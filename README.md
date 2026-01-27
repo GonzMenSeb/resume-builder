@@ -25,7 +25,17 @@ Generate professional, ATS-optimized resumes from raw data using Claude AI. Tran
 
 - Python 3.11 or higher
 - `pdflatex` (for PDF compilation)
-- Anthropic API key
+- Claude CLI (for AI-powered features)
+
+**Install Claude CLI:**
+
+```bash
+# macOS/Linux (via Homebrew)
+brew install anthropic-cli
+
+# Or download from https://github.com/anthropics/claude-code
+# Follow the official installation instructions
+```
 
 **Install LaTeX on Ubuntu/Debian:**
 ```bash
@@ -54,17 +64,17 @@ pip install -e .
 
 ### Configuration
 
-Set your Anthropic API key:
+Configure the Claude model (optional):
 
 ```bash
-export RESUME_GEN_ANTHROPIC_API_KEY="sk-ant-..."
+export RESUME_GEN_CLAUDE_MODEL=sonnet
 ```
 
 Or create a `.env` file:
 
 ```bash
-RESUME_GEN_ANTHROPIC_API_KEY=sk-ant-...
-RESUME_GEN_CLAUDE_MODEL=claude-sonnet-4-20250514
+RESUME_GEN_CLAUDE_MODEL=sonnet
+RESUME_GEN_CLAUDE_CLI_TIMEOUT=3600
 ```
 
 ## Usage
@@ -126,6 +136,11 @@ resume-gen generate ./data/ --no-compile
 resume-gen generate ./data/ -V
 ```
 
+**Specify Claude model:**
+```bash
+resume-gen generate ./data/ --claude-model opus
+```
+
 ### Complete Example
 
 ```bash
@@ -134,6 +149,7 @@ resume-gen generate \
   --job-url https://example.com/job/senior-python-dev \
   --template modern \
   --output ./output/tailored_resume.pdf \
+  --claude-model sonnet \
   --verbose
 ```
 
@@ -214,7 +230,7 @@ resume-generator/
 │   │   ├── text.py         # Text file extraction
 │   │   └── loader.py       # Multi-source data loader
 │   ├── extraction/          # AI-powered profile extraction
-│   │   ├── profile.py      # Profile extractor using Claude
+│   │   ├── profile.py      # Profile extractor using Claude CLI
 │   │   └── prompts.py      # Extraction prompts
 │   ├── optimization/        # Resume optimization
 │   │   ├── optimizer.py    # X-Y-Z formula optimization
@@ -230,6 +246,10 @@ resume-generator/
 │   │   └── job.py          # Job description model
 │   ├── ui/                  # User interface
 │   │   └── progress.py     # Terminal progress UI
+│   ├── utils/               # Utility modules
+│   │   ├── json_parser.py  # JSON parsing utilities
+│   │   └── cli.py          # CLI utilities
+│   ├── claude_client.py     # Claude CLI subprocess client
 │   ├── config.py            # Configuration and settings
 │   ├── pipeline.py          # Main pipeline orchestration
 │   └── main.py              # CLI entry point
@@ -292,8 +312,8 @@ All settings can be configured via environment variables or `.env` file with the
 ### Example `.env` File
 
 ```bash
-RESUME_GEN_ANTHROPIC_API_KEY=sk-ant-...
-RESUME_GEN_CLAUDE_MODEL=claude-sonnet-4-20250514
+RESUME_GEN_CLAUDE_MODEL=sonnet
+RESUME_GEN_CLAUDE_CLI_TIMEOUT=3600
 RESUME_GEN_DEFAULT_TEMPLATE=modern
 RESUME_GEN_PRIMARY_COLOR=#1E3A8A
 RESUME_GEN_COMPILE_PDF=true
@@ -305,7 +325,7 @@ RESUME_GEN_VERBOSE=false
 The resume generation pipeline consists of the following stages:
 
 1. **Loading**: Read and extract text from input sources
-2. **Extracting**: Use Claude AI to extract structured profile data
+2. **Extracting**: Use Claude CLI to extract structured profile data
 3. **Optimizing**: Apply X-Y-Z formula to optimize bullet points
 4. **Tailoring** *(optional)*: Customize resume for specific job
 5. **Generating**: Build LaTeX document from optimized data
@@ -385,17 +405,22 @@ ATS-friendly design optimized for:
 
 ## Troubleshooting
 
+### Claude CLI Not Found
+
+**Problem**: `Claude CLI not available. Please install Claude CLI.`
+
+**Solution**: Install the Claude CLI following the prerequisites section. Ensure the `claude` binary is in your PATH.
+
+```bash
+# Verify installation
+claude --version
+```
+
 ### LaTeX Compilation Fails
 
 **Problem**: `pdflatex` command not found
 
 **Solution**: Install LaTeX distribution (see Prerequisites section)
-
-### API Key Errors
-
-**Problem**: `anthropic_api_key is required`
-
-**Solution**: Set `RESUME_GEN_ANTHROPIC_API_KEY` environment variable or create `.env` file
 
 ### PDF Extraction Issues
 
@@ -408,6 +433,22 @@ ATS-friendly design optimized for:
 **Problem**: Large files cause memory issues
 
 **Solution**: Process files individually or increase system memory. Consider splitting large PDFs.
+
+### Claude CLI Timeout
+
+**Problem**: AI operations taking too long
+
+**Solution**: Increase the timeout value:
+
+```bash
+export RESUME_GEN_CLAUDE_CLI_TIMEOUT=7200  # 2 hours
+```
+
+Or specify in `.env`:
+
+```bash
+RESUME_GEN_CLAUDE_CLI_TIMEOUT=7200
+```
 
 ## Research Foundations
 
@@ -437,7 +478,7 @@ MIT License - see [LICENSE](LICENSE) for details
 
 ## Acknowledgments
 
-- Powered by [Anthropic Claude](https://www.anthropic.com/claude)
+- Powered by [Claude CLI](https://github.com/anthropics/claude-code) from Anthropic
 - LaTeX templates inspired by resume research and best practices
 - Built with Python 3.11+, Pydantic, Rich, and modern async patterns
 
