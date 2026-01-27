@@ -1,19 +1,18 @@
-"""Resume optimizer using Claude to transform PersonProfile into optimized ResumeDocument."""
+"""Resume optimizer using Claude CLI to transform PersonProfile into optimized ResumeDocument."""
+
+from __future__ import annotations
 
 import logging
-import time
-from collections.abc import Callable
-from typing import Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
-from anthropic import (
-    Anthropic,
-    APIConnectionError,
-    APITimeoutError,
-    RateLimitError,
-)
 from pydantic import BaseModel, Field, ValidationError
 
-from resume_generator.config import Settings, get_settings
+from resume_generator.claude_client import (
+    ClaudeCLI,
+    ClaudeCLIError,
+    build_prompt_with_schema,
+    parse_json_response,
+)
 from resume_generator.models.profile import PersonProfile
 from resume_generator.models.resume import (
     BulletType,
@@ -33,46 +32,15 @@ from resume_generator.optimization.prompts import (
     build_skills_optimization_prompt,
 )
 
-T = TypeVar("T")
-logger = logging.getLogger(__name__)
+if TYPE_CHECKING:
+    from resume_generator.config import Settings
 
-STRUCTURED_OUTPUTS_BETA = "structured-outputs-2025-11-13"
-MAX_RETRIES = 3
-INITIAL_BACKOFF_SECONDS = 1.0
-MAX_BACKOFF_SECONDS = 32.0
+T = TypeVar("T", bound=BaseModel)
+logger = logging.getLogger(__name__)
 
 
 class OptimizationError(Exception):
     """Raised when resume optimization fails."""
-
-
-def _is_retryable_error(error: Exception) -> bool:
-    return isinstance(error, (APITimeoutError, APIConnectionError, RateLimitError))
-
-
-def _exponential_backoff(attempt: int) -> float:
-    backoff: float = INITIAL_BACKOFF_SECONDS * (2**attempt)
-    return min(backoff, MAX_BACKOFF_SECONDS)
-
-
-def _call_with_retry(func: Callable[[], T]) -> T:
-    last_exception: Exception | None = None
-    for attempt in range(MAX_RETRIES):
-        try:
-            return func()
-        except Exception as e:
-            if not _is_retryable_error(e):
-                raise
-            last_exception = e
-            if attempt == MAX_RETRIES - 1:
-                logger.error("Max retries exceeded after %d attempts", MAX_RETRIES)
-                raise
-            wait_time = _exponential_backoff(attempt)
-            logger.warning("Retryable error, waiting %.1fs: %s", wait_time, e)
-            time.sleep(wait_time)
-    if last_exception:
-        raise last_exception
-    raise AssertionError("Unexpected control flow in retry logic")
 
 
 class OptimizedBulletSchema(BaseModel):
@@ -121,11 +89,28 @@ class SkillsOptimizationSchema(BaseModel):
 
 
 class ResumeOptimizer:
-    """Transforms PersonProfile into optimized ResumeDocument using Claude AI."""
+    """Transforms PersonProfile into optimized ResumeDocument using Claude CLI."""
 
-    def __init__(self, settings: Settings | None = None) -> None:
-        self._settings = settings or get_settings()
-        self._client = Anthropic(api_key=self._settings.anthropic_api_key.get_secret_value())
+    def __init__(
+        self,
+        settings: Settings | None = None,
+        claude_cli: ClaudeCLI | None = None,
+    ) -> None:
+        if claude_cli is not None:
+            self._cli = claude_cli
+            self._settings = settings
+        elif settings is not None:
+            self._cli = ClaudeCLI(
+                model=settings.claude_model.value,
+                timeout=settings.claude_cli_timeout,
+            )
+            self._settings = settings
+        else:
+            from resume_generator.config import get_settings
+
+            s = get_settings()
+            self._cli = ClaudeCLI(model=s.claude_model.value, timeout=s.claude_cli_timeout)
+            self._settings = s
 
     def optimize(
         self,
@@ -188,6 +173,8 @@ class ResumeOptimizer:
         profile: PersonProfile,
         target_keywords: list[str] | None,
     ) -> list[ResumeExperience]:
+        max_bullets = self._settings.max_bullets_per_job if self._settings else 5
+
         optimized: list[ResumeExperience] = []
         for exp in profile.experiences:
             if not exp.achievements:
@@ -210,6 +197,7 @@ class ResumeOptimizer:
                     role_title=exp.title,
                     company=exp.company,
                     target_keywords=target_keywords,
+                    max_bullets=max_bullets,
                 )
 
             optimized.append(
@@ -232,7 +220,9 @@ class ResumeOptimizer:
         role_title: str,
         company: str,
         target_keywords: list[str] | None,
+        max_bullets: int,
     ) -> list[ResumeBullet]:
+        min_bullets = self._settings.min_bullets_per_job if self._settings else 2
         prompt = build_bullet_batch_prompt(
             achievements=achievements,
             role_title=role_title,
@@ -242,15 +232,15 @@ class ResumeOptimizer:
 
         try:
             result = self._call_claude_structured(prompt, BulletBatchResultSchema)
-        except Exception as e:
+        except OptimizationError as e:
             logger.warning("Bullet optimization failed, using original: %s", e)
             return [
                 ResumeBullet(text=a, bullet_type=BulletType.GENERIC, relevance_score=0.5)
-                for a in achievements[: self._settings.max_bullets_per_job]
+                for a in achievements[:max_bullets]
             ]
 
         bullets: list[ResumeBullet] = []
-        for b in result.bullets[: self._settings.max_bullets_per_job]:
+        for b in result.bullets[:max_bullets]:
             bullets.append(
                 ResumeBullet(
                     text=b.text,
@@ -265,7 +255,6 @@ class ResumeOptimizer:
                 )
             )
 
-        min_bullets = self._settings.min_bullets_per_job
         while len(bullets) < min_bullets and len(bullets) < len(achievements):
             idx = len(bullets)
             bullets.append(
@@ -310,7 +299,7 @@ class ResumeOptimizer:
         try:
             result = self._call_claude_structured(prompt, ProfessionalSummarySchema)
             return result.summary
-        except Exception as e:
+        except OptimizationError as e:
             logger.warning("Summary generation failed, using original: %s", e)
             return profile.professional_summary
 
@@ -345,7 +334,7 @@ class ResumeOptimizer:
             for g in sorted(result.skill_groups, key=lambda x: x.priority):
                 groups.append(ResumeSkillGroup(category=g.category, skills=g.skills))
             return groups
-        except Exception as e:
+        except OptimizationError as e:
             logger.warning("Skills optimization failed, using basic grouping: %s", e)
             return self._fallback_skill_groups(profile)
 
@@ -399,32 +388,42 @@ class ResumeOptimizer:
         ]
 
     def _call_claude_structured(self, prompt: str, schema: type[T]) -> T:
-        def _api_call() -> T:
-            response = self._client.beta.messages.parse(
-                model=self._settings.claude_model.value,
-                max_tokens=self._settings.max_tokens,
-                betas=[STRUCTURED_OUTPUTS_BETA],
-                system=RESUME_OPTIMIZER_SYSTEM,
-                messages=[{"role": "user", "content": prompt}],
-                output_format=schema,
-            )
-            if response.stop_reason == "refusal":
-                raise OptimizationError("Claude refused to process this request")
-            if response.stop_reason == "max_tokens":
-                raise OptimizationError("Response truncated due to max_tokens limit")
-            if response.parsed_output is None:
-                raise OptimizationError("No parsed output received from Claude")
-            return response.parsed_output
+        """Call Claude CLI and parse response into the specified schema.
+
+        Args:
+            prompt: The prompt to send to Claude.
+            schema: A Pydantic model class defining the expected output structure.
+
+        Returns:
+            Parsed and validated instance of the schema.
+
+        Raises:
+            OptimizationError: If the CLI call or parsing fails.
+        """
+        full_prompt = build_prompt_with_schema(prompt, schema)
 
         try:
-            return _call_with_retry(_api_call)
-        except OptimizationError:
-            raise
+            result = self._cli.invoke(prompt=full_prompt, system=RESUME_OPTIMIZER_SYSTEM)
+        except ClaudeCLIError as e:
+            logger.exception("Claude CLI invocation failed")
+            raise OptimizationError(f"Claude CLI error: {e}") from e
+
+        if result.failed:
+            raise OptimizationError(
+                f"Claude CLI returned non-zero exit code: {result.exit_code}"
+            )
+
+        try:
+            data = parse_json_response(result.output)
+        except ValueError as e:
+            logger.error("Failed to parse JSON from Claude response: %s", e)
+            raise OptimizationError(f"Failed to parse response: {e}") from e
+
+        try:
+            return schema.model_validate(data)
         except ValidationError as e:
+            logger.error("Response validation failed: %s", e)
             raise OptimizationError(f"Response validation failed: {e}") from e
-        except Exception as e:
-            logger.exception("Claude API call failed")
-            raise OptimizationError(f"API call failed: {e}") from e
 
     @staticmethod
     def _parse_bullet_type(bullet_type: str) -> BulletType:
