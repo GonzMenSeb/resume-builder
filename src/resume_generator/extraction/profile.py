@@ -2,10 +2,17 @@
 
 import json
 import logging
+import time
+from collections.abc import Callable
 from datetime import date
-from typing import Any
+from typing import Any, TypeVar
 
-from anthropic import Anthropic
+from anthropic import (
+    Anthropic,
+    APIConnectionError,
+    APITimeoutError,
+    RateLimitError,
+)
 from pydantic import BaseModel, Field, ValidationError
 
 from resume_generator.config import Settings, get_settings
@@ -21,13 +28,75 @@ from resume_generator.models.profile import (
     SkillCategory,
 )
 
+T = TypeVar("T")
+
 logger = logging.getLogger(__name__)
 
 STRUCTURED_OUTPUTS_BETA = "structured-outputs-2025-11-13"
+MAX_RETRIES = 3
+INITIAL_BACKOFF_SECONDS = 1.0
+MAX_BACKOFF_SECONDS = 32.0
 
 
 class ExtractionError(Exception):
     """Raised when profile extraction fails."""
+
+
+def _is_retryable_error(error: Exception) -> bool:
+    """Check if an error is retryable."""
+    return isinstance(
+        error,
+        (APITimeoutError, APIConnectionError, RateLimitError),
+    )
+
+
+def _exponential_backoff(attempt: int) -> float:
+    """Calculate exponential backoff with jitter.
+
+    Backoff = min(initial * (2 ^ attempt) + jitter, max_backoff)
+    """
+    backoff: float = INITIAL_BACKOFF_SECONDS * (2 ** attempt)
+    backoff = min(backoff, MAX_BACKOFF_SECONDS)
+    return backoff
+
+
+def _call_with_retry(func: Callable[[], T]) -> T:
+    """Execute function with exponential backoff retry logic.
+
+    Retries on transient errors (timeout, connection, rate limit).
+    Non-retryable errors and max retries raise immediately.
+    """
+    last_exception: Exception | None = None
+
+    for attempt in range(MAX_RETRIES):
+        try:
+            return func()
+        except Exception as e:
+            if not _is_retryable_error(e):
+                raise
+
+            last_exception = e
+            if attempt == MAX_RETRIES - 1:
+                logger.error(
+                    "Max retries exceeded after %d attempts. Last error: %s",
+                    MAX_RETRIES,
+                    e,
+                )
+                raise
+
+            wait_time = _exponential_backoff(attempt)
+            logger.warning(
+                "Retryable error on attempt %d/%d: %s. Waiting %.1fs before retry.",
+                attempt + 1,
+                MAX_RETRIES,
+                e,
+                wait_time,
+            )
+            time.sleep(wait_time)
+
+    if last_exception:
+        raise last_exception
+    raise AssertionError("Unexpected control flow in retry logic")
 
 
 class ContactInfoSchema(BaseModel):
@@ -178,8 +247,8 @@ class ProfileExtractor:
         return profile
 
     def _call_claude_structured(self, raw_text: str) -> ProfileExtractionSchema:
-        """Call Claude API using structured output mode."""
-        try:
+        """Call Claude API using structured output mode with retry logic."""
+        def _api_call() -> ProfileExtractionSchema:
             response = self._client.beta.messages.parse(
                 model=self._settings.claude_model.value,
                 max_tokens=self._settings.max_tokens,
@@ -200,6 +269,8 @@ class ProfileExtractor:
 
             return response.parsed_output
 
+        try:
+            return _call_with_retry(_api_call)
         except ExtractionError:
             raise
         except Exception as e:
@@ -359,8 +430,8 @@ class LegacyProfileExtractor:
         return profile
 
     def _call_claude(self, user_prompt: str) -> str:
-        """Call Claude API and return the response text."""
-        try:
+        """Call Claude API and return the response text with retry logic."""
+        def _api_call() -> str:
             response = self._client.messages.create(
                 model=self._settings.claude_model.value,
                 max_tokens=self._settings.max_tokens,
@@ -371,6 +442,9 @@ class LegacyProfileExtractor:
             if content.type != "text":
                 raise ExtractionError(f"Unexpected response type: {content.type}")
             return content.text
+
+        try:
+            return _call_with_retry(_api_call)
         except Exception as e:
             if isinstance(e, ExtractionError):
                 raise

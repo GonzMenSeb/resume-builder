@@ -1,7 +1,7 @@
 # Progress Tracker
 
-**Session:** 9
-**Current Task:** 9 of 44
+**Session:** 14
+**Current Task:** 14 of 44
 
 ## Task List
 
@@ -13,12 +13,12 @@
 ✓ [x] **Task 6:** `[coding]` Create `src/resume_generator/models/resume.py` with Pydantic models: `ResumeBullet`, `ResumeExperience`, `ResumeSection`, `ResumeDocument`
 ✓ [x] **Task 7:** `[coding]` Create `src/resume_generator/models/job.py` with Pydantic models: `JobRequirement`, `JobDescription` for job position parsing
 ✓ [x] **Task 8:** `[coding]` Create `src/resume_generator/ingestion/base.py` with abstract `BaseExtractor` class defining `extract(path: Path) -> str` interface
-→ [ ] **Task 9:** `[coding]` Create `src/resume_generator/ingestion/pdf.py` with `PDFExtractor` class using `pypdf` to extract text from PDF files
-  [ ] **Task 10:** `[coding]` Create `src/resume_generator/ingestion/text.py` with `TextExtractor` class handling `.txt`, `.md`, and raw text input
-  [ ] **Task 11:** `[coding]` Create `src/resume_generator/ingestion/loader.py` with `DataLoader` class that auto-detects file types, aggregates content from multiple sources, and returns unified text
-  [ ] **Task 12:** `[coding]` Create `src/resume_generator/extraction/prompts.py` with prompt templates for extracting structured profile data from raw text
-  [ ] **Task 13:** `[coding]` Create `src/resume_generator/extraction/profile.py` with `ProfileExtractor` class using Anthropic SDK to call Claude and parse response into `PersonProfile` model
-  [ ] **Task 14:** `[coding]` Implement `ProfileExtractor.extract()` method with structured output parsing via Claude's JSON mode
+✓ [x] **Task 9:** `[coding]` Create `src/resume_generator/ingestion/pdf.py` with `PDFExtractor` class using `pypdf` to extract text from PDF files
+✓ [x] **Task 10:** `[coding]` Create `src/resume_generator/ingestion/text.py` with `TextExtractor` class handling `.txt`, `.md`, and raw text input
+✓ [x] **Task 11:** `[coding]` Create `src/resume_generator/ingestion/loader.py` with `DataLoader` class that auto-detects file types, aggregates content from multiple sources, and returns unified text
+✓ [x] **Task 12:** `[coding]` Create `src/resume_generator/extraction/prompts.py` with prompt templates for extracting structured profile data from raw text
+✓ [x] **Task 13:** `[coding]` Create `src/resume_generator/extraction/profile.py` with `ProfileExtractor` class using Anthropic SDK to call Claude and parse response into `PersonProfile` model
+→ [ ] **Task 14:** `[coding]` Implement `ProfileExtractor.extract()` method with structured output parsing via Claude's JSON mode
   [ ] **Task 15:** `[quick]` Add retry logic with exponential backoff for API calls in `ProfileExtractor`
   [ ] **Task 16:** `[coding]` Create `src/resume_generator/optimization/prompts.py` with prompts implementing research principles: X-Y-Z formula, action verbs, quantified achievements
   [ ] **Task 17:** `[coding]` Create `src/resume_generator/optimization/optimizer.py` with `ResumeOptimizer` class that transforms `PersonProfile` into `ResumeDocument` using Claude
@@ -51,33 +51,34 @@
   [ ] **Task 44:** `[quick]` Final cleanup: remove unused imports, ensure consistent formatting with `ruff`
 
 ## Latest Completed
-**Task 9:** `[coding]` Create `src/resume_generator/ingestion/pdf.py` with `PDFExtractor` class using `pypdf` to extract text from PDF files
+**Task 14:** `[coding]` Implement `ProfileExtractor.extract()` method with structured output parsing via Claude's JSON mode
 
 ### Summary
-## Completion Report
+## Summary
 
-**What was completed:**
-- Created `src/resume_generator/ingestion/pdf.py` with `PDFExtractor` class
-- The class uses `pypdf` library to extract text from PDF files
-- Implements the `BaseExtractor` interface with:
-  - `supported_extensions` property returning `{".pdf"}`
-  - `extract()` method for basic text extraction (pages separated by double newlines)
-  - `extract_with_metadata()` method returning `ExtractionResult` with PDF metadata (page count, title, author, creator)
-- Proper error handling using `ExtractionError` from base module
-- Updated `ingestion/__init__.py` to export `PDFExtractor`
+**Task #14 Completed: Implement `ProfileExtractor.extract()` method with structured output parsing via Claude's JSON mode**
 
-**Tests run and results:**
-1. `ruff check` - All checks passed
-2. `ruff format --check` - Already formatted
-3. `mypy` - No issues found
-4. Manual integration tests with real PDF files - Successfully extracted 2749 chars from a real resume PDF with metadata
+### What was completed:
+1. Implemented the `ProfileExtractor.extract()` method using Claude's beta structured outputs API (`client.beta.messages.parse()`)
+2. Created Pydantic schemas for extraction (`ProfileExtractionSchema`, `ContactInfoSchema`, `ExperienceSchema`, etc.) that are compatible with Claude's JSON mode constraints
+3. Added proper handling for:
+   - `stop_reason == "refusal"` - when Claude refuses to process
+   - `stop_reason == "max_tokens"` - when response is truncated
+   - Type conversion from extraction schema to full `PersonProfile` model
+4. Preserved the original implementation as `LegacyProfileExtractor` for fallback support with older models
+5. Uses the `structured-outputs-2025-11-13` beta feature
 
-**Files modified:**
-- `src/resume_generator/ingestion/pdf.py` (new file)
-- `src/resume_generator/ingestion/__init__.py` (updated exports)
+### Tests run:
+- `ruff check src/resume_generator/` - All checks passed
+- `python3 -m py_compile` - Syntax check passed
+- Import tests successful
+- `mypy` - Profile.py file passes (other files have unrelated existing issues)
 
-**Commit hash:** `ee97dc7`
+### Files modified:
+- `src/resume_generator/extraction/profile.py` - Major rewrite with structured outputs
+- `src/resume_generator/extraction/__init__.py` - Added `LegacyProfileExtractor` export
 
-**Blockers:** None
+### Commit hash:
+`b236bd9`
 
 TASK COMPLETE

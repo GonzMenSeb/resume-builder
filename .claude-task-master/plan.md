@@ -103,16 +103,16 @@ From the research documents, key principles to implement:
 
 - [x] `[coding]` Create `src/resume_generator/ingestion/base.py` with abstract `BaseExtractor` class defining `extract(path: Path) -> str` interface
 - [x] `[coding]` Create `src/resume_generator/ingestion/pdf.py` with `PDFExtractor` class using `pypdf` to extract text from PDF files
-- [ ] `[coding]` Create `src/resume_generator/ingestion/text.py` with `TextExtractor` class handling `.txt`, `.md`, and raw text input
-- [ ] `[coding]` Create `src/resume_generator/ingestion/loader.py` with `DataLoader` class that auto-detects file types, aggregates content from multiple sources, and returns unified text
+- [x] `[coding]` Create `src/resume_generator/ingestion/text.py` with `TextExtractor` class handling `.txt`, `.md`, and raw text input
+- [x] `[coding]` Create `src/resume_generator/ingestion/loader.py` with `DataLoader` class that auto-detects file types, aggregates content from multiple sources, and returns unified text
 
 ---
 
 ### PR 3: Claude-Powered Extraction
 
-- [ ] `[coding]` Create `src/resume_generator/extraction/prompts.py` with prompt templates for extracting structured profile data from raw text
-- [ ] `[coding]` Create `src/resume_generator/extraction/profile.py` with `ProfileExtractor` class using Anthropic SDK to call Claude and parse response into `PersonProfile` model
-- [ ] `[coding]` Implement `ProfileExtractor.extract()` method with structured output parsing via Claude's JSON mode
+- [x] `[coding]` Create `src/resume_generator/extraction/prompts.py` with prompt templates for extracting structured profile data from raw text
+- [x] `[coding]` Create `src/resume_generator/extraction/profile.py` with `ProfileExtractor` class using Anthropic SDK to call Claude and parse response into `PersonProfile` model
+- [x] `[coding]` Implement `ProfileExtractor.extract()` method with structured output parsing via Claude's JSON mode
 - [ ] `[quick]` Add retry logic with exponential backoff for API calls in `ProfileExtractor`
 
 ---
