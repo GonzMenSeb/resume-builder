@@ -91,8 +91,8 @@ From the research documents, key principles to implement:
 
 - [x] `[quick]` Initialize git repository and create feature branch `feat/resume-generator-mvp`
 - [x] `[coding]` Create `pyproject.toml` with dependencies: `anthropic>=0.40.0`, `pydantic>=2.0`, `rich>=13.0`, `pypdf>=4.0`, `aiofiles>=23.0`, `typer>=0.9.0`
-- [ ] `[coding]` Create `src/resume_generator/__init__.py` with version and package metadata
-- [ ] `[coding]` Create `src/resume_generator/config.py` with `Settings` Pydantic model for API keys, paths, and pipeline options
+- [x] `[coding]` Create `src/resume_generator/__init__.py` with version and package metadata
+- [x] `[coding]` Create `src/resume_generator/config.py` with `Settings` Pydantic model for API keys, paths, and pipeline options
 - [ ] `[coding]` Create `src/resume_generator/models/profile.py` with Pydantic models: `ContactInfo`, `Experience`, `Education`, `Skill`, `Certification`, `PersonProfile`
 - [ ] `[coding]` Create `src/resume_generator/models/resume.py` with Pydantic models: `ResumeBullet`, `ResumeExperience`, `ResumeSection`, `ResumeDocument`
 - [ ] `[coding]` Create `src/resume_generator/models/job.py` with Pydantic models: `JobRequirement`, `JobDescription` for job position parsing

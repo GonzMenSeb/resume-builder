@@ -1,14 +1,14 @@
 # Progress Tracker
 
-**Session:** 2
-**Current Task:** 2 of 44
+**Session:** 4
+**Current Task:** 4 of 44
 
 ## Task List
 
 ✓ [x] **Task 1:** `[quick]` Initialize git repository and create feature branch `feat/resume-generator-mvp`
-→ [ ] **Task 2:** `[coding]` Create `pyproject.toml` with dependencies: `anthropic>=0.40.0`, `pydantic>=2.0`, `rich>=13.0`, `pypdf>=4.0`, `aiofiles>=23.0`, `typer>=0.9.0`
-  [ ] **Task 3:** `[coding]` Create `src/resume_generator/__init__.py` with version and package metadata
-  [ ] **Task 4:** `[coding]` Create `src/resume_generator/config.py` with `Settings` Pydantic model for API keys, paths, and pipeline options
+✓ [x] **Task 2:** `[coding]` Create `pyproject.toml` with dependencies: `anthropic>=0.40.0`, `pydantic>=2.0`, `rich>=13.0`, `pypdf>=4.0`, `aiofiles>=23.0`, `typer>=0.9.0`
+✓ [x] **Task 3:** `[coding]` Create `src/resume_generator/__init__.py` with version and package metadata
+→ [ ] **Task 4:** `[coding]` Create `src/resume_generator/config.py` with `Settings` Pydantic model for API keys, paths, and pipeline options
   [ ] **Task 5:** `[coding]` Create `src/resume_generator/models/profile.py` with Pydantic models: `ContactInfo`, `Experience`, `Education`, `Skill`, `Certification`, `PersonProfile`
   [ ] **Task 6:** `[coding]` Create `src/resume_generator/models/resume.py` with Pydantic models: `ResumeBullet`, `ResumeExperience`, `ResumeSection`, `ResumeDocument`
   [ ] **Task 7:** `[coding]` Create `src/resume_generator/models/job.py` with Pydantic models: `JobRequirement`, `JobDescription` for job position parsing
@@ -51,32 +51,34 @@
   [ ] **Task 44:** `[quick]` Final cleanup: remove unused imports, ensure consistent formatting with `ruff`
 
 ## Latest Completed
-**Task 2:** `[coding]` Create `pyproject.toml` with dependencies: `anthropic>=0.40.0`, `pydantic>=2.0`, `rich>=13.0`, `pypdf>=4.0`, `aiofiles>=23.0`, `typer>=0.9.0`
+**Task 4:** `[coding]` Create `src/resume_generator/config.py` with `Settings` Pydantic model for API keys, paths, and pipeline options
 
 ### Summary
-## Task Complete Summary
+## Task Completion Summary
 
 **What was completed:**
-- Created `pyproject.toml` with all required dependencies:
-  - `anthropic>=0.40.0`
-  - `pydantic>=2.0`
-  - `rich>=13.0`
-  - `pypdf>=4.0`
-  - `aiofiles>=23.0`
-  - `typer>=0.9.0`
-- Additionally configured:
-  - Hatchling build system
-  - Dev dependencies (pytest, ruff, mypy)
-  - CLI entry point (`resume-gen`)
-  - Tool configurations for ruff, mypy, and pytest
+- Created `src/resume_generator/config.py` with a comprehensive `Settings` Pydantic model including:
+  - **API Configuration**: Anthropic API key (SecretStr), Claude model selection (enum), max tokens, timeout, retries
+  - **Path Configuration**: Output directory, templates directory, cache directory with auto-path conversion
+  - **Template & Design Configuration**: Research-backed defaults for colors, font sizes, margins
+  - **Content Optimization Settings**: Bullets per job (3-5), summary word counts (50-100), keyword match rate (70%), tailoring customization rate (50%)
+  - **Pipeline Options**: Job tailoring toggle, PDF compilation, keep LaTeX source, verbose mode
+  - **Enums**: `ResumeTemplate` (MODERN, ATS), `ClaudeModel` (SONNET, OPUS, HAIKU)
+  - **Helper methods**: `ensure_directories()`, `get_template_path()`
+  - Environment variable support with `RESUME_GEN_` prefix and `.env` file support
+- Added `pydantic-settings>=2.0` dependency to `pyproject.toml`
 
 **Tests run and results:**
-- TOML syntax validation: PASSED
+- Python syntax check: ✅ Passed
+- Module import test: ✅ Passed
+- Settings instantiation with env vars: ✅ Passed
+- All enums and helper methods validated
 
 **Files modified:**
-- `pyproject.toml` (created)
+- `src/resume_generator/config.py` (created - 186 lines)
+- `pyproject.toml` (added pydantic-settings dependency)
 
-**Commit hash:** `d78495c`
+**Commit hash:** `d10a27e65a2cc9fe78ae52f6bd9348bc9c27b75e`
 
 **Blockers:** None
 
