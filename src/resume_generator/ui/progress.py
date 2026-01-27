@@ -111,6 +111,124 @@ class StageProgressColumn(ProgressColumn):
 
 
 @dataclass
+class StageDisplayConfig:
+    """Configuration for stage display elements."""
+
+    icon: str
+    label: str
+    color: str
+
+
+STAGE_DISPLAY_CONFIG: list[StageDisplayConfig] = [
+    StageDisplayConfig("📄", "Loading Data", "bright_cyan"),
+    StageDisplayConfig("🔍", "Extracting Profile", "bright_yellow"),
+    StageDisplayConfig("✨", "Optimizing Content", "bright_magenta"),
+    StageDisplayConfig("📝", "Generating LaTeX", "green"),
+    StageDisplayConfig("🖨️", "Compiling PDF", "bright_green"),
+]
+
+
+class StageProgressBar:
+    """Visual progress bar for a single stage."""
+
+    WIDTH = 12
+
+    def __init__(self, config: StageDisplayConfig) -> None:
+        self.config = config
+        self.active = False
+        self.completed = False
+        self.progress = 0.0
+        self.start_time: float | None = None
+        self.end_time: float | None = None
+
+    def render(self, spinner_frame: str = "⠋") -> RenderableType:
+        icon = self.config.icon
+        label = self.config.label
+        color = self.config.color
+
+        if self.completed:
+            status_icon = "✓"
+            status_style = "bold bright_green"
+            bar = "█" * self.WIDTH
+            bar_style = f"dim {color}"
+            elapsed = (self.end_time or time()) - (self.start_time or time())
+            time_str = f" {elapsed:.1f}s"
+        elif self.active:
+            status_icon = spinner_frame
+            status_style = f"bold {color}"
+            filled = int(self.progress * self.WIDTH)
+            bar = "█" * filled + "▓" + "░" * (self.WIDTH - filled - 1)
+            bar_style = color
+            elapsed = time() - (self.start_time or time())
+            time_str = f" {elapsed:.1f}s"
+        else:
+            status_icon = "○"
+            status_style = "dim grey50"
+            bar = "░" * self.WIDTH
+            bar_style = "dim grey30"
+            time_str = ""
+
+        text = Text()
+        text.append(f"{status_icon} ", style=status_style)
+        text.append(f"{icon} ", style=color if (self.active or self.completed) else "dim")
+        text.append(f"{label:<18} ", style=f"bold {color}" if self.active else (f"dim {color}" if self.completed else "dim grey50"))
+        text.append(bar, style=bar_style)
+        text.append(time_str, style="dim cyan")
+
+        return text
+
+
+class StageProgressDisplay:
+    """Live stage-by-stage progress visualization component."""
+
+    SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+
+    def __init__(self) -> None:
+        self._stages = [StageProgressBar(cfg) for cfg in STAGE_DISPLAY_CONFIG]
+        self._current_idx = -1
+        self._spinner_idx = 0
+        self._last_tick = time()
+
+    def start_stage(self, index: int) -> None:
+        if 0 <= index < len(self._stages):
+            self._current_idx = index
+            self._stages[index].active = True
+            self._stages[index].start_time = time()
+            self._stages[index].progress = 0.0
+
+    def complete_stage(self, index: int) -> None:
+        if 0 <= index < len(self._stages):
+            self._stages[index].active = False
+            self._stages[index].completed = True
+            self._stages[index].progress = 1.0
+            self._stages[index].end_time = time()
+
+    def update_progress(self, index: int, progress: float) -> None:
+        if 0 <= index < len(self._stages):
+            self._stages[index].progress = min(1.0, max(0.0, progress))
+
+    def _tick_spinner(self) -> str:
+        now = time()
+        if now - self._last_tick > 0.08:
+            self._spinner_idx = (self._spinner_idx + 1) % len(self.SPINNER_FRAMES)
+            self._last_tick = now
+        return self.SPINNER_FRAMES[self._spinner_idx]
+
+    def render(self) -> RenderableType:
+        spinner = self._tick_spinner()
+        elements = [stage.render(spinner) for stage in self._stages]
+        return Group(*elements)
+
+    def render_panel(self) -> Panel:
+        return Panel(
+            self.render(),
+            title="[bold bright_white]⚡ Pipeline Stages",
+            border_style="bright_blue",
+            padding=(0, 1),
+        )
+
+
+@dataclass
 class PipelineStats:
     """Statistics collected during pipeline execution."""
 
@@ -124,6 +242,15 @@ class PipelineStats:
     optimization_score: float = 0.0
     output_path: Path | None = None
     errors: list[str] = field(default_factory=list)
+
+
+PIPELINE_STAGE_TO_DISPLAY_INDEX: dict[PipelineStage, int] = {
+    PipelineStage.LOADING: 0,
+    PipelineStage.EXTRACTING: 1,
+    PipelineStage.OPTIMIZING: 2,
+    PipelineStage.GENERATING: 3,
+    PipelineStage.COMPILING: 4,
+}
 
 
 class PipelineUI:
@@ -146,6 +273,7 @@ class PipelineUI:
         self._stats = PipelineStats()
         self._completed_stages: set[PipelineStage] = set()
         self._status_message: str = ""
+        self._stage_display = StageProgressDisplay()
 
     @property
     def stats(self) -> PipelineStats:
@@ -320,7 +448,7 @@ class PipelineUI:
         if current_action:
             elements.append(current_action)
 
-        elements.append(self._build_stages_panel())
+        elements.append(self._stage_display.render_panel())
 
         has_stats = any([
             self._stats.files_loaded,
@@ -349,6 +477,7 @@ class PipelineUI:
         self._status_message = ""
         self._stage_progress = None
         self._stage_task_id = None
+        self._stage_display = StageProgressDisplay()
 
         self._progress = self._create_overall_progress()
         total_stages = len(stages) if stages else len(PipelineStage)
@@ -381,6 +510,8 @@ class PipelineUI:
             completed: Whether this stage is completed.
             message: Optional status message to display.
         """
+        display_idx = PIPELINE_STAGE_TO_DISPLAY_INDEX.get(stage)
+
         if completed:
             if self._current_stage:
                 start = self._stage_start_times.get(self._current_stage, time())
@@ -390,6 +521,9 @@ class PipelineUI:
             if self._progress and self._overall_task_id is not None:
                 self._progress.advance(self._overall_task_id)
 
+            if display_idx is not None:
+                self._stage_display.complete_stage(display_idx)
+
             self._current_stage = None
             self._stage_progress = None
             self._stage_task_id = None
@@ -398,6 +532,9 @@ class PipelineUI:
             self._current_stage = stage
             self._stage_start_times[stage] = time()
             self._status_message = message or ""
+
+            if display_idx is not None:
+                self._stage_display.start_stage(display_idx)
 
             self._stage_progress = self._create_stage_progress(stage)
             info = STAGE_CONFIG[stage]
@@ -425,6 +562,12 @@ class PipelineUI:
                 total=total,
                 description=message if message else None,
             )
+
+        if self._current_stage is not None:
+            display_idx = PIPELINE_STAGE_TO_DISPLAY_INDEX.get(self._current_stage)
+            if display_idx is not None and total > 0:
+                self._stage_display.update_progress(display_idx, current / total)
+
         if message:
             self._status_message = message
         if self._live:
