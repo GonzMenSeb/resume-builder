@@ -20,31 +20,60 @@ _BACKSLASH_PLACEHOLDER = "\x00BACKSLASH\x00"
 _TILDE_PLACEHOLDER = "\x00TILDE\x00"
 _CARET_PLACEHOLDER = "\x00CARET\x00"
 
-LATEX_SIMPLE_ESCAPES: list[tuple[str, str]] = [
-    ("&", r"\&"),
-    ("%", r"\%"),
-    ("$", r"\$"),
-    ("#", r"\#"),
-    ("_", r"\_"),
-    ("{", r"\{"),
-    ("}", r"\}"),
-    ("<", r"\textless{}"),
-    (">", r"\textgreater{}"),
-    ("|", r"\textbar{}"),
-    ('"', r"''"),
-]
+LATEX_SPECIAL_CHARS: dict[str, str] = {
+    "&": r"\&",
+    "%": r"\%",
+    "$": r"\$",
+    "#": r"\#",
+    "_": r"\_",
+    "{": r"\{",
+    "}": r"\}",
+    "<": r"\textless{}",
+    ">": r"\textgreater{}",
+    "|": r"\textbar{}",
+}
+
+UNICODE_REPLACEMENTS: dict[str, str] = {
+    "\u2018": "`",
+    "\u2019": "'",
+    "\u201c": "``",
+    "\u201d": "''",
+    "\u2013": "--",
+    "\u2014": "---",
+    "\u2026": r"\ldots{}",
+    "\u00a0": "~",
+    "\u00b0": r"\textdegree{}",
+    "\u2022": r"\textbullet{}",
+    "\u00a9": r"\textcopyright{}",
+    "\u00ae": r"\textregistered{}",
+    "\u2122": r"\texttrademark{}",
+    "\u00b1": r"\textpm{}",
+    "\u00d7": r"\texttimes{}",
+    "\u00f7": r"\textdiv{}",
+}
 
 
 def latex_escape(text: str | None) -> str:
-    """Escape special LaTeX characters in text."""
+    """
+    Escape special LaTeX characters in text.
+
+    Handles:
+    - LaTeX special chars: & % $ # _ { } < > |
+    - Backslash, tilde, caret (multi-step to avoid double-escaping)
+    - Unicode smart quotes, dashes, ellipsis, symbols
+    - Straight quotes to LaTeX quotes
+    """
     if text is None:
         return ""
     result = str(text)
     result = result.replace("\\", _BACKSLASH_PLACEHOLDER)
     result = result.replace("~", _TILDE_PLACEHOLDER)
     result = result.replace("^", _CARET_PLACEHOLDER)
-    for char, replacement in LATEX_SIMPLE_ESCAPES:
+    for char, replacement in LATEX_SPECIAL_CHARS.items():
         result = result.replace(char, replacement)
+    for char, replacement in UNICODE_REPLACEMENTS.items():
+        result = result.replace(char, replacement)
+    result = result.replace('"', "''")
     result = result.replace(_BACKSLASH_PLACEHOLDER, r"\textbackslash{}")
     result = result.replace(_TILDE_PLACEHOLDER, r"\textasciitilde{}")
     result = result.replace(_CARET_PLACEHOLDER, r"\textasciicircum{}")
