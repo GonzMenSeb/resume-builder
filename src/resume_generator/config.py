@@ -16,11 +16,11 @@ class ResumeTemplate(str, Enum):
 
 
 class ClaudeModel(str, Enum):
-    """Supported Claude models."""
+    """Supported Claude models for CLI invocation."""
 
-    SONNET = "claude-sonnet-4-20250514"
-    OPUS = "claude-opus-4-20250514"
-    HAIKU = "claude-haiku-4-20250514"
+    SONNET = "sonnet"
+    OPUS = "opus"
+    HAIKU = "haiku"
 
 
 class Settings(BaseSettings):
