@@ -1,0 +1,204 @@
+%% Modern ATS-Compatible Resume Template
+%% Jinja2 LaTeX template following research-based design guidelines
+%% - Single-column layout for ATS compatibility
+%% - Configurable primary/secondary/accent colors
+%% - Font sizes: Name 22pt, headers 14pt, body 11pt
+%% - Margins 0.6-0.75in for optimal content density
+%% - ~30:70 content-to-whitespace ratio
+
+\documentclass[11pt,letterpaper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+
+%% Typography: Sans-serif for modern/tech, professional appearance
+((* if config.font_family == 'serif' *))
+\usepackage{newpxtext}
+((* else *))
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+((* endif *))
+\usepackage{microtype}
+
+\usepackage[
+    top=((( config.margin_top | default('0.6in') ))),
+    bottom=((( config.margin_bottom | default('0.5in') ))),
+    left=((( config.margin_left | default('0.65in') ))),
+    right=((( config.margin_right | default('0.65in') )))
+]{geometry}
+
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{parskip}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{etoolbox}
+
+%% Color scheme (max 3 colors per research guidelines)
+\definecolor{primary}{RGB}{((( config.primary_color | default('45, 85, 145') )))}
+\definecolor{secondary}{RGB}{((( config.secondary_color | default('60, 60, 60') )))}
+\definecolor{accent}{RGB}{((( config.accent_color | default('100, 100, 100') )))}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=primary,
+    urlcolor=primary,
+    pdfborder={0 0 0}
+}
+
+\pagestyle{empty}
+
+%% Section formatting: 14pt headers with rule
+\titleformat{\section}
+    {\fontsize{14}{16}\bfseries\color{primary}}
+    {}
+    {0pt}
+    {\MakeUppercase}
+    [\vspace{-6pt}\textcolor{primary}{\titlerule[0.8pt]}]
+
+\titlespacing*{\section}{0pt}{12pt}{6pt}[0pt]
+
+%% Prevent widow lines after section headers
+\makeatletter
+\patchcmd{\@afterheading}{\clubpenalty \@M}{\clubpenalty \@M \@afterindentfalse \interlinepenalty\@M}{}{}
+\makeatother
+
+%% Bullet list: compact, professional
+\setlist[itemize]{
+    leftmargin=1.2em,
+    itemsep=1pt,
+    parsep=0pt,
+    topsep=3pt,
+    label=\textcolor{primary}{\textbullet}
+}
+
+\begin{document}
+
+%% === HEADER ===
+\begin{center}
+    {\fontsize{22}{26}\bfseries\color{secondary} ((( contact.name | latex_escape )))}\\[6pt]
+    {\color{accent}
+        ((* if contact.email *))((( contact.email | latex_escape )))((* endif *))%
+        ((* if contact.phone *)) \enspace $\cdot$ \enspace ((( contact.phone | latex_escape )))((* endif *))%
+        ((* if contact.location *)) \enspace $\cdot$ \enspace ((( contact.location | latex_escape )))((* endif *))
+    }
+    ((* if contact.linkedin_url or contact.github_url or contact.portfolio_url *))
+    \\[3pt]
+    {\color{accent}
+        ((* if contact.linkedin_url *))\href{((( contact.linkedin_url | string )))}{LinkedIn}((* endif *))%
+        ((* if contact.github_url *)) \enspace $\cdot$ \enspace \href{((( contact.github_url | string )))}{GitHub}((* endif *))%
+        ((* if contact.portfolio_url *)) \enspace $\cdot$ \enspace \href{((( contact.portfolio_url | string )))}{Portfolio}((* endif *))
+    }
+    ((* endif *))
+\end{center}
+\vspace{2pt}
+
+((* if professional_summary *))
+%% === PROFESSIONAL SUMMARY ===
+\section{Professional Summary}
+((( professional_summary | latex_escape )))
+((* endif *))
+
+((* if experiences *))
+%% === EXPERIENCE ===
+\section{Experience}
+
+((* for exp in experiences *))
+\noindent
+\textbf{\color{secondary}((( exp.title | latex_escape )))} \hfill {\color{accent}((( exp.date_range_str )))}\\
+\textit{((( exp.company | latex_escape )))((* if exp.location *)), ((( exp.location | latex_escape )))((* endif *))}
+\vspace{2pt}
+
+((* if exp.bullets *))
+\begin{itemize}
+((* for bullet in exp.bullets *))
+    \item ((( bullet.text | latex_escape )))
+((* endfor *))
+\end{itemize}
+((* endif *))
+
+((* if not loop.last *))\vspace{4pt}((* endif *))
+((* endfor *))
+((* endif *))
+
+((* if education *))
+%% === EDUCATION ===
+\section{Education}
+
+((* for edu in education *))
+\noindent
+\textbf{\color{secondary}((( edu.degree | latex_escape )))}((* if edu.graduation_str *)) \hfill {\color{accent}((( edu.graduation_str )))}((* endif *))\\
+((( edu.institution | latex_escape )))((* if edu.location *)), ((( edu.location | latex_escape )))((* endif *))%
+((* if edu.gpa *)) \enspace $\cdot$ \enspace GPA: ((( edu.gpa )))((* endif *))
+((* if edu.honors *))
+\begin{itemize}
+((* for honor in edu.honors *))
+    \item ((( honor | latex_escape )))
+((* endfor *))
+\end{itemize}
+((* endif *))
+
+((* if not loop.last *))\vspace{4pt}((* endif *))
+((* endfor *))
+((* endif *))
+
+((* if skills *))
+%% === SKILLS ===
+\section{Skills}
+((* for skill_group in skills *))
+\textbf{((( skill_group.category | latex_escape ))):} ((( skill_group.skills | join(', ') | latex_escape )))((* if not loop.last *))\\[2pt]((* endif *))
+((* endfor *))
+((* endif *))
+
+((* if certifications *))
+%% === CERTIFICATIONS ===
+\section{Certifications}
+((* for cert in certifications *))
+\noindent
+\textbf{((( cert.name | latex_escape )))}((* if cert.issuer *)) -- ((( cert.issuer | latex_escape )))((* endif *))((* if cert.date_earned *)) \hfill {\color{accent}((( cert.date_earned.strftime('%Y') )))}((* endif *))((* if not loop.last *))\\[2pt]((* endif *))
+((* endfor *))
+((* endif *))
+
+((* if projects *))
+%% === PROJECTS ===
+\section{Projects}
+
+((* for project in projects *))
+\noindent
+\textbf{\color{secondary}((( project.name | latex_escape )))}((* if project.url *)) -- \href{((( project.url | string )))}{Link}((* endif *))
+((* if project.description *))
+\\((( project.description | latex_escape )))
+((* endif *))
+((* if project.technologies *))
+\\{\small\color{accent}Technologies: ((( project.technologies | join(', ') | latex_escape )))}
+((* endif *))
+((* if project.highlights *))
+\begin{itemize}
+((* for highlight in project.highlights *))
+    \item ((( highlight | latex_escape )))
+((* endfor *))
+\end{itemize}
+((* endif *))
+
+((* if not loop.last *))\vspace{4pt}((* endif *))
+((* endfor *))
+((* endif *))
+
+((* for section in additional_sections *))
+((* if section.visible *))
+%% === ((( section.title | upper ))) ===
+\section{((( section.title | latex_escape )))}
+((* if section.content is string *))
+((( section.content | latex_escape )))
+((* elif section.content is iterable *))
+((* for item in section.content *))
+((* if item is string *))
+\noindent ((( item | latex_escape )))((* if not loop.last *))\\((* endif *))
+((* endif *))
+((* endfor *))
+((* endif *))
+
+((* endif *))
+((* endfor *))
+
+\end{document}
