@@ -141,13 +141,13 @@ From the research documents, key principles to implement:
 - [x] `[coding]` Create `src/resume_generator/ui/progress.py` with `PipelineUI` class using Rich library for colorful console output
 - [x] `[coding]` Implement `PipelineUI` methods: `start_pipeline()`, `update_stage()`, `show_progress()`, `show_success()`, `show_error()` with Rich panels, progress bars, and spinners
 - [x] `[coding]` Add stage-by-stage progress visualization with Rich Live display: "📄 Loading Data", "🔍 Extracting Profile", "✨ Optimizing Content", "📝 Generating LaTeX", "🖨️ Compiling PDF"
-- [ ] `[coding]` Implement summary panel showing extraction stats, optimization score, and output path
+- [x] `[coding]` Implement summary panel showing extraction stats, optimization score, and output path
 
 ---
 
 ### PR 7: Pipeline Orchestration & CLI
 
-- [ ] `[coding]` Create `src/resume_generator/pipeline.py` with `ResumePipeline` class orchestrating: ingestion → extraction → optimization → generation → compilation
+- [x] `[coding]` Create `src/resume_generator/pipeline.py` with `ResumePipeline` class orchestrating: ingestion → extraction → optimization → generation → compilation
 - [ ] `[coding]` Implement async pipeline execution with proper error handling and stage tracking
 - [ ] `[coding]` Create `src/resume_generator/main.py` with Typer CLI: `generate` command accepting input paths, job description (optional), output path, and template selection
 - [ ] `[coding]` Add CLI options: `--job-url` for job posting URL, `--template` for template selection, `--output` for output path, `--verbose` for debug output

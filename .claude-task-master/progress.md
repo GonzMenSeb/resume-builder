@@ -1,7 +1,7 @@
 # Progress Tracker
 
-**Session:** 27
-**Current Task:** 27 of 44
+**Session:** 29
+**Current Task:** 29 of 44
 
 ## Task List
 
@@ -31,9 +31,9 @@
 ✓ [x] **Task 24:** `[coding]` Implement proper LaTeX escaping for special characters in `generator.py`
 ✓ [x] **Task 25:** `[coding]` Create `src/resume_generator/ui/progress.py` with `PipelineUI` class using Rich library for colorful console output
 ✓ [x] **Task 26:** `[coding]` Implement `PipelineUI` methods: `start_pipeline()`, `update_stage()`, `show_progress()`, `show_success()`, `show_error()` with Rich panels, progress bars, and spinners
-→ [ ] **Task 27:** `[coding]` Add stage-by-stage progress visualization with Rich Live display: "📄 Loading Data", "🔍 Extracting Profile", "✨ Optimizing Content", "📝 Generating LaTeX", "🖨️ Compiling PDF"
-  [ ] **Task 28:** `[coding]` Implement summary panel showing extraction stats, optimization score, and output path
-  [ ] **Task 29:** `[coding]` Create `src/resume_generator/pipeline.py` with `ResumePipeline` class orchestrating: ingestion → extraction → optimization → generation → compilation
+✓ [x] **Task 27:** `[coding]` Add stage-by-stage progress visualization with Rich Live display: "📄 Loading Data", "🔍 Extracting Profile", "✨ Optimizing Content", "📝 Generating LaTeX", "🖨️ Compiling PDF"
+✓ [x] **Task 28:** `[coding]` Implement summary panel showing extraction stats, optimization score, and output path
+→ [ ] **Task 29:** `[coding]` Create `src/resume_generator/pipeline.py` with `ResumePipeline` class orchestrating: ingestion → extraction → optimization → generation → compilation
   [ ] **Task 30:** `[coding]` Implement async pipeline execution with proper error handling and stage tracking
   [ ] **Task 31:** `[coding]` Create `src/resume_generator/main.py` with Typer CLI: `generate` command accepting input paths, job description (optional), output path, and template selection
   [ ] **Task 32:** `[coding]` Add CLI options: `--job-url` for job posting URL, `--template` for template selection, `--output` for output path, `--verbose` for debug output
@@ -51,41 +51,36 @@
   [ ] **Task 44:** `[quick]` Final cleanup: remove unused imports, ensure consistent formatting with `ruff`
 
 ## Latest Completed
-**Task 27:** `[coding]` Add stage-by-stage progress visualization with Rich Live display: "📄 Loading Data", "🔍 Extracting Profile", "✨ Optimizing Content", "📝 Generating LaTeX", "🖨️ Compiling PDF"
+**Task 29:** `[coding]` Create `src/resume_generator/pipeline.py` with `ResumePipeline` class orchestrating: ingestion → extraction → optimization → generation → compilation
 
 ### Summary
 ## Summary
 
 **What was completed:**
-- Added stage-by-stage progress visualization with Rich Live display featuring:
-  - `StageDisplayConfig` dataclass for configuring stage icons, labels, and colors
-  - `StageProgressBar` class for rendering individual stages with:
-    - Animated spinner frames (⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏) for active stages
-    - Progress bars with filled (█), partial (▓), and empty (░) segments
-    - Real-time elapsed time tracking
-    - Visual state indicators: ○ (pending), spinner (active), ✓ (completed)
-  - `StageProgressDisplay` class for coordinating all 5 pipeline stages
-  - `STAGE_DISPLAY_CONFIG` with the exact stages specified in the task:
-    - 📄 Loading Data (bright_cyan)
-    - 🔍 Extracting Profile (bright_yellow)  
-    - ✨ Optimizing Content (bright_magenta)
-    - 📝 Generating LaTeX (green)
-    - 🖨️ Compiling PDF (bright_green)
-  - `PIPELINE_STAGE_TO_DISPLAY_INDEX` mapping for PipelineStage enum integration
-  - Full integration with existing `PipelineUI` class via `update_stage()` and `show_progress()` methods
+- Created `src/resume_generator/pipeline.py` with `ResumePipeline` class that orchestrates the full resume generation flow:
+  - **Ingestion stage**: Uses `DataLoader` to load PDFs, text files, markdown, etc.
+  - **Extraction stage**: Uses `ProfileExtractor` to call Claude AI and parse raw text into `PersonProfile`
+  - **Optimization stage**: Uses `ResumeOptimizer` to transform profile into optimized `ResumeDocument` with X-Y-Z formula bullets
+  - **Tailoring stage** (optional): Uses `JobTailorer` to customize resume for specific job descriptions
+  - **Generation stage**: Uses `LaTeXGenerator` to create LaTeX source from the resume document
+  - **Compilation stage**: Uses `PDFCompiler` to compile LaTeX to PDF
+- Added `PipelineResult` dataclass containing paths to generated files, resume/profile objects, and metrics (keyword match rate, optimization score)
+- Added `PipelineError` with stage context for meaningful error reporting
+- Integrated with `PipelineUI` for colorful progress tracking throughout the pipeline
+- Updated `src/resume_generator/__init__.py` to export `ResumePipeline`, `PipelineResult`, and `PipelineError`
 
 **Tests run and results:**
-- ✓ `ruff check` - All checks passed
-- ✓ `mypy` - No issues found in 2 source files
-- ✓ Import verification - All new exports working correctly
-- ✓ Visual test - Stage-by-stage progress displays correctly with spinners, progress bars, and completion markers
-- ✓ Full PipelineUI integration test - All stages, progress updates, and success/error panels work
+- ✓ `ruff check src/resume_generator/pipeline.py` - All checks passed
+- ✓ `mypy src/resume_generator/pipeline.py` - No errors in pipeline.py (other errors are pre-existing in model files)
+- ✓ Import verification - All classes import correctly
+- ✓ PipelineError stage attribute test - Works correctly
+- ✓ PipelineResult fields test - Works correctly
 
 **Files modified:**
-- `src/resume_generator/ui/progress.py` (added StageDisplayConfig, StageProgressBar, StageProgressDisplay, PIPELINE_STAGE_TO_DISPLAY_INDEX; integrated into PipelineUI)
-- `src/resume_generator/ui/__init__.py` (added exports for new classes and configurations)
+- `src/resume_generator/pipeline.py` (created - 249 lines)
+- `src/resume_generator/__init__.py` (updated exports)
 
-**Commit hash:** `ecd3378`
+**Commit hash:** `7e4d220`
 
 ```
 TASK COMPLETE

@@ -4,7 +4,13 @@ __version__ = "0.1.0"
 __author__ = "Sebastian"
 __email__ = "sebastian@example.com"
 
-from resume_generator.pipeline import PipelineError, PipelineResult, ResumePipeline
+from resume_generator.pipeline import (
+    PipelineError,
+    PipelineResult,
+    ResumePipeline,
+    StageResult,
+    StageStatus,
+)
 
 __all__ = [
     "__version__",
@@ -13,4 +19,6 @@ __all__ = [
     "ResumePipeline",
     "PipelineResult",
     "PipelineError",
+    "StageResult",
+    "StageStatus",
 ]
