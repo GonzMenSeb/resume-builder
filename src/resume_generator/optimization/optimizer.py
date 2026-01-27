@@ -418,9 +418,7 @@ class ResumeOptimizer:
             raise OptimizationError(f"Claude CLI error: {e}") from e
 
         if result.failed:
-            raise OptimizationError(
-                f"Claude CLI returned non-zero exit code: {result.exit_code}"
-            )
+            raise OptimizationError(f"Claude CLI returned non-zero exit code: {result.exit_code}")
 
         try:
             data = parse_json_response(result.output)

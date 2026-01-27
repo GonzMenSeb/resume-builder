@@ -123,8 +123,7 @@ class ClaudeCLI:
             return InvokeResult(success=False, output="".join(output_lines), exit_code=-1)
         except FileNotFoundError as e:
             raise ClaudeCLINotFoundError(
-                f"Claude CLI binary '{CLAUDE_BINARY}' not found. "
-                "Please install Claude CLI first."
+                f"Claude CLI binary '{CLAUDE_BINARY}' not found. Please install Claude CLI first."
             ) from e
         except OSError as e:
             raise ClaudeCLIInvocationError(f"Failed to invoke Claude CLI: {e}") from e

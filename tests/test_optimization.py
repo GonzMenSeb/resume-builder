@@ -228,9 +228,7 @@ class TestResumeOptimizer:
         }
 
         skills_result = {
-            "skill_groups": [
-                {"category": "Languages", "skills": ["Python", "Go"], "priority": 1}
-            ],
+            "skill_groups": [{"category": "Languages", "skills": ["Python", "Go"], "priority": 1}],
             "total_skills_count": 2,
         }
 
@@ -520,19 +518,21 @@ class TestJobTailorer:
         mock_cli = MagicMock(spec=ClaudeCLI)
         mock_cli.invoke.return_value = InvokeResult(
             success=True,
-            output=json.dumps({
-                "tailored_summary": "Test summary",
-                "experiences": [],
-                "skills": {"reordered_groups": [], "added_keywords": [], "keyword_mapping": {}},
-                "keyword_analysis": {
-                    "job_keywords": [],
-                    "matched_keywords": [],
-                    "missing_keywords": [],
-                    "match_rate": 0.5,
-                    "recommendations": [],
-                },
-                "overall_fit_score": 0.7,
-            }),
+            output=json.dumps(
+                {
+                    "tailored_summary": "Test summary",
+                    "experiences": [],
+                    "skills": {"reordered_groups": [], "added_keywords": [], "keyword_mapping": {}},
+                    "keyword_analysis": {
+                        "job_keywords": [],
+                        "matched_keywords": [],
+                        "missing_keywords": [],
+                        "match_rate": 0.5,
+                        "recommendations": [],
+                    },
+                    "overall_fit_score": 0.7,
+                }
+            ),
             exit_code=0,
         )
 

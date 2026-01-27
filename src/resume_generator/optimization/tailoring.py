@@ -1039,9 +1039,7 @@ class JobTailorer:
             raise TailoringError(f"Claude CLI error: {e}") from e
 
         if result.failed:
-            raise TailoringError(
-                f"Claude CLI returned non-zero exit code: {result.exit_code}"
-            )
+            raise TailoringError(f"Claude CLI returned non-zero exit code: {result.exit_code}")
 
         try:
             data = parse_json_response(result.output)

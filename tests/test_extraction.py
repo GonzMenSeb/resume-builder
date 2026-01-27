@@ -103,9 +103,7 @@ class TestProfileExtractor:
     ) -> None:
         mock_cli = MagicMock()
         json_response = mock_extraction_schema.model_dump_json()
-        mock_cli.invoke.return_value = InvokeResult(
-            success=True, output=json_response, exit_code=0
-        )
+        mock_cli.invoke.return_value = InvokeResult(success=True, output=json_response, exit_code=0)
         extractor._cli = mock_cli
 
         profile = extractor.extract(sample_raw_text)
@@ -119,9 +117,7 @@ class TestProfileExtractor:
         assert len(profile.skills) == 2
         assert profile.raw_text is not None
 
-    def test_extract_cli_failure(
-        self, extractor: ProfileExtractor, sample_raw_text: str
-    ) -> None:
+    def test_extract_cli_failure(self, extractor: ProfileExtractor, sample_raw_text: str) -> None:
         mock_cli = MagicMock()
         mock_cli.invoke.return_value = InvokeResult(
             success=False, output="Error occurred", exit_code=1
@@ -141,9 +137,7 @@ class TestProfileExtractor:
         with pytest.raises(ExtractionError, match="Claude CLI error"):
             extractor.extract(sample_raw_text)
 
-    def test_extract_timeout_error(
-        self, extractor: ProfileExtractor, sample_raw_text: str
-    ) -> None:
+    def test_extract_timeout_error(self, extractor: ProfileExtractor, sample_raw_text: str) -> None:
         mock_cli = MagicMock()
         mock_cli.invoke.side_effect = ClaudeCLITimeoutError("Timeout after 3600s")
         extractor._cli = mock_cli
@@ -234,9 +228,7 @@ class TestProfileExtractor:
         assert extractor._parse_skill_category("unknown") == SkillCategory.OTHER
         assert extractor._parse_skill_category("invalid") == SkillCategory.OTHER
 
-    def test_convert_to_profile_with_minimal_data(
-        self, extractor: ProfileExtractor
-    ) -> None:
+    def test_convert_to_profile_with_minimal_data(self, extractor: ProfileExtractor) -> None:
         minimal_schema = ProfileExtractionSchema(
             contact=ContactInfoSchema(
                 full_name="Jane Smith",
@@ -252,9 +244,7 @@ class TestProfileExtractor:
         assert profile.skills == []
         assert profile.raw_text == "raw text"
 
-    def test_convert_to_profile_skips_invalid_experience(
-        self, extractor: ProfileExtractor
-    ) -> None:
+    def test_convert_to_profile_skips_invalid_experience(self, extractor: ProfileExtractor) -> None:
         schema = ProfileExtractionSchema(
             contact=ContactInfoSchema(full_name="Test", email="test@example.com"),
             experiences=[
@@ -270,9 +260,7 @@ class TestProfileExtractor:
         assert profile.experiences[0].company == "Corp1"
         assert profile.experiences[1].company == "Corp3"
 
-    def test_convert_to_profile_handles_languages(
-        self, extractor: ProfileExtractor
-    ) -> None:
+    def test_convert_to_profile_handles_languages(self, extractor: ProfileExtractor) -> None:
         schema = ProfileExtractionSchema(
             contact=ContactInfoSchema(full_name="Test", email="test@example.com"),
             languages=[["English", "Native"], ["Spanish", "Professional"], ["French"]],
@@ -285,9 +273,7 @@ class TestProfileExtractor:
         assert profile.languages[1] == ("Spanish", "Professional")
         assert profile.languages[2] == ("French", "")
 
-    def test_convert_to_profile_validation_error(
-        self, extractor: ProfileExtractor
-    ) -> None:
+    def test_convert_to_profile_validation_error(self, extractor: ProfileExtractor) -> None:
         invalid_schema = ProfileExtractionSchema(
             contact=ContactInfoSchema(
                 full_name="",

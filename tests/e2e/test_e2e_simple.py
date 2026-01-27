@@ -20,96 +20,112 @@ OUTPUT_DIR = Path("output/e2e_test_simple")
 
 
 def create_mock_profile_response() -> str:
-    return json.dumps({
-        "contact": {
-            "full_name": "John Doe",
-            "email": "john.doe@example.com",
-            "phone": "+1-555-0123",
-            "location": "New York, NY",
-        },
-        "professional_summary": "Experienced software engineer with expertise in Python and cloud technologies",
-        "headline": "Senior Software Engineer",
-        "years_of_experience": 8.0,
-        "experiences": [
-            {
-                "company": "Tech Corp",
-                "title": "Senior Software Engineer",
-                "start_date": "2018-01-01",
-                "end_date": None,
-                "is_current": True,
-                "achievements": [
-                    "Designed and implemented microservices architecture",
-                    "Led team of 5 engineers in developing cloud-native applications",
-                ],
-                "technologies": ["Python", "AWS", "Kubernetes"],
-            }
-        ],
-        "education": [
-            {
-                "institution": "State University",
-                "degree": "Bachelor of Science",
-                "field_of_study": "Computer Science",
-                "graduation_date": "2015-05-01",
-            }
-        ],
-        "skills": [
-            {"name": "Python", "category": "programming", "years_experience": 8.0},
-            {"name": "AWS", "category": "cloud", "years_experience": 6.0},
-            {"name": "Kubernetes", "category": "devops", "years_experience": 4.0},
-        ],
-        "certifications": [],
-        "projects": [],
-    })
+    return json.dumps(
+        {
+            "contact": {
+                "full_name": "John Doe",
+                "email": "john.doe@example.com",
+                "phone": "+1-555-0123",
+                "location": "New York, NY",
+            },
+            "professional_summary": "Experienced software engineer with expertise in Python and cloud technologies",
+            "headline": "Senior Software Engineer",
+            "years_of_experience": 8.0,
+            "experiences": [
+                {
+                    "company": "Tech Corp",
+                    "title": "Senior Software Engineer",
+                    "start_date": "2018-01-01",
+                    "end_date": None,
+                    "is_current": True,
+                    "achievements": [
+                        "Designed and implemented microservices architecture",
+                        "Led team of 5 engineers in developing cloud-native applications",
+                    ],
+                    "technologies": ["Python", "AWS", "Kubernetes"],
+                }
+            ],
+            "education": [
+                {
+                    "institution": "State University",
+                    "degree": "Bachelor of Science",
+                    "field_of_study": "Computer Science",
+                    "graduation_date": "2015-05-01",
+                }
+            ],
+            "skills": [
+                {"name": "Python", "category": "programming", "years_experience": 8.0},
+                {"name": "AWS", "category": "cloud", "years_experience": 6.0},
+                {"name": "Kubernetes", "category": "devops", "years_experience": 4.0},
+            ],
+            "certifications": [],
+            "projects": [],
+        }
+    )
 
 
 def create_mock_bullet_response() -> str:
-    return json.dumps({
-        "bullets": [
-            {
-                "text": "Architected microservices platform serving 1M+ daily users with 99.9% uptime",
-                "bullet_type": "xyz",
-                "action_verb": "Architected",
-                "has_metrics": True,
-                "metrics": {"users": "1M+", "uptime": "99.9%"},
-                "keywords": ["microservices", "platform", "architecture"],
-                "relevance_score": 0.95,
-                "original_index": 0,
-            },
-            {
-                "text": "Led cross-functional team of 5 engineers, delivering 3 major features ahead of schedule",
-                "bullet_type": "xyz",
-                "action_verb": "Led",
-                "has_metrics": True,
-                "metrics": {"team_size": "5", "features": "3"},
-                "keywords": ["leadership", "team", "delivery"],
-                "relevance_score": 0.90,
-                "original_index": 1,
-            },
-        ],
-        "removed_bullets": [],
-        "overall_quality_score": 0.92,
-    })
+    return json.dumps(
+        {
+            "bullets": [
+                {
+                    "text": "Architected microservices platform serving 1M+ daily users with 99.9% uptime",
+                    "bullet_type": "xyz",
+                    "action_verb": "Architected",
+                    "has_metrics": True,
+                    "metrics": {"users": "1M+", "uptime": "99.9%"},
+                    "keywords": ["microservices", "platform", "architecture"],
+                    "relevance_score": 0.95,
+                    "original_index": 0,
+                },
+                {
+                    "text": "Led cross-functional team of 5 engineers, delivering 3 major features ahead of schedule",
+                    "bullet_type": "xyz",
+                    "action_verb": "Led",
+                    "has_metrics": True,
+                    "metrics": {"team_size": "5", "features": "3"},
+                    "keywords": ["leadership", "team", "delivery"],
+                    "relevance_score": 0.90,
+                    "original_index": 1,
+                },
+            ],
+            "removed_bullets": [],
+            "overall_quality_score": 0.92,
+        }
+    )
 
 
 def create_mock_summary_response() -> str:
-    return json.dumps({
-        "summary": "Senior Software Engineer with 8+ years of experience building scalable cloud-native systems",
-        "word_count": 14,
-        "keywords_included": ["Senior", "Software Engineer", "experience", "cloud-native"],
-        "tailored_for_job": False,
-    })
+    return json.dumps(
+        {
+            "summary": "Senior Software Engineer with 8+ years of experience building scalable cloud-native systems",
+            "word_count": 14,
+            "keywords_included": ["Senior", "Software Engineer", "experience", "cloud-native"],
+            "tailored_for_job": False,
+        }
+    )
 
 
 def create_mock_skills_response() -> str:
-    return json.dumps({
-        "skill_groups": [
-            {"category": "Programming Languages", "skills": ["Python", "Java", "Go"], "priority": 0},
-            {"category": "Cloud & DevOps", "skills": ["AWS", "Kubernetes", "Docker"], "priority": 1},
-        ],
-        "added_skills": [],
-        "removed_skills": [],
-        "total_skills_count": 6,
-    })
+    return json.dumps(
+        {
+            "skill_groups": [
+                {
+                    "category": "Programming Languages",
+                    "skills": ["Python", "Java", "Go"],
+                    "priority": 0,
+                },
+                {
+                    "category": "Cloud & DevOps",
+                    "skills": ["AWS", "Kubernetes", "Docker"],
+                    "priority": 1,
+                },
+            ],
+            "added_skills": [],
+            "removed_skills": [],
+            "total_skills_count": 6,
+        }
+    )
 
 
 def test_pdf_ingestion(tmp_path: Path) -> None:

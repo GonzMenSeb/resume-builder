@@ -135,9 +135,7 @@ class TestClaudeCLI:
 
     @patch.object(ClaudeCLI, "_should_use_pty", return_value=False)
     @patch("subprocess.Popen")
-    def test_invoke_success(
-        self, mock_popen: MagicMock, mock_use_pty: MagicMock
-    ) -> None:
+    def test_invoke_success(self, mock_popen: MagicMock, mock_use_pty: MagicMock) -> None:
         mock_process = MagicMock()
         mock_process.stdout = iter(["Line 1\n", "Line 2\n"])
         mock_process.returncode = 0
@@ -153,9 +151,7 @@ class TestClaudeCLI:
 
     @patch.object(ClaudeCLI, "_should_use_pty", return_value=False)
     @patch("subprocess.Popen")
-    def test_invoke_failure(
-        self, mock_popen: MagicMock, mock_use_pty: MagicMock
-    ) -> None:
+    def test_invoke_failure(self, mock_popen: MagicMock, mock_use_pty: MagicMock) -> None:
         mock_process = MagicMock()
         mock_process.stdout = iter(["Error occurred\n"])
         mock_process.returncode = 1
@@ -203,9 +199,7 @@ class TestClaudeCLI:
 
     @patch.object(ClaudeCLI, "_should_use_pty", return_value=False)
     @patch("subprocess.Popen")
-    def test_invoke_timeout(
-        self, mock_popen: MagicMock, mock_use_pty: MagicMock
-    ) -> None:
+    def test_invoke_timeout(self, mock_popen: MagicMock, mock_use_pty: MagicMock) -> None:
         mock_process = MagicMock()
         mock_process.stdout = iter(["partial output\n"])
         mock_process.wait.side_effect = subprocess.TimeoutExpired("cmd", 60)
@@ -221,9 +215,7 @@ class TestClaudeCLI:
 
     @patch.object(ClaudeCLI, "_should_use_pty", return_value=False)
     @patch("subprocess.Popen")
-    def test_invoke_not_found_error(
-        self, mock_popen: MagicMock, mock_use_pty: MagicMock
-    ) -> None:
+    def test_invoke_not_found_error(self, mock_popen: MagicMock, mock_use_pty: MagicMock) -> None:
         mock_popen.side_effect = FileNotFoundError()
 
         cli = ClaudeCLI()
@@ -234,9 +226,7 @@ class TestClaudeCLI:
 
     @patch.object(ClaudeCLI, "_should_use_pty", return_value=False)
     @patch("subprocess.Popen")
-    def test_invoke_os_error(
-        self, mock_popen: MagicMock, mock_use_pty: MagicMock
-    ) -> None:
+    def test_invoke_os_error(self, mock_popen: MagicMock, mock_use_pty: MagicMock) -> None:
         mock_popen.side_effect = OSError("Permission denied")
 
         cli = ClaudeCLI()
@@ -316,7 +306,7 @@ That's all."""
             parse_json_response("")
 
     def test_parse_json_array_in_response(self) -> None:
-        response = "Result: {\"items\": [1, 2, 3]}"
+        response = 'Result: {"items": [1, 2, 3]}'
         result = parse_json_response(response)
         assert result == {"items": [1, 2, 3]}
 
