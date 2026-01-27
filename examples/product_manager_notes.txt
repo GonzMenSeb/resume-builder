@@ -1,0 +1,135 @@
+PRODUCT MANAGER - RAW NOTES FOR RESUME
+
+Contact: james.rodriguez@email.com | (510) 555-0198 | Oakland, CA
+LinkedIn: linkedin.com/in/jamesrodriguez | Twitter: @jamesprod
+
+---
+
+ABOUT ME
+Product leader with 8 years driving growth and innovation across mobile, web, and developer platforms. Known for data-driven decision making, cross-functional leadership, and shipping products users love. Grew from Associate PM to Senior PM, managing $50M+ budgets. Passionate about solving hard problems at scale.
+
+---
+
+CAREER HISTORY
+
+SENIOR PRODUCT MANAGER - Mobile Ecosystem
+CloudServices Corp | Sunnyvale, CA | April 2021 to now
+
+Manage suite of mobile developer tools and SDKs used by 100K+ developers globally.
+
+Major accomplishments:
+* Launched new push notification platform that became #1 revenue driver for mobile team, generating $8M ARR in first year
+* Discovered and captured messaging market segment through user research and competitive analysis, growing user base from 5K to 120K developers
+* Defined and owned mobile monetization strategy; negotiated partnerships with 15 enterprise customers (avg contract value $200K+)
+* Led cross-functional initiative to redesign developer experience which reduced onboarding time from 2 hours to 12 minutes - improved activation rate 156%
+* Owned quarterly roadmap planning and backlog prioritization for 15 engineers and 2 designers
+* Conducted 200+ customer interviews and user research sessions with developers
+
+Metrics managed: Monthly active users, API call volume, developer satisfaction (NPS +72), feature adoption rates, customer churn
+
+Most proud of: Built strong product culture emphasizing data over politics; team scored highest satisfaction in company survey
+
+---
+
+PRODUCT MANAGER
+TechForward Industries | San Jose, CA | October 2018 to March 2021
+
+Managed core search and discovery product for e-commerce platform with 10M+ daily active users. Led team of 8 engineers and 1 designer. Budget: $2M annually.
+
+Drove major initiatives:
+* Redesigned search results page based on extensive A/B testing program - achieved 34% increase in conversion rate (worth $15M annually), 28% improvement in click-through rate
+* Implemented ML-powered personalization engine that learned user preferences and adapted rankings - increased session length by 2.1x
+* Owned recommendation algorithm improvements that boosted cross-category discovery by 45% and drove 22% increase in average order value
+* Launched seller marketplace integration, onboarding 500+ third-party merchants and expanding catalog from 2M to 8M products
+* Built analytics infrastructure and dashboards (SQL, Tableau) giving teams real-time visibility into key metrics
+* Directed user research program with 50+ monthly user interviews and continuous usability testing
+* Negotiated and managed relationships with 8 vendor partners, securing favorable terms on technology licensing
+
+Started as Associate PM, promoted to Product Manager after first year based on impact of search results redesign.
+
+Metrics: Conversion rate, CTR, session length, ARPU, inventory diversity, merchant acquisition
+
+---
+
+ASSOCIATE PRODUCT MANAGER
+FinServe Digital | San Francisco, CA | July 2017 to September 2018
+
+Associate PM on personal finance platform serving 5M+ consumers.
+
+Projects:
+* Researched and defined requirements for budget tracking feature through user interviews and market analysis; feature adopted by 12% of user base within 3 months
+* Owned analytics and reporting for expense management tools; built dashboards tracking 20+ key metrics
+* Conducted competitive analysis of 15 fintech startups, identifying market gaps and opportunity areas
+* Supported senior PM on major product updates and feature launches
+
+---
+
+EARLY CAREER
+Before moving to PM:
+* Business Analyst at ConsultingCo (2 years) - analyzed business requirements, created specifications for development teams, coordinated stakeholder meetings
+* Operations Associate at FinTech Startup (1.5 years) - managed data collection for expansion into new markets, customer interviews, operational metrics
+
+---
+
+EDUCATION
+
+MBA - Product Management Track
+University of California, Berkeley | Haas School of Business
+Graduated: May 2017
+
+Bachelor of Science - Economics
+UC Davis
+Graduated: May 2015
+GPA: 3.8/4.0
+Honors: Summa Cum Laude
+
+---
+
+SKILLS & EXPERTISE
+
+Product Management: Roadmap planning, prioritization, user research, market analysis, competitive intelligence, feature definition, requirements documentation, agile methodology, metrics and analytics, A/B testing, go-to-market strategy, product strategy
+
+Technical: SQL, Tableau, Google Analytics, Mixpanel, Amplitude, Jira, Figma, prototyping tools
+
+Business: P&L management, vendor negotiation, partnership management, contract negotiation, budget planning
+
+Soft Skills: Cross-functional leadership, stakeholder management, user advocacy, communication, data-driven decision making, business acumen
+
+---
+
+CERTIFICATIONS & TRAINING
+
+Reforge - Advanced Product Management
+Reforge - AI/ML for Product Managers
+Pragmatic Institute - Product Manager Certification
+
+---
+
+AWARDS & RECOGNITION
+
+"Product Leader of the Year" - CloudServices Corp, 2023
+Recognized for impact on mobile ecosystem and team mentorship
+
+Keynote Speaker - ProductCon 2022
+Talked about "Scaling Product Teams and Processes" (500+ attendees)
+
+---
+
+LANGUAGES
+
+English (Native)
+Spanish (Conversational)
+
+---
+
+INTERESTING STUFF
+
+Articles Published:
+- "How to Build a World-Class User Research Program" - Medium, 2022
+- "Data-Driven Prioritization: Beyond the RICE Model" - Product School, 2021
+
+Mentoring: Mentor 2 APMs aspiring to become PMs at my company
+
+Hobbies: Hiking, cooking, reading about startup stories and economics
+
+Looking forward to: Leading larger product organization or founding something. Excited about AI applications in consumer products.

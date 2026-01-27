@@ -1,0 +1,619 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=1in,headheight=14pt]{geometry}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tcolorbox}
+\usepackage{longtable}
+\usepackage{amssymb}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!70!black,
+    urlcolor=blue!70!black,
+    citecolor=blue!70!black
+}
+
+\titleformat{\section}{\Large\bfseries\color{blue!70!black}}{\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries\color{blue!50!black}}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries\color{blue!30!black}}{\thesubsubsection}{1em}{}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{CV/Resume Content Optimization Guide}
+\lhead{\leftmark}
+\rfoot{Page \thepage}
+
+\newtcolorbox{keystat}{
+    colback=blue!5!white,
+    colframe=blue!75!black,
+    fonttitle=\bfseries,
+    title=Key Statistic
+}
+
+\newtcolorbox{bestpractice}{
+    colback=green!5!white,
+    colframe=green!50!black,
+    fonttitle=\bfseries,
+    title=Best Practice
+}
+
+\newtcolorbox{warning}{
+    colback=red!5!white,
+    colframe=red!75!black,
+    fonttitle=\bfseries,
+    title=Warning
+}
+
+\title{\textbf{CV/Resume Content Optimization Guide}\\[0.5em]
+\large Evidence-Based Strategies for Writing Effective Content\\
+for Human Recruiters and ATS Systems}
+\author{Research Compilation Report}
+\date{January 2026}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Executive Summary}
+
+This report focuses on content strategy for CVs and resumes: what to write, how to write it, keyword optimization, tailoring techniques, and section content guidelines. Document formatting, visual design, and layout specifications are covered in the companion document ``CV/Resume Document Design Guide.''
+
+\textit{Note: The terms ``CV'' and ``resume'' are used interchangeably in this guide. Terminology and conventions may vary by country---in some regions, a CV is a comprehensive academic document while a resume is a concise professional summary; in others, the terms are synonymous. Always research local conventions for your target job market.}
+
+\begin{keystat}
+\begin{itemize}[noitemsep]
+    \item Over 97\% of large enterprises globally use Applicant Tracking Systems (ATS)
+    \item 75\% of resumes are rejected by ATS before reaching a human recruiter
+    \item Recruiters spend an average of 7.4 seconds on initial resume screening
+    \item Tailored resumes receive 40\% more interview invitations
+    \item Resumes with quantified achievements receive 2.5$\times$ more interviews
+\end{itemize}
+\end{keystat}
+
+\section{Understanding the Modern Hiring Landscape}
+
+\subsection{The Dual-Audience Challenge}
+
+Modern job seekers face a unique challenge: their resume must satisfy two distinct audiences with different evaluation criteria.
+
+\subsubsection{Applicant Tracking Systems (ATS)}
+
+According to industry data, 99.7\% of recruiters use an ATS to filter candidates\footnote{Source: Jobscan Recruiter Survey}. These systems have evolved from simple keyword scanners into sophisticated AI-powered platforms that evaluate candidates across multiple criteria including:
+
+\begin{itemize}
+    \item Keyword relevance and frequency
+    \item Experience matching against job requirements
+    \item Qualification alignment
+    \item Document structure parsing
+\end{itemize}
+
+\subsubsection{Human Recruiters}
+
+The 2018 Ladders Eye-Tracking Study revealed that recruiters spend an average of 7.4 seconds on initial resume screening (up from 6 seconds in 2012)\footnote{Source: TheLadders Eye-Tracking Study 2018}. Eye-tracking data shows recruiters read in an F-shaped or E-shaped pattern, focusing primarily on:
+
+\begin{itemize}
+    \item The upper-left portion of the resume
+    \item Candidate name and most recent job title
+    \item First few bullet points under each position
+\end{itemize}
+
+\begin{bestpractice}
+Top-performing resumes in the eye-tracking study shared common traits: simple layouts with clearly marked section headers, bold job titles supported by bulleted accomplishments, and a detailed summary at the top. These resumes received an average usability rating of 6.2/7 compared to 3.9/7 for poorly formatted resumes.
+\end{bestpractice}
+
+\section{Resume Format Types}
+
+Research indicates clear preferences among hiring managers for different resume organizational formats:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Format} & \textbf{Hiring Manager Preference} & \textbf{Best For} \\
+\midrule
+Chronological & Most preferred overall & Consistent work history \\
+Combination/Hybrid & 43\% prefer for mid-career & Highlighting both skills \& experience \\
+Functional & Often raises red flags & Career changers (use cautiously) \\
+\bottomrule
+\end{tabular}
+\caption{Resume Format Preferences}
+\end{table}
+
+\begin{warning}
+Functional resumes often raise suspicion among hiring managers because they can obscure employment gaps and make it difficult to assess how recently skills were used. 64\% of hiring managers believe functional resumes are acceptable only for career changers.
+\end{warning}
+
+\subsection{Optimal Resume Length}
+
+A 2018 ResumeGo study involving 482 HR professionals found surprising results about resume length\footnote{Source: ResumeGo Research Study}:
+
+\begin{keystat}
+\textbf{Recruiters were 2.3 times more likely to prefer two-page resumes over one-page resumes}, regardless of candidate job level. For managerial positions, this preference increased to 2.9 times.
+\end{keystat}
+
+Key findings from the study:
+\begin{itemize}
+    \item Recruiters spent 2 minutes 24 seconds on one-page resumes
+    \item Recruiters spent 4 minutes 5 seconds on two-page resumes
+    \item Two-page resumes scored 21\% higher on ``summarizing credentials'' (8.6 vs 7.1 out of 10)
+    \item Even for entry-level positions, recruiters were 1.4$\times$ more likely to prefer two pages
+\end{itemize}
+
+\begin{bestpractice}
+A general guideline: one page for every 10 years of experience. Those with fewer than 10 years may consider one page, but don't sacrifice important content just to fit on a single page.
+\end{bestpractice}
+
+\section{ATS Keyword Optimization}
+
+\subsection{Understanding ATS Evaluation}
+
+Modern ATS platforms use machine learning algorithms to evaluate resumes through multiple screening stages. According to Jobscan's research, up to 75\% of resumes are rejected by ATS before a human ever sees them\footnote{Source: Jobscan ATS Research}.
+
+\subsection{Exact Match Requirements}
+
+\begin{keystat}
+ATS systems primarily look for exact keyword matches. If a job posting requires ``Data Scientist,'' writing ``Data Science'' may cause the system to miss the match entirely.
+\end{keystat}
+
+Keyword optimization strategies:
+\begin{enumerate}
+    \item Extract keywords directly from the job description
+    \item Include both acronyms and spelled-out versions (e.g., ``SEO (Search Engine Optimization)'')
+    \item Use keywords 2--3 times throughout the resume in context
+    \item Place critical keywords in the summary and skills sections
+    \item Mirror the exact terminology used in the job posting
+\end{enumerate}
+
+\subsection{Avoiding Keyword Stuffing}
+
+Modern AI-powered ATS tools now evaluate context and readability, not just raw keyword counts. Overloading your resume with repetitive terms:
+\begin{itemize}
+    \item Looks unprofessional to human readers
+    \item May trigger spam filters in sophisticated systems
+    \item Hurts overall readability scores
+\end{itemize}
+
+\begin{bestpractice}
+Aim for a 65--80\% keyword match rate with the job description. Tools like Jobscan can help analyze your match rate. A 75\% match is generally considered ``good,'' but over-optimization can hurt your chances.
+\end{bestpractice}
+
+\section{Content Strategy and Writing}
+
+\subsection{The Professional Summary}
+
+Research analysis shows that resumes with professional summaries receive 340\% more interview callbacks than those with traditional objective statements\footnote{Source: The Interview Guys Research Analysis}.
+
+\subsubsection{Summary vs.\ Objective}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Professional Summary} & \textbf{Objective Statement} \\
+\midrule
+Focuses on value you provide & Focuses on what you want \\
+Highlights achievements & States career goals \\
+Receives 6--7 seconds attention & Receives 3--4 seconds attention \\
+Preferred by modern recruiters & Considered outdated \\
+\bottomrule
+\end{tabular}
+\caption{Summary vs.\ Objective Comparison}
+\end{table}
+
+\begin{bestpractice}
+Use a professional summary (50--100 words) that includes:
+\begin{itemize}[noitemsep]
+    \item Years of experience in your field
+    \item 2--3 key accomplishments with metrics
+    \item Relevant technical or industry-specific skills
+    \item Unique value proposition
+\end{itemize}
+Only use an objective if you are a recent graduate, career changer, or have limited relevant experience.
+\end{bestpractice}
+
+\subsection{The Google X-Y-Z Formula}
+
+Former Google SVP of People Operations Laszlo Bock recommends the X-Y-Z formula for writing accomplishment statements\footnote{Source: Laszlo Bock, former Google SVP}:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black]
+\textbf{Formula:} ``Accomplished [X] as measured by [Y] by doing [Z]''
+\begin{itemize}[noitemsep]
+    \item \textbf{X} = What you accomplished
+    \item \textbf{Y} = How it was measured (the metric)
+    \item \textbf{Z} = How you achieved it (the method)
+\end{itemize}
+\end{tcolorbox}
+
+\textbf{Examples:}
+\begin{itemize}
+    \item ``Increased sales by 33\% as measured by quarterly revenue by implementing new email marketing strategies''
+    \item ``Improved call volume by 15\% through implementation of an Excel KPI dashboard and data-driven insights''
+    \item ``Reduced customer churn by 25\% as measured by monthly retention rates by redesigning the onboarding process''
+\end{itemize}
+
+\subsection{Quantified Achievements}
+
+\begin{keystat}
+According to a LinkedIn Talent Report (2023), resumes with quantified achievements receive 2.5$\times$ more interview invitations than those without. Yet less than 20\% of applications include specific relevant achievements.
+\end{keystat}
+
+\subsubsection{Types of Metrics to Include}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Category} & \textbf{Examples} \\
+\midrule
+Financial & Revenue generated, costs saved, budget managed \\
+Operational & Processes improved, time saved, efficiency gains \\
+Performance & Targets exceeded, satisfaction scores, rankings \\
+People & Team size managed, retention rates, hiring achievements \\
+Scale & Projects completed, customers served, transactions processed \\
+\bottomrule
+\end{tabular}
+\caption{Metric Categories for Resume Achievements}
+\end{table}
+
+\begin{bestpractice}
+Prioritize 5--7 of your most impactful metrics that align with the target role. If you don't have exact figures, use conservative estimates. Numbers add authenticity---anyone can claim they ``excelled,'' but ``maintained a 98\% satisfaction rating across 300+ customers monthly'' proves it.
+\end{bestpractice}
+
+\subsection{Action Verbs}
+
+Strong, specific action verbs increase engagement and make accomplishments more memorable to hiring managers.
+
+\begin{warning}
+\textbf{Avoid these overused phrases:}
+\begin{itemize}[noitemsep]
+    \item ``Responsible for...''
+    \item ``Duties included...''
+    \item ``Tasked with...''
+    \item ``Experience in...''
+\end{itemize}
+These phrases are vague, passive, and don't communicate actual accomplishments.
+\end{warning}
+
+\textbf{Strong action verbs by category:}
+\begin{itemize}
+    \item \textbf{Leadership:} Directed, Orchestrated, Spearheaded, Championed
+    \item \textbf{Achievement:} Exceeded, Outperformed, Surpassed, Delivered
+    \item \textbf{Innovation:} Pioneered, Launched, Transformed, Revolutionized
+    \item \textbf{Analysis:} Diagnosed, Evaluated, Investigated, Identified
+    \item \textbf{Communication:} Negotiated, Persuaded, Collaborated, Presented
+\end{itemize}
+
+\begin{bestpractice}
+Use varied action verbs---don't repeat the same verb across multiple bullet points. Pair action verbs with metrics for maximum impact. Limit to 1--2 action verbs per sentence to avoid appearing overzealous.
+\end{bestpractice}
+
+\subsection{Bullet Point Writing}
+
+The consensus among recruiters and career experts strongly favors bullet points over dense paragraphs:
+
+\begin{itemize}
+    \item Dense paragraphs are largely ignored in eye-tracking studies
+    \item Short, numbered bullets attracted more visual fixation
+    \item Bullet points improve ATS keyword identification
+    \item The hybrid approach (short intro paragraph + bullets) is optimal
+\end{itemize}
+
+\begin{bestpractice}
+Use 3--5 bullet points per position (up to 6 for major roles). Reserve paragraphs only for the professional summary section. Each bullet should begin with a strong action verb and ideally include quantified results.
+\end{bestpractice}
+
+\section{Resume Section Content}
+
+\subsection{Contact Information Content}
+
+\subsubsection{Essential Elements}
+\begin{itemize}
+    \item Full name
+    \item Professional email address
+    \item Phone number with country code (for international applications)
+    \item City and region/province or metro area (full address not required)
+    \item LinkedIn profile URL
+    \item Portfolio or relevant website (if applicable)
+\end{itemize}
+
+\subsubsection{Email Address Best Practices}
+
+\begin{warning}
+Avoid unprofessional email addresses like ``pizzalover43@email.com'' or addresses containing random numbers. Never use your current employer's email domain.
+\end{warning}
+
+\begin{bestpractice}
+Use a modern email provider (Gmail recommended) with a professional format:
+\begin{itemize}[noitemsep]
+    \item firstname.lastname@gmail.com (ideal)
+    \item firstname.m.lastname@gmail.com (if name is common)
+    \item firstnamelastname@gmail.com (acceptable)
+\end{itemize}
+\end{bestpractice}
+
+\subsection{Skills Section Content}
+
+\begin{keystat}
+41\% of hiring managers notice skills on your resume first. 67\% of HR managers would hire a candidate with strong soft skills even if technical abilities were lacking.
+\end{keystat}
+
+\subsubsection{What to Include}
+
+\begin{itemize}
+    \item Include 3--10 skills maximum
+    \item Group into categories if you have 4+ skills (e.g., ``Technical Skills,'' ``Languages'')
+    \item List most relevant skills first
+    \item Be specific: ``Excel (pivot tables, macros)'' instead of just ``Excel''
+\end{itemize}
+
+\subsubsection{Hard Skills vs.\ Soft Skills}
+
+\begin{bestpractice}
+\begin{itemize}[noitemsep]
+    \item Hard skills belong in the dedicated skills section
+    \item Soft skills should be demonstrated through achievements in work experience bullets
+    \item Tailor skills to match job description keywords exactly
+    \item Include both acronyms and full terms for technical skills
+\end{itemize}
+\end{bestpractice}
+
+\subsection{Education Section Content}
+
+\subsubsection{Placement Guidelines}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Experience Level} & \textbf{Education Placement} \\
+\midrule
+Recent graduate ($<$3 years) & Near top, before work experience \\
+Mid-career (3--10 years) & After work experience \\
+Senior ($>$10 years) & Bottom of resume, minimal detail \\
+\bottomrule
+\end{tabular}
+\caption{Education Section Placement by Career Stage}
+\end{table}
+
+\subsubsection{What to Include}
+
+\begin{itemize}
+    \item Degree name and major
+    \item Institution name
+    \item Graduation date (optional if $>$10 years ago)
+    \item Academic grades/GPA (only if excellent---e.g., top 15\% of class---and you're a recent graduate)
+    \item Relevant coursework (recent graduates only)
+    \item Honors and awards
+\end{itemize}
+
+\begin{bestpractice}
+If you have a bachelor's degree or higher, omit high school information. List multiple degrees in reverse chronological order by level (Ph.D., Master's, Bachelor's). Remove graduation dates for degrees earned more than 10--15 years ago to avoid age discrimination.
+\end{bestpractice}
+
+\subsection{Certifications and Licenses Content}
+
+\subsubsection{Placement Options}
+
+\begin{enumerate}
+    \item \textbf{After name:} For critical credentials (e.g., ``Jane Smith, CPA, PMP'')
+    \item \textbf{In summary:} If certification is a major job requirement
+    \item \textbf{Dedicated section:} When you have multiple relevant credentials
+    \item \textbf{Combined with education:} When you have only 1--2 certifications
+\end{enumerate}
+
+\subsubsection{What to Include}
+
+\begin{itemize}
+    \item Certification name and acronym
+    \item Certifying body/organization
+    \item Date earned
+    \item Expiration date (if applicable)
+\end{itemize}
+
+\subsection{References}
+
+\begin{warning}
+\textbf{Do not include references or ``References Available Upon Request'' on your resume.} This phrase is considered outdated and wastes valuable space. Employers assume references are available. Prepare a separate reference document to provide when requested.
+\end{warning}
+
+\subsection{Hobbies and Interests Content}
+
+\begin{keystat}
+57\% of Gen Z hiring managers rate hobbies and interests as one of the three most important resume sections. Volunteering experience boosts hiring odds by 27\%.
+\end{keystat}
+
+\subsubsection{When to Include}
+
+\begin{itemize}
+    \item Entry-level candidates with limited work experience
+    \item When hobbies demonstrate relevant skills
+    \item When applying to culture-focused companies
+    \item When hobbies align with company values
+\end{itemize}
+
+\begin{bestpractice}
+Keep this section brief (4--5 items maximum) and place at the bottom. Be specific---``competitive marathon runner'' is more impactful than ``running.'' Prioritize hobbies that demonstrate skills or align with the target company's culture.
+\end{bestpractice}
+
+\section{Tailoring and Customization}
+
+\subsection{The Impact of Tailoring}
+
+\begin{keystat}
+Research from the Journal of Applied Psychology found that tailored resumes are 40\% more likely to land interviews compared to generic submissions. A/B testing showed tailored applications had a 12\% success rate vs.\ 8\% for generic resumes.
+\end{keystat}
+
+\subsubsection{What to Customize}
+
+Experts recommend customizing 40--60\% of your resume content for each application:
+\begin{itemize}
+    \item Professional summary (always)
+    \item Skills section keywords (always)
+    \item Achievement bullet points (select most relevant)
+    \item Section ordering (prioritize most relevant sections)
+\end{itemize}
+
+\subsubsection{Tailoring Strategy}
+
+\begin{enumerate}
+    \item Analyze the job description for key requirements
+    \item Identify the 5--10 most important keywords
+    \item Reorder your bullet points to lead with most relevant achievements
+    \item Mirror exact terminology from the posting
+    \item Adjust your summary to address specific job requirements
+\end{enumerate}
+
+\begin{warning}
+\textbf{Avoid over-tailoring.} Modifying your resume so extensively that it appears dishonest or claims expertise you don't have will raise red flags. Aim for 80\% alignment with required qualifications.
+\end{warning}
+
+\section{LinkedIn Profile Alignment}
+
+\subsection{Why Consistency Matters}
+
+\begin{keystat}
+Recruiters actively cross-reference resumes against LinkedIn profiles---a process called ``triangulation.'' AI screening tools can automatically flag inconsistencies, potentially boosting algorithmic match scores by up to 23\% when documents are aligned.
+\end{keystat}
+
+\subsubsection{Critical Areas for Consistency}
+
+\begin{itemize}
+    \item Job titles (exact matches required)
+    \item Employment dates (month and year)
+    \item Company names (identical spelling)
+    \item Education details
+\end{itemize}
+
+\begin{warning}
+Discrepancies between your resume and LinkedIn profile---even minor ones---immediately raise red flags about your attention to detail or honesty. If your resume says you worked somewhere from 2015--2018 but LinkedIn shows 2016--2019, recruiters will question your entire profile.
+\end{warning}
+
+\begin{bestpractice}
+Update both documents simultaneously whenever making changes. While content can differ in tone (LinkedIn can be more conversational), core facts must be identical. Use LinkedIn's additional space for more detailed descriptions while keeping your resume concise.
+\end{bestpractice}
+
+\section{Addressing Employment Gaps}
+
+\subsection{The Changing Perspective}
+
+\begin{keystat}
+A LinkedIn survey found that 79\% of hiring managers would still hire applicants with resume gaps when properly explained. 1 in 5 job seekers in 2023 reported career gaps of one year or longer.
+\end{keystat}
+
+\subsection{Strategies for Addressing Gaps}
+
+\begin{enumerate}
+    \item \textbf{Add a Career Break entry:} Include it like any other position with dates
+    \item \textbf{Highlight activities during the gap:} Volunteering, freelance work, education
+    \item \textbf{Use a hybrid resume format:} Emphasizes skills over chronology
+    \item \textbf{Address briefly in cover letter:} One to two sentences of context
+    \item \textbf{Be honest and direct:} Unexplained gaps raise more suspicion
+\end{enumerate}
+
+\begin{warning}
+Never fabricate employment to cover gaps. A survey shows 64.2\% of applicants who lie on resumes get caught (81.4\% of those who lie are eventually discovered). Frame gaps positively without apologizing or oversharing.
+\end{warning}
+
+\section{Personal Branding}
+
+\subsection{The Unique Value Proposition}
+
+Harvard Business School Professor Jill Avery defines a personal value proposition as describing ``how you will make a difference, why you are especially equipped to make this difference, and what evidence you have to support that assertion.''\footnote{Source: Harvard Business School Online}
+
+\subsubsection{Creating Your Branding Statement}
+
+A resume branding statement should be:
+\begin{itemize}
+    \item Short (15--20 words maximum)
+    \item Specific to your value and expertise
+    \item Supported by evidence (not just claims)
+    \item Positioned at the top of your resume
+\end{itemize}
+
+\textbf{Examples:}
+\begin{itemize}
+    \item \textbf{Finance:} ``Award-winning financial advisor partnering with clients to achieve financial well-being through proactive retirement strategies''
+    \item \textbf{Marketing:} ``MarCom award-winning digital marketer reinventing brand perceptions via cutting-edge campaigns that grow revenue''
+    \item \textbf{Technical:} ``IGDA-certified game developer with 5 years driving innovation in mobile video game development''
+\end{itemize}
+
+\section{Pre-Submission Content Checklist}
+
+\begin{enumerate}
+    \item[$\square$] Contact information is complete and professional
+    \item[$\square$] Professional summary is tailored to the specific job
+    \item[$\square$] Keywords from job description are incorporated naturally
+    \item[$\square$] Achievements are quantified with metrics (X-Y-Z formula)
+    \item[$\square$] Action verbs are strong and varied (no ``responsible for'')
+    \item[$\square$] LinkedIn profile matches resume facts exactly
+    \item[$\square$] No spelling or grammatical errors
+    \item[$\square$] No ``References Available Upon Request''
+    \item[$\square$] Length is appropriate for experience level
+    \item[$\square$] Most relevant experiences and skills are prominent
+    \item[$\square$] Each bullet point demonstrates results, not just duties
+    \item[$\square$] Skills match job description terminology exactly
+\end{enumerate}
+
+\section{Sources and References}
+
+\subsection{Research Studies}
+
+\begin{enumerate}
+    \item TheLadders Eye-Tracking Study (2018) -- \url{https://www.theladders.com/static/images/basicSite/pdfs/TheLadders-EyeTracking-StudyC2.pdf}
+    \item ResumeGo Resume Length Study -- \url{https://www.resumego.net/research/one-or-two-page-resumes/}
+    \item Jobscan ATS Research and Recruiter Survey -- \url{https://www.jobscan.co/}
+    \item LinkedIn Talent Solutions Reports -- \url{https://www.linkedin.com/}
+    \item Journal of Applied Psychology -- Resume Tailoring Research
+\end{enumerate}
+
+\subsection{University Career Services}
+
+\begin{enumerate}
+    \item Harvard Mignone Center for Career Success -- \url{https://careerservices.fas.harvard.edu/}
+    \item Stanford GSB Career Resources -- \url{https://www.gsb.stanford.edu/alumni/career-resources/}
+    \item Columbia Career Education -- \url{https://www.careereducation.columbia.edu/}
+    \item MIT Career Advising \& Professional Development -- \url{https://capd.mit.edu/}
+    \item Washington University Career Services -- \url{https://careers.washu.edu/}
+\end{enumerate}
+
+\subsection{Industry Resources}
+
+\begin{enumerate}
+    \item Indeed Career Advice -- \url{https://www.indeed.com/career-advice/}
+    \item TopResume Career Advice -- \url{https://topresume.com/career-advice/}
+    \item The Muse Career Advice -- \url{https://www.themuse.com/advice/}
+    \item Resume Genius Blog -- \url{https://resumegenius.com/blog/}
+    \item Novoresume Career Blog -- \url{https://novoresume.com/career-blog/}
+    \item The Interview Guys Blog -- \url{https://blog.theinterviewguys.com/}
+    \item Harvard Business School Online -- \url{https://online.hbs.edu/blog/}
+\end{enumerate}
+
+\section{Conclusion}
+
+Creating effective CV/resume content requires understanding both the technical requirements of ATS systems and the psychological patterns of human recruiters. The evidence consistently shows that success comes from:
+
+\begin{enumerate}
+    \item \textbf{Keyword optimization} that mirrors job description terminology without keyword stuffing
+    \item \textbf{Quantified achievements} using formulas like Google's X-Y-Z method
+    \item \textbf{Tailoring} each application with 40--60\% customization
+    \item \textbf{Consistency} across all professional documents and profiles
+    \item \textbf{Strong action verbs} that communicate results rather than responsibilities
+    \item \textbf{Strategic content placement} putting the most relevant information where recruiters look first
+\end{enumerate}
+
+The modern job search is a dual-audience challenge, but by following the evidence-based content strategies in this report, candidates can significantly improve their odds of passing ATS screening and making a strong impression on human recruiters in those critical 7.4 seconds of initial review.
+
+\textit{For formatting, visual design, and document layout guidelines, see the companion ``CV/Resume Document Design Guide.''}
+
+\end{document}

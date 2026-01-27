@@ -1,0 +1,1020 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=1in,headheight=14pt]{geometry}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tcolorbox}
+\usepackage{longtable}
+\usepackage{amssymb}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!70!black,
+    urlcolor=blue!70!black,
+    citecolor=blue!70!black
+}
+
+\titleformat{\section}{\Large\bfseries\color{blue!70!black}}{\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries\color{blue!50!black}}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries\color{blue!30!black}}{\thesubsubsection}{1em}{}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{CV/Resume Document Design Guide}
+\lhead{\leftmark}
+\rfoot{Page \thepage}
+
+\newtcolorbox{keystat}{
+    colback=blue!5!white,
+    colframe=blue!75!black,
+    fonttitle=\bfseries,
+    title=Key Statistic
+}
+
+\newtcolorbox{bestpractice}{
+    colback=green!5!white,
+    colframe=green!50!black,
+    fonttitle=\bfseries,
+    title=Best Practice
+}
+
+\newtcolorbox{warning}{
+    colback=red!5!white,
+    colframe=red!75!black,
+    fonttitle=\bfseries,
+    title=Warning
+}
+
+\newtcolorbox{designtip}{
+    colback=purple!5!white,
+    colframe=purple!50!black,
+    fonttitle=\bfseries,
+    title=Design Tip
+}
+
+\title{\textbf{CV/Resume Document Design Guide}\\[0.5em]
+\large Format, Aesthetics, Structure, and Visual Design Principles}
+\author{Research Compilation Report}
+\date{January 2026}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Executive Summary}
+
+This guide focuses exclusively on the document design aspects of CVs and resumes: format specifications, visual design principles, layout strategies, typography, and structural organization. Content strategy, keyword optimization, and tailoring techniques are covered in the companion document ``CV/Resume Optimization Report.''
+
+\textit{Note: The terms ``CV'' and ``resume'' are used interchangeably in this guide. Conventions vary by region---always research local standards for your target market.}
+
+\begin{keystat}
+\begin{itemize}[noitemsep]
+    \item Recruiters spend 6--8 seconds scanning each resume; visual design determines what they see
+    \item Minimalist designs improve retention of key details by 40\% compared to cluttered formats
+    \item The ideal content-to-white-space ratio is approximately 30:70
+    \item Resumes with more than two graphics have a 27\% lower ATS match rate
+    \item Using the wrong paper size can cause clipped margins or content pushed onto extra pages
+\end{itemize}
+\end{keystat}
+
+\section{Page Format and Dimensions}
+
+\subsection{Paper Size Standards}
+
+Paper size varies by region and affects how your document displays in ATS systems, PDF viewers, and print formats.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}llll@{}}
+\toprule
+\textbf{Format} & \textbf{Region} & \textbf{Inches} & \textbf{Millimeters} \\
+\midrule
+US Letter & US, Canada & 8.5 $\times$ 11 & 216 $\times$ 279 \\
+A4 & Europe, International & 8.27 $\times$ 11.7 & 210 $\times$ 297 \\
+\bottomrule
+\end{tabular}
+\caption{Standard Resume Paper Sizes by Region}
+\end{table}
+
+\begin{bestpractice}
+Use US Letter (8.5 $\times$ 11 inches) when applying in North America. Use A4 (210 $\times$ 297 mm) when applying internationally. Using the wrong size can cause display issues, uneven spacing, or content overflow.
+\end{bestpractice}
+
+\subsection{Margins}
+
+Margins frame your content and ensure readability. Research indicates clear standards:
+
+\begin{itemize}
+    \item \textbf{Standard margins:} 1 inch (2.54 cm) on all sides---this is the default in most word processors
+    \item \textbf{Acceptable range:} 0.5--1 inch (1.3--2.5 cm) on all sides
+    \item \textbf{Absolute minimum:} 0.5 inches (1.3 cm)---and preferably only at the top
+    \item \textbf{Consistency rule:} Opposite margins should mirror each other
+\end{itemize}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Margin Size} & \textbf{When to Use} & \textbf{Considerations} \\
+\midrule
+1 inch (2.54 cm) & Default / Traditional industries & ATS-compatible, high readability \\
+0.75 inch (1.9 cm) & Moderate content density & Balanced space utilization \\
+0.5 inch (1.3 cm) & Maximum content / Executive resumes & Use sparingly, harder to read \\
+\bottomrule
+\end{tabular}
+\caption{Margin Size Guidelines}
+\end{table}
+
+\begin{warning}
+Never go below 0.5-inch margins. Excessively narrow margins make text feel cramped, reduce readability, and may cause printing issues. Traditional industries like law, finance, and healthcare expect standard 1-inch margins.
+\end{warning}
+
+\section{Typography}
+
+Typography significantly impacts perceived competence and trustworthiness. Research confirms that font choice affects how hiring managers evaluate candidates.
+
+\subsection{Font Selection}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Font Type} & \textbf{Recommended Fonts} & \textbf{Best For} \\
+\midrule
+Sans-serif & Arial, Calibri, Helvetica & Tech, modern industries, screen reading \\
+Serif & Georgia, Times New Roman, Garamond & Finance, law, academia, print \\
+\bottomrule
+\end{tabular}
+\caption{Font Type Recommendations}
+\end{table}
+
+\subsubsection{Sans-Serif Fonts}
+
+Sans-serif fonts lack the small decorative lines at letter ends. They appear modern and clean, reading better on screens.
+
+\textbf{Common choices:} Arial, Calibri, Helvetica, Verdana
+
+\textbf{Best for:} Technology companies, startups, modern industries, digital-first applications
+
+\subsubsection{Serif Fonts}
+
+Serif fonts have small lines at letter ends, conveying tradition and reliability. They typically read better in print.
+
+\textbf{Common choices:} Times New Roman, Georgia, Garamond, Cambria
+
+\textbf{Best for:} Traditional industries (finance, law), academia, printed resumes
+
+\subsection{Font Sizes}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Element} & \textbf{Recommended Size} \\
+\midrule
+Name / Header & 18--24 pt (up to 36 pt acceptable) \\
+Section Headings & 14--16 pt \\
+Body Text & 10--12 pt \\
+Absolute Minimum & 10 pt (never smaller) \\
+\bottomrule
+\end{tabular}
+\caption{Font Size Guidelines}
+\end{table}
+
+\begin{keystat}
+Research from Carnegie Mellon University found that 18-point font sizes improved reading comprehension significantly. While this is impractical for full resumes, it underscores the importance of not going too small with your text.
+\end{keystat}
+
+\begin{bestpractice}
+\begin{itemize}[noitemsep]
+    \item Use 11--12 pt for body text---this is the sweet spot for readability
+    \item Headers should be 2--4 points larger than body text
+    \item Never go below 10 pt for any text
+    \item Limit yourself to a maximum of two font families
+    \item Create clear hierarchy: Name $>$ Section Headers $>$ Body Text
+\end{itemize}
+\end{bestpractice}
+
+\subsection{Font Styling}
+
+\begin{itemize}
+    \item \textbf{Bold:} Use sparingly to highlight job titles, company names, or key achievements
+    \item \textbf{Italics:} Avoid for extended text as they reduce readability on digital screens; acceptable for publication titles or brief emphasis
+    \item \textbf{Underline:} Generally avoid---in digital contexts, underlines suggest hyperlinks
+    \item \textbf{ALL CAPS:} Use only for section headings if desired; avoid in body text as it reduces readability
+\end{itemize}
+
+\begin{warning}
+Inconsistent typography is one of the top distractions in resume design. Maintain the same fonts, sizes, and formatting styles throughout your document to create a polished, professional appearance.
+\end{warning}
+
+\section{Layout and Visual Hierarchy}
+
+\subsection{Understanding Visual Hierarchy}
+
+Visual hierarchy guides the reader's eye to the most important information first. Research shows recruiters follow predictable scanning patterns.
+
+\subsubsection{The F-Pattern and E-Pattern}
+
+Eye-tracking studies reveal that recruiters typically follow an F-pattern when scanning documents:
+
+\begin{enumerate}
+    \item Start at the top left
+    \item Read across the top (first horizontal sweep)
+    \item Move down, read across the middle (second horizontal sweep)
+    \item Scan down the left side vertically
+\end{enumerate}
+
+\begin{designtip}
+Position your most impressive qualifications in the upper-left quadrant and at the beginning of each section where they're most likely to be seen during the 6--8 second initial scan.
+\end{designtip}
+
+\subsection{One-Column vs.\ Two-Column Layouts}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Aspect} & \textbf{One-Column} & \textbf{Two-Column} \\
+\midrule
+ATS Compatibility & Excellent & Often problematic \\
+Readability & Traditional, linear & Modern, scannable \\
+Best For & Online applications & Direct contact, creative fields \\
+Space Efficiency & Lower & Higher \\
+Formatting Reliability & High & Requires careful balance \\
+\bottomrule
+\end{tabular}
+\caption{Layout Comparison}
+\end{table}
+
+\subsubsection{One-Column Layout}
+
+\textbf{Advantages:}
+\begin{itemize}
+    \item Most ATS-compatible---systems easily parse linear content
+    \item Professional and classic appearance
+    \item Consistent formatting across devices and file types
+    \item Familiar to older hiring managers
+\end{itemize}
+
+\textbf{Disadvantages:}
+\begin{itemize}
+    \item Space limitations for extensive experience
+    \item Can appear plain compared to modern designs
+\end{itemize}
+
+\subsubsection{Two-Column Layout}
+
+\textbf{Advantages:}
+\begin{itemize}
+    \item Enhanced scannability---information divided for quick review
+    \item More space for showcasing skills and accomplishments
+    \item Modern, visually appealing appearance
+    \item Demonstrates design awareness in creative fields
+\end{itemize}
+
+\textbf{Disadvantages:}
+\begin{itemize}
+    \item ATS systems often misparse tables and columns
+    \item May display inconsistently across devices
+    \item Requires careful formatting to maintain balance
+\end{itemize}
+
+\begin{bestpractice}
+Maintain two versions of your resume:
+\begin{itemize}[noitemsep]
+    \item \textbf{ATS version:} Simple one-column layout for online applications
+    \item \textbf{Design version:} Two-column or visually enhanced for in-person exchanges, email pitches, and portfolios
+\end{itemize}
+\end{bestpractice}
+
+\subsection{White Space}
+
+White space (negative space) is perhaps the most undervalued element in resume design.
+
+\begin{keystat}
+Research from Washington University shows that proper white space can increase reader comprehension by up to 20\%. The ideal content-to-white-space ratio is approximately 30:70---meaning about 70\% of your resume should be empty space.
+\end{keystat}
+
+\textbf{Functions of white space:}
+\begin{itemize}
+    \item Allows the recruiter's eyes to rest and process information
+    \item Makes the resume feel open and accessible
+    \item Conveys professionalism and attention to detail
+    \item Creates natural groupings through the Gestalt law of proximity
+\end{itemize}
+
+\begin{warning}
+Overcrowded resumes are hard to read and process. However, too much blank space can make a resume seem incomplete or underwhelming. Balance is key.
+\end{warning}
+
+\subsection{Line Spacing}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Element} & \textbf{Recommended Spacing} \\
+\midrule
+Within text blocks & 1.0--1.15 line spacing \\
+Standard range & 120\%--150\% of font size \\
+Between sections & Double space (or extra space) \\
+After subheadings & Double line or section break \\
+\bottomrule
+\end{tabular}
+\caption{Line Spacing Guidelines}
+\end{table}
+
+\begin{bestpractice}
+Use single spacing (1.0--1.15) for content within sections, with an extra space between each section. This differentiates your resume sections without causing clutter.
+\end{bestpractice}
+
+\subsection{Text Alignment}
+
+\begin{itemize}
+    \item \textbf{Left-aligned text:} The most readable and standard alignment for body text; also the most ATS-friendly
+    \item \textbf{Centered text:} Acceptable for your name and contact information at the top; avoid for large sections of text
+    \item \textbf{Right-aligned text:} Use only for dates or secondary information
+    \item \textbf{Justified text:} Avoid---creates irregular spacing between words, reducing readability
+\end{itemize}
+
+\section{Color and Visual Design}
+
+\subsection{Color Psychology and Usage}
+
+Color can enhance your resume when used strategically, but it can also detract from content when overused.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Color} & \textbf{Associations} & \textbf{Best For} \\
+\midrule
+Navy Blue & Trust, stability, dependability & Corporate, management roles \\
+Dark Gray & Neutral, professional & Traditional fields (law, finance) \\
+Black \& White & Classic, professional & Finance, IT, legal, banking \\
+Burgundy & Sophisticated, confident & Executive positions \\
+Dark Green & Growth, stability & Healthcare, environmental roles \\
+\bottomrule
+\end{tabular}
+\caption{Color Recommendations by Association}
+\end{table}
+
+\subsubsection{Colors to Avoid}
+
+\begin{warning}
+\begin{itemize}[noitemsep]
+    \item \textbf{Bright red:} Aggressive, intense---use very sparingly if at all
+    \item \textbf{Bright yellow:} Hard to read, strains eyes
+    \item \textbf{Bright green:} Can feel too casual in traditional industries
+    \item \textbf{Purple or pink:} May work in creative roles but not universally suitable
+    \item \textbf{Neon or high-saturation tones:} Distract from content, appear unprofessional
+\end{itemize}
+\end{warning}
+
+\subsection{Color Usage Guidelines}
+
+\begin{bestpractice}
+\begin{itemize}[noitemsep]
+    \item Use a maximum of three colors: primary, secondary, and accent
+    \item Color should cover no more than 20\% of the document
+    \item Body text should always be black or dark gray
+    \item Ensure high contrast between text and background
+    \item One to two colors (black and gray, or black and navy) works well for most industries
+\end{itemize}
+\end{bestpractice}
+
+\subsubsection{Industry-Specific Recommendations}
+
+\begin{itemize}
+    \item \textbf{Traditional industries} (law, finance, publishing, academia): Black and white is the preferred standard
+    \item \textbf{Creative industries} (tech, design, marketing, media): Strategic color use can be an advantage
+    \item \textbf{Non-creative professions:} Deep or soft color schemes (burgundy, deep green, deep blue) add subtle visual interest
+\end{itemize}
+
+\section{Icons, Graphics, and Visual Elements}
+
+\subsection{ATS Compatibility Concerns}
+
+\begin{keystat}
+According to Jobscan's 2024 ATS Compatibility Report, resumes with more than two graphics have a 27\% lower match rate. ATS systems cannot interpret non-text elements like images and graphics.
+\end{keystat}
+
+\subsection{When to Use Icons}
+
+Icons may be appropriate in specific circumstances:
+
+\textbf{Acceptable uses:}
+\begin{itemize}
+    \item Contact information section (phone, email, LinkedIn symbols)
+    \item Creative fields (graphic design, UX/UI, marketing)
+    \item Direct submissions to recruiters (not through ATS)
+    \item Printed resumes for networking events
+\end{itemize}
+
+\textbf{When to avoid:}
+\begin{itemize}
+    \item Online applications through ATS portals
+    \item Traditional industries (law, finance, government, academia)
+    \item Any application where you're unsure if it goes through an ATS
+\end{itemize}
+
+\subsection{Technical Implementation of Icons}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Icon Type} & \textbf{ATS Compatibility} & \textbf{Recommendation} \\
+\midrule
+Icon fonts (Wingdings) & Better & Use if icons are needed \\
+Vector icons & Variable & Requires proper embedding \\
+Image icons (PNG, JPG) & Poor & Avoid \\
+Embedded graphics & Poor & Avoid \\
+\bottomrule
+\end{tabular}
+\caption{Icon Type Compatibility}
+\end{table}
+
+\begin{bestpractice}
+If you use icons:
+\begin{itemize}[noitemsep]
+    \item Use icon fonts (like Wingdings) rather than embedded images
+    \item Keep icons small---approximately 16$\times$16 pixels
+    \item Maintain consistent design language (same line weight, color scheme, style)
+    \item Use universally recognized symbols (envelope for email, phone for number)
+    \item Test your resume in a plain text editor---if icons disappear or scramble, they may cause ATS issues
+\end{itemize}
+\end{bestpractice}
+
+\subsection{Infographic and Creative Resumes}
+
+Infographic resumes use visual elements like graphs, charts, and icons to present information.
+
+\textbf{Best industries for infographic resumes:}
+\begin{itemize}
+    \item Graphic design
+    \item Sales and marketing
+    \item Public relations
+    \item Creative agencies
+\end{itemize}
+
+\textbf{Industries that never use creative resumes:}
+\begin{itemize}
+    \item Banking and finance
+    \item Medicine and healthcare
+    \item Federal and government positions
+    \item Academia
+\end{itemize}
+
+\begin{warning}
+The main disadvantage of infographic resumes is they cannot be used for online job applications. They are difficult for ATS to parse, potentially causing your application to be overlooked.
+\end{warning}
+
+\begin{bestpractice}
+Maintain both formats: a standard ATS-friendly resume for online portals and a visually enhanced version for in-person interviews, networking events, and direct submissions.
+\end{bestpractice}
+
+\section{Document Structure and Section Organization}
+
+\subsection{Standard Section Order}
+
+The order of sections should reflect both convention and what's most relevant for your situation.
+
+\subsubsection{Standard Order (Experienced Professionals)}
+
+\begin{enumerate}
+    \item Contact Information / Header
+    \item Professional Summary
+    \item Work Experience
+    \item Skills
+    \item Education
+    \item Additional Sections (Certifications, Languages, etc.)
+\end{enumerate}
+
+\subsubsection{Order for Recent Graduates / Entry-Level}
+
+\begin{enumerate}
+    \item Contact Information / Header
+    \item Objective Statement (or Summary)
+    \item Education
+    \item Skills
+    \item Work Experience / Internships
+    \item Additional Sections (Projects, Activities, etc.)
+\end{enumerate}
+
+\subsubsection{Order for Academic CVs}
+
+\begin{enumerate}
+    \item Contact Information
+    \item Education
+    \item Research Experience
+    \item Publications
+    \item Teaching Experience
+    \item Presentations and Conferences
+    \item Awards and Honors
+    \item Professional Affiliations
+    \item References
+\end{enumerate}
+
+\begin{designtip}
+For academic CVs, adjust section order based on the institution's priorities: emphasize publications for research institutions; highlight teaching experience for teaching-focused colleges.
+\end{designtip}
+
+\subsection{Section Headers}
+
+\subsubsection{Standard Header Names}
+
+Use conventional, ATS-recognizable section headers:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Standard Header} & \textbf{Avoid} \\
+\midrule
+Work Experience & My Journey, Career Path \\
+Education & Academic Background, Learning \\
+Skills & What I Know, Expertise \\
+Professional Summary & About Me, Bio \\
+\bottomrule
+\end{tabular}
+\caption{Standard vs.\ Non-Standard Section Headers}
+\end{table}
+
+\subsubsection{Capitalization Styles}
+
+There is no single correct capitalization style; consistency is what matters.
+
+\begin{itemize}
+    \item \textbf{Title Case:} ``Work Experience''---capitalize first word and important words
+    \item \textbf{Sentence case:} ``Work experience''---capitalize only the first word
+    \item \textbf{ALL CAPS:} ``WORK EXPERIENCE''---creates strong visual separation
+\end{itemize}
+
+\begin{bestpractice}
+Choose one capitalization style and apply it consistently to all headers. Title case is generally considered most professional and readable. Avoid all-lowercase styling---it appears trendy but unprofessional.
+\end{bestpractice}
+
+\subsubsection{Header Formatting}
+
+\begin{itemize}
+    \item Make headers 2--4 points larger than body text
+    \item Use bold formatting for clear visual distinction
+    \item Consider adding a horizontal line beneath headers for separation
+    \item Maintain consistent spacing above and below all headers
+\end{itemize}
+
+\section{Contact Information Section Design}
+
+\subsection{Essential Elements}
+
+\begin{itemize}
+    \item Full name (most prominent element, 20--24 pt, bold)
+    \item Phone number (with country code for international applications)
+    \item Professional email address
+    \item Location (city and state/region only---full address not required)
+    \item LinkedIn profile URL (optional but recommended)
+    \item Portfolio or personal website (if relevant)
+\end{itemize}
+
+\subsection{Layout Options}
+
+\subsubsection{Horizontal Layout}
+
+Contact details spread across one or two lines at the top, separated by pipes, bullets, or spacing.
+
+\textit{Example: John Smith | john.smith@email.com | (555) 123-4567 | New York, NY | linkedin.com/in/johnsmith}
+
+\subsubsection{Two-Column Header}
+
+Name on the left, contact details aligned on the right. Creates visual balance and draws attention to your name.
+
+\subsubsection{Centered Layout}
+
+All elements centered at the top of the page. Clean, symmetrical appearance.
+
+\begin{warning}
+Avoid placing contact information in Word's header or footer sections. ATS systems often don't scan these areas, potentially missing your contact details. Place all contact information in the main body of the document.
+\end{warning}
+
+\subsection{Email Address Format}
+
+\begin{bestpractice}
+\begin{itemize}[noitemsep]
+    \item \textbf{Ideal format:} firstname.lastname@gmail.com
+    \item \textbf{Alternative:} firstname.m.lastname@gmail.com (if name is common)
+    \item \textbf{Acceptable:} firstnamelastname@gmail.com
+    \item Use a modern email provider (Gmail recommended)
+    \item Never use your current employer's email domain
+    \item Avoid unprofessional addresses (pizzalover43@, random numbers, nicknames)
+\end{itemize}
+\end{bestpractice}
+
+\section{Bullet Points and Text Formatting}
+
+\subsection{Bullet Points vs.\ Paragraphs}
+
+\begin{keystat}
+Eye-tracking studies confirm that dense paragraphs are largely ignored, while short, numbered bullets attract more visual fixation. Bullet points also improve ATS keyword identification.
+\end{keystat}
+
+\subsubsection{The Hybrid Approach}
+
+The optimal approach combines both elements:
+
+\begin{enumerate}
+    \item Write a brief 1--2 sentence summary of the role (paragraph)
+    \item Follow with 3--5 bullet points highlighting specific achievements
+\end{enumerate}
+
+This creates visual interest while maintaining scannability.
+
+\subsection{Bullet Point Guidelines}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Aspect} & \textbf{Recommendation} \\
+\midrule
+Number per position & 3--5 bullets (up to 7 for major roles) \\
+Length & 1--2 lines each (aim for one line) \\
+Style & Begin with action verb \\
+Symbol & Simple shapes (circle, square, diamond) \\
+Consistency & Same symbol throughout document \\
+\bottomrule
+\end{tabular}
+\caption{Bullet Point Guidelines}
+\end{table}
+
+\begin{warning}
+Common mistakes to avoid:
+\begin{itemize}[noitemsep]
+    \item Overloading each role with too many bullets (creates clutter)
+    \item Starting every bullet the same way (causes them to blend together)
+    \item Writing bullets that are too long (look like paragraphs)
+    \item Switching formats inconsistently (appears unfocused)
+\end{itemize}
+\end{warning}
+
+\section{Date Formatting}
+
+\subsection{Standard Format}
+
+\begin{keystat}
+The industry-standard format for employment dates is Month Year (e.g., May 2023). This is instantly understood by both human readers and ATS systems.
+\end{keystat}
+
+\subsubsection{Acceptable Formats}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Format} & \textbf{Example} & \textbf{Notes} \\
+\midrule
+Month Year & January 2022 & Most common, highly readable \\
+Abbreviated & Jan 2022 & Use first three letters, no period \\
+Numeric & 01/2022 & MM/YYYY format, ATS-friendly \\
+\bottomrule
+\end{tabular}
+\caption{Acceptable Date Formats}
+\end{table}
+
+\subsection{Date Formatting Rules}
+
+\begin{bestpractice}
+\begin{itemize}[noitemsep]
+    \item Choose one format and use it consistently throughout
+    \item Use a hyphen or en dash to separate date ranges (leave space on both sides: 2020 -- 2023)
+    \item For current positions, write ``Present'' as the end date
+    \item Exact days are unnecessary---month and year suffice
+    \item When abbreviating months, use first three letters without a period (Jan, Feb, Mar)
+    \item Be aware of regional conventions: US uses Month/Date/Year; Europe uses Date/Month/Year
+\end{itemize}
+\end{bestpractice}
+
+\subsection{Date Placement}
+
+Dates typically appear:
+\begin{itemize}
+    \item Right-aligned on the same line as the position title, or
+    \item On a separate line directly beneath the position/company
+\end{itemize}
+
+\section{File Format and Naming}
+
+\subsection{File Formats}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Format} & \textbf{When to Use} & \textbf{ATS Compatibility} \\
+\midrule
+DOCX & Online ATS applications & Highest (82\% recruiter preference) \\
+PDF (text-based) & Direct recruiter contact, printing & Good (most modern ATS) \\
+PDF (scanned) & Never & Poor (treated as image) \\
+PNG/JPG & Never & None \\
+\bottomrule
+\end{tabular}
+\caption{File Format Recommendations}
+\end{table}
+
+\begin{bestpractice}
+Maintain both DOCX and PDF versions:
+\begin{itemize}[noitemsep]
+    \item \textbf{DOCX:} Use for online ATS applications unless PDF is specifically requested
+    \item \textbf{PDF:} Use for direct recruiter contact, networking, and printing---preserves formatting across all devices
+\end{itemize}
+\end{bestpractice}
+
+\subsection{File Naming Conventions}
+
+\begin{keystat}
+Generic file names like ``resume.pdf'' or ``Document\_1.pdf'' appear unprofessional and can get lost in a recruiter's downloads folder. A clear, professional file name helps your application stand out.
+\end{keystat}
+
+\subsubsection{Recommended Naming Format}
+
+\texttt{FirstName\_LastName\_Resume.pdf} \\
+\texttt{FirstName-LastName-JobTitle-Resume.pdf}
+
+\textbf{Examples:}
+\begin{itemize}
+    \item JohnSmith\_Resume.pdf
+    \item Sarah\_Connor\_Software\_Developer\_Resume.pdf
+    \item John-Doe-Marketing-Manager-Resume.pdf
+\end{itemize}
+
+\subsubsection{File Naming Rules}
+
+\begin{bestpractice}
+\begin{itemize}[noitemsep]
+    \item Include your full name for easy identification
+    \item Optionally include the job title for relevance
+    \item Separate words with hyphens or underscores (not spaces)
+    \item Avoid special characters (@, \#, \%, \&)
+    \item Keep it concise: 5--7 words maximum
+    \item Exclude version numbers from submitted files
+    \item Follow any specific employer instructions
+\end{itemize}
+\end{bestpractice}
+
+\section{Photos and Headshots}
+
+\subsection{Regional Conventions}
+
+Photo inclusion varies dramatically by region due to anti-discrimination laws and cultural norms.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Region} & \textbf{Photo Expected?} & \textbf{Notes} \\
+\midrule
+United States & No & EEOC regulations discourage photos \\
+United Kingdom & No & Anti-discrimination concerns \\
+Canada & No & Similar to US practices \\
+Germany & Optional & Legally cannot be required, but often expected \\
+France & Common & Traditional practice \\
+Spain, Italy & Common & Expected in most applications \\
+Switzerland & Yes & Standard practice \\
+Sweden, Netherlands & No & Photos avoided to prevent bias \\
+\bottomrule
+\end{tabular}
+\caption{Photo Inclusion by Region}
+\end{table}
+
+\subsection{When Photos Are Required}
+
+If you determine a photo is appropriate for your target region:
+
+\begin{bestpractice}
+\begin{itemize}[noitemsep]
+    \item Use a professional headshot taken by a photographer
+    \item Size: approximately passport size (1 $\times$ 1.3 inches or 2.5 $\times$ 3.5 cm)
+    \item Placement: top of resume, near name and contact info (top-left or top-right)
+    \item Your face should take up more than half of the photo
+    \item Use professional attire and neutral background
+    \item Ensure high resolution and good lighting
+\end{itemize}
+\end{bestpractice}
+
+\begin{warning}
+For US and UK job seekers, LinkedIn provides a good compromise: include a professional photo on your LinkedIn profile while keeping your resume photo-free. This allows recruiters to put a face to your qualifications without risking discrimination claims.
+\end{warning}
+
+\section{Skills Section Design}
+
+\subsection{Layout Options}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Layout} & \textbf{Description} & \textbf{Best For} \\
+\midrule
+Simple list & Comma-separated skills & Limited skills, ATS optimization \\
+Bullet points & Vertical list with bullets & Moderate number of skills \\
+Columns & Two or three columns & Many skills, space efficiency \\
+Categories & Grouped by type with headers & Diverse skill sets, technical roles \\
+\bottomrule
+\end{tabular}
+\caption{Skills Section Layout Options}
+\end{table}
+
+\subsection{Grouping Strategies}
+
+\begin{designtip}
+Group skills into labeled categories to highlight specific areas of expertise. This is particularly effective for experienced professionals in IT, marketing, or engineering.
+
+\textbf{Example categories:}
+\begin{itemize}[noitemsep]
+    \item Technical Skills / Programming Languages
+    \item Software / Tools
+    \item Languages
+    \item Certifications
+\end{itemize}
+\end{designtip}
+
+\subsection{Formatting Recommendations}
+
+\begin{bestpractice}
+\begin{itemize}[noitemsep]
+    \item Include 8--12 highly relevant skills (minimum 3, maximum 10)
+    \item Place hard (technical) skills before soft skills
+    \item Bold category headings for visual separation
+    \item Use comma-separated lists within categories to save space
+    \item Add parenthetical proficiency levels when helpful: ``Python (Advanced)''
+    \item Be specific: ``Excel (pivot tables, macros)'' instead of just ``Excel''
+\end{itemize}
+\end{bestpractice}
+
+\section{Professional Summary vs.\ Objective Design}
+
+\subsection{Professional Summary}
+
+\textbf{Length:} 50--100 words, 3--5 sentences
+
+\textbf{Placement:} Directly below contact information
+
+\textbf{Format options:}
+\begin{itemize}
+    \item Short paragraph (most common)
+    \item Paragraph followed by bullet points highlighting key qualifications
+    \item Brief introductory line with bulleted achievements
+\end{itemize}
+
+\textbf{Header titles:} Professional Summary, Summary, Profile, Career Summary, Executive Summary
+
+\subsection{Objective Statement}
+
+\textbf{Length:} 1--2 sentences
+
+\textbf{Best for:} Career changers, entry-level candidates, recent graduates
+
+\textbf{Header titles:} Objective, Career Objective
+
+\begin{designtip}
+The professional summary has largely replaced the objective statement in modern resumes. Use an objective only when you need to explain a significant career change or when you have limited relevant experience to summarize.
+\end{designtip}
+
+\section{ATS-Friendly Design Checklist}
+
+Applicant Tracking Systems require specific formatting considerations to parse resumes correctly.
+
+\subsection{Layout Requirements}
+
+\begin{enumerate}
+    \item[$\square$] Single-column layout (avoid tables and text boxes)
+    \item[$\square$] Standard section headings (Work Experience, Education, Skills)
+    \item[$\square$] Contact information in body text, not header/footer
+    \item[$\square$] No images, graphics, logos, or photos
+    \item[$\square$] Consistent date formatting throughout
+    \item[$\square$] Standard fonts (Arial, Calibri, Times New Roman, Georgia)
+\end{enumerate}
+
+\subsection{Typography Requirements}
+
+\begin{enumerate}
+    \item[$\square$] Font size 10--12 pt for body text
+    \item[$\square$] No more than two font families
+    \item[$\square$] Avoid unusual characters or symbols
+    \item[$\square$] Use simple bullet symbols (circles, squares)
+    \item[$\square$] No colored text in critical areas (name, section headers are acceptable)
+\end{enumerate}
+
+\subsection{File Requirements}
+
+\begin{enumerate}
+    \item[$\square$] Save as DOCX for online applications
+    \item[$\square$] Use text-based PDF (not scanned image)
+    \item[$\square$] Professional file naming convention
+    \item[$\square$] Test in plain text editor for parsing issues
+\end{enumerate}
+
+\section{Design Checklist by Industry}
+
+\subsection{Traditional Industries (Finance, Law, Healthcare, Government)}
+
+\begin{enumerate}
+    \item[$\square$] Black and white color scheme
+    \item[$\square$] One-column layout
+    \item[$\square$] Standard 1-inch margins
+    \item[$\square$] Serif or conservative sans-serif font
+    \item[$\square$] No icons or graphics
+    \item[$\square$] No photo (US/UK)
+    \item[$\square$] Conservative section headers
+\end{enumerate}
+
+\subsection{Creative Industries (Design, Marketing, Media)}
+
+\begin{enumerate}
+    \item[$\square$] Strategic use of color (navy, dark gray, or brand colors)
+    \item[$\square$] Two-column layout acceptable
+    \item[$\square$] Modern sans-serif fonts
+    \item[$\square$] Minimal icons in contact section
+    \item[$\square$] Visual hierarchy demonstrates design awareness
+    \item[$\square$] Portfolio link included
+    \item[$\square$] Maintain ATS version for online applications
+\end{enumerate}
+
+\subsection{Technology Industry}
+
+\begin{enumerate}
+    \item[$\square$] Clean, modern design
+    \item[$\square$] Sans-serif fonts (Calibri, Arial, Helvetica)
+    \item[$\square$] One-column preferred for ATS compatibility
+    \item[$\square$] GitHub/portfolio links included
+    \item[$\square$] Technical skills prominently displayed
+    \item[$\square$] Subtle accent colors acceptable
+\end{enumerate}
+
+\section{Sources and References}
+
+\subsection{Typography and Design Research}
+
+\begin{enumerate}
+    \item Nielsen Norman Group -- Eye-Tracking Studies -- \url{https://www.nngroup.com/}
+    \item Carnegie Mellon University -- Font Size Research
+    \item Washington University -- White Space and Comprehension Studies
+\end{enumerate}
+
+\subsection{ATS and Recruiting Data}
+
+\begin{enumerate}
+    \item Jobscan ATS Compatibility Report 2024 -- \url{https://www.jobscan.co/}
+    \item TheLadders Eye-Tracking Study (2018) -- \url{https://www.theladders.com/}
+\end{enumerate}
+
+\subsection{Industry Resources}
+
+\begin{enumerate}
+    \item Resume.io Templates and Guides -- \url{https://resume.io/}
+    \item Novoresume Career Blog -- \url{https://novoresume.com/career-blog/}
+    \item Indeed Career Advice -- \url{https://www.indeed.com/career-advice/}
+    \item ResumeGenius Blog -- \url{https://resumegenius.com/blog/}
+    \item Enhancv Blog -- \url{https://enhancv.com/blog/}
+    \item Microsoft Word Blog -- \url{https://word.cloud.microsoft/create/en/blog/}
+    \item Teal Career Advice -- \url{https://www.tealhq.com/}
+    \item TopResume Career Advice -- \url{https://topresume.com/career-advice/}
+    \item Kickresume Blog -- \url{https://www.kickresume.com/en/blog/}
+\end{enumerate}
+
+\subsection{Academic CV Resources}
+
+\begin{enumerate}
+    \item MIT Career Advising -- \url{https://capd.mit.edu/resources/cvs/}
+    \item University of Pennsylvania Career Services -- \url{https://careerservices.upenn.edu/}
+    \item Cornell Graduate School -- \url{https://gradschool.cornell.edu/}
+    \item University of Arizona Career Center -- \url{https://career.arizona.edu/}
+\end{enumerate}
+
+\section{Conclusion}
+
+Effective CV/resume design balances visual appeal with practical functionality. The document must satisfy both human readers---who spend mere seconds scanning---and ATS systems that parse content algorithmically.
+
+Key design principles:
+\begin{enumerate}
+    \item \textbf{Clarity over creativity:} Clean, simple layouts with proper white space outperform visually complex designs
+    \item \textbf{Consistency is critical:} Uniform formatting, fonts, and styling throughout the document signal professionalism
+    \item \textbf{Context determines design:} Match your design choices to your target industry and application method
+    \item \textbf{ATS compatibility is essential:} The most beautifully designed resume fails if it can't pass automated screening
+    \item \textbf{Maintain multiple versions:} Keep both ATS-optimized and visually enhanced versions for different contexts
+\end{enumerate}
+
+The goal of document design is to make your qualifications effortless to find and process. When in doubt, prioritize readability and simplicity over visual flair.
+
+\end{document}
