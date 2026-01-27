@@ -1,7 +1,7 @@
 # Progress Tracker
 
-**Session:** 8
-**Current Task:** 8 of 44
+**Session:** 9
+**Current Task:** 9 of 44
 
 ## Task List
 
@@ -12,8 +12,8 @@
 ✓ [x] **Task 5:** `[coding]` Create `src/resume_generator/models/profile.py` with Pydantic models: `ContactInfo`, `Experience`, `Education`, `Skill`, `Certification`, `PersonProfile`
 ✓ [x] **Task 6:** `[coding]` Create `src/resume_generator/models/resume.py` with Pydantic models: `ResumeBullet`, `ResumeExperience`, `ResumeSection`, `ResumeDocument`
 ✓ [x] **Task 7:** `[coding]` Create `src/resume_generator/models/job.py` with Pydantic models: `JobRequirement`, `JobDescription` for job position parsing
-→ [ ] **Task 8:** `[coding]` Create `src/resume_generator/ingestion/base.py` with abstract `BaseExtractor` class defining `extract(path: Path) -> str` interface
-  [ ] **Task 9:** `[coding]` Create `src/resume_generator/ingestion/pdf.py` with `PDFExtractor` class using `pypdf` to extract text from PDF files
+✓ [x] **Task 8:** `[coding]` Create `src/resume_generator/ingestion/base.py` with abstract `BaseExtractor` class defining `extract(path: Path) -> str` interface
+→ [ ] **Task 9:** `[coding]` Create `src/resume_generator/ingestion/pdf.py` with `PDFExtractor` class using `pypdf` to extract text from PDF files
   [ ] **Task 10:** `[coding]` Create `src/resume_generator/ingestion/text.py` with `TextExtractor` class handling `.txt`, `.md`, and raw text input
   [ ] **Task 11:** `[coding]` Create `src/resume_generator/ingestion/loader.py` with `DataLoader` class that auto-detects file types, aggregates content from multiple sources, and returns unified text
   [ ] **Task 12:** `[coding]` Create `src/resume_generator/extraction/prompts.py` with prompt templates for extracting structured profile data from raw text
@@ -51,36 +51,33 @@
   [ ] **Task 44:** `[quick]` Final cleanup: remove unused imports, ensure consistent formatting with `ruff`
 
 ## Latest Completed
-**Task 8:** `[coding]` Create `src/resume_generator/ingestion/base.py` with abstract `BaseExtractor` class defining `extract(path: Path) -> str` interface
+**Task 9:** `[coding]` Create `src/resume_generator/ingestion/pdf.py` with `PDFExtractor` class using `pypdf` to extract text from PDF files
 
 ### Summary
-## Task Complete
+## Completion Report
 
 **What was completed:**
-- Created `src/resume_generator/ingestion/` directory
-- Created `src/resume_generator/ingestion/__init__.py` with module exports
-- Created `src/resume_generator/ingestion/base.py` with:
-  - `ExtractionError` exception class for extraction failures
-  - `ExtractionResult` dataclass with text, source_path, char_count, word_count, and metadata
-  - `BaseExtractor` abstract class with:
-    - `supported_extensions` abstract property
-    - `can_handle(path)` method to check file compatibility
-    - `extract(path) -> str` abstract method (the core interface)
-    - `extract_with_metadata(path)` method returning `ExtractionResult`
-    - `_validate_path(path)` helper for path validation
+- Created `src/resume_generator/ingestion/pdf.py` with `PDFExtractor` class
+- The class uses `pypdf` library to extract text from PDF files
+- Implements the `BaseExtractor` interface with:
+  - `supported_extensions` property returning `{".pdf"}`
+  - `extract()` method for basic text extraction (pages separated by double newlines)
+  - `extract_with_metadata()` method returning `ExtractionResult` with PDF metadata (page count, title, author, creator)
+- Proper error handling using `ExtractionError` from base module
+- Updated `ingestion/__init__.py` to export `PDFExtractor`
 
 **Tests run and results:**
-- `ruff check src/resume_generator/ingestion/` - All checks passed!
-- `mypy src/resume_generator/ingestion/` - Success: no issues found in 2 source files
+1. `ruff check` - All checks passed
+2. `ruff format --check` - Already formatted
+3. `mypy` - No issues found
+4. Manual integration tests with real PDF files - Successfully extracted 2749 chars from a real resume PDF with metadata
 
 **Files modified:**
-- `src/resume_generator/ingestion/__init__.py` (new)
-- `src/resume_generator/ingestion/base.py` (new)
+- `src/resume_generator/ingestion/pdf.py` (new file)
+- `src/resume_generator/ingestion/__init__.py` (updated exports)
 
-**Commit hash:** `3241e9214cd94867b7fd592c3dbc55c485e377a6`
+**Commit hash:** `ee97dc7`
 
 **Blockers:** None
 
-```
 TASK COMPLETE
-```
