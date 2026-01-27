@@ -12,12 +12,21 @@ from resume_generator.optimization.prompts import (
     build_professional_summary_prompt,
     build_skills_optimization_prompt,
 )
-from resume_generator.optimization.tailoring import JobTailorer, TailoringError
+from resume_generator.optimization.tailoring import (
+    ACRONYM_EXPANSIONS,
+    JobTailorer,
+    KeywordMatchResult,
+    MatchAnalysis,
+    TailoringError,
+)
 
 __all__ = [
     "ACHIEVEMENT_OPTIMIZER_SYSTEM",
+    "ACRONYM_EXPANSIONS",
     "ACTION_VERBS_BY_CATEGORY",
     "JobTailorer",
+    "KeywordMatchResult",
+    "MatchAnalysis",
     "OptimizationError",
     "PROFESSIONAL_SUMMARY_SYSTEM",
     "RESUME_OPTIMIZER_SYSTEM",

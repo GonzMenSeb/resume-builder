@@ -795,3 +795,131 @@ Goal: Deeply understand the research results we have in this repo and, with them
 Current Task (#16): Create `src/resume_generator/optimization/prompts.py` with prompts implementing research principles: X-Y-Z formula, action verbs, quantified achievements
 
 Please complete this task.
+[RESPONSE]
+## Summary
+
+**Task #16 completed**: Created `src/resume_generator/optimization/prompts.py` with comprehensive prompts implementing research principles.
+
+### What was completed:
+1. Created `src/resume_generator/optimization/__init__.py` with proper exports
+2. Created `src/resume_generator/optimization/prompts.py` with:
+   - **System prompts**: `RESUME_OPTIMIZER_SYSTEM`, `ACHIEVEMENT_OPTIMIZER_SYSTEM`, `PROFESSIONAL_SUMMARY_SYSTEM`
+   - **Reference data**: `ACTION_VERBS_BY_CATEGORY` (80+ action verbs in 8 categories), `WEAK_PHRASES` (phrases to avoid)
+   - **Builder functions**:
+     - `build_achievement_optimization_prompt()` - single bullet X-Y-Z transformation
+     - `build_bullet_batch_prompt()` - batch optimization for 3-5 bullets per role
+     - `build_professional_summary_prompt()` - 50-100 word summary generation
+     - `build_job_tailoring_prompt()` - keyword optimization targeting 65-80% match rate
+     - `build_skills_optimization_prompt()` - ATS-compatible skill grouping
+
+### Research principles implemented:
+- Google X-Y-Z formula: "Accomplished [X] as measured by [Y], by doing [Z]"
+- Strong action verbs replacing weak phrases
+- Quantified achievements (2.5x interview boost)
+- ATS keyword optimization (65-80% target match rate)
+- Professional summary (50-100 words)
+- 3-5 bullet points per position
+
+### Tests run:
+- Module import verification: ✅ successful
+- Ruff linting: ✅ All checks passed
+
+### Files modified:
+- `src/resume_generator/optimization/__init__.py` (new)
+- `src/resume_generator/optimization/prompts.py` (new)
+
+### Commit hash: `f2a9979`
+
+TASK COMPLETE
+=== END | completed | 152.8s ===
+=== SESSION 17 | WORKING | 07:44:47 ===
+[PROMPT]
+Goal: Deeply understand the research results we have in this repo and, with them, together with python's claude sdk, let's create a proffessional python project to generate S+ tier resumes from a s...
+
+Current Task (#17): Create `src/resume_generator/optimization/optimizer.py` with `ResumeOptimizer` class that transforms `PersonProfile` into `ResumeDocument` using Claude
+
+Please complete this task.
+[RESPONSE]
+## Summary
+
+**Task #17 completed**: Created `src/resume_generator/optimization/optimizer.py` with `ResumeOptimizer` class that transforms `PersonProfile` into `ResumeDocument` using Claude.
+
+### What was completed:
+1. Created `src/resume_generator/optimization/optimizer.py` with:
+   - **`ResumeOptimizer` class** - Main optimizer with `optimize()` method
+   - **`OptimizationError`** - Custom exception for optimization failures
+   - **Pydantic schemas** for Claude structured outputs: `OptimizedBulletSchema`, `BulletBatchResultSchema`, `ProfessionalSummarySchema`, `SkillGroupSchema`, `SkillsOptimizationSchema`
+   - **Key methods**:
+     - `_optimize_experiences()` - Transforms profile experiences with X-Y-Z bullet optimization
+     - `_optimize_bullets()` - Uses Claude to transform achievements into X-Y-Z format bullets
+     - `_generate_summary()` - Creates professional summary (50-100 words)
+     - `_optimize_skills()` - Groups and optimizes skills for ATS
+     - `_build_education()`, `_build_certifications()`, `_build_projects()` - Converts profile data to resume format
+     - `_call_claude_structured()` - Generic structured output API caller with retry logic
+
+2. Updated `src/resume_generator/optimization/__init__.py` to export `ResumeOptimizer` and `OptimizationError`
+
+### Features:
+- Uses Claude's structured outputs for reliable JSON parsing
+- Exponential backoff retry logic for transient API errors
+- Fallback mechanisms when optimization fails
+- Configurable bullet counts via Settings (min 3, max 5)
+- Supports optional job targeting with keywords
+
+### Tests run:
+- Module import verification: ✅ successful
+- Ruff linting: ✅ All checks passed
+- Mypy type checking: ✅ No issues found
+
+### Files modified:
+- `src/resume_generator/optimization/optimizer.py` (new - 349 lines)
+- `src/resume_generator/optimization/__init__.py` (updated exports)
+
+### Commit hash: `b88ebe9d9a49e3a95c1d9dfb06f7ae344b3da38e`
+
+TASK COMPLETE
+=== END | completed | 142.6s ===
+=== SESSION 18 | WORKING | 07:47:10 ===
+[PROMPT]
+Goal: Deeply understand the research results we have in this repo and, with them, together with python's claude sdk, let's create a proffessional python project to generate S+ tier resumes from a s...
+
+Current Task (#18): Create `src/resume_generator/optimization/tailoring.py` with `JobTailorer` class that optimizes resume content for specific job descriptions (keyword matching, bullet reordering...
+
+Please complete this task.
+[RESPONSE]
+## Task Complete Summary
+
+**What was completed:**
+- Created `src/resume_generator/optimization/tailoring.py` with the `JobTailorer` class
+- Key features implemented:
+  - **Keyword extraction** from job descriptions (required skills, preferred skills, tech keywords)
+  - **Keyword match analysis** between resume and job (calculates match rate, identifies missing keywords)
+  - **Experience relevance scoring** based on title overlap, technology match, and bullet keyword density
+  - **Bullet reordering** by job relevance - most relevant bullets first
+  - **Skills reordering** prioritizing required → preferred → other job keywords
+  - **Rule-based tailoring** for when AI is unavailable
+  - **AI-enhanced tailoring** using Claude structured outputs (with retry logic)
+  - **Summary customization** placeholder for job-relevant professional summaries
+- Updated `__init__.py` to export `JobTailorer` and `TailoringError`
+
+**Tests run and results:**
+- ✓ Ruff linting passed
+- ✓ Mypy type checking passed (only unrelated pydantic decorator warnings)
+- ✓ Import verification passed
+- ✓ Manual functional tests passed (keyword extraction, match analysis, bullet/skills reordering, rule-based tailoring)
+
+**Files modified:**
+1. `src/resume_generator/optimization/tailoring.py` (new - 616 lines)
+2. `src/resume_generator/optimization/__init__.py` (updated exports)
+
+**Commit hash:** `72b4fc7`
+
+TASK COMPLETE
+=== END | completed | 232.3s ===
+=== SESSION 19 | WORKING | 07:51:02 ===
+[PROMPT]
+Goal: Deeply understand the research results we have in this repo and, with them, together with python's claude sdk, let's create a proffessional python project to generate S+ tier resumes from a s...
+
+Current Task (#19): Implement keyword extraction and matching score calculation in `tailoring.py`
+
+Please complete this task.

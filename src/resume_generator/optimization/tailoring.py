@@ -4,6 +4,8 @@ import logging
 import re
 import time
 from collections.abc import Callable
+from dataclasses import dataclass
+from difflib import SequenceMatcher
 from typing import TypeVar
 
 from anthropic import (
@@ -32,6 +34,66 @@ STRUCTURED_OUTPUTS_BETA = "structured-outputs-2025-11-13"
 MAX_RETRIES = 3
 INITIAL_BACKOFF_SECONDS = 1.0
 MAX_BACKOFF_SECONDS = 32.0
+
+WEIGHT_REQUIRED = 3.0
+WEIGHT_PREFERRED = 2.0
+WEIGHT_GENERAL = 1.0
+WEIGHT_EXACT_MATCH = 1.0
+WEIGHT_FUZZY_MATCH = 0.7
+WEIGHT_PARTIAL_MATCH = 0.5
+FUZZY_MATCH_THRESHOLD = 0.85
+
+ACRONYM_EXPANSIONS: dict[str, list[str]] = {
+    "ml": ["machine learning"],
+    "ai": ["artificial intelligence"],
+    "dl": ["deep learning"],
+    "nlp": ["natural language processing"],
+    "cv": ["computer vision"],
+    "api": ["application programming interface"],
+    "rest": ["representational state transfer"],
+    "sql": ["structured query language"],
+    "nosql": ["non-relational database", "non relational database"],
+    "aws": ["amazon web services"],
+    "gcp": ["google cloud platform"],
+    "ci": ["continuous integration"],
+    "cd": ["continuous delivery", "continuous deployment"],
+    "cicd": ["continuous integration continuous deployment", "ci/cd"],
+    "devops": ["development operations"],
+    "k8s": ["kubernetes"],
+    "js": ["javascript"],
+    "ts": ["typescript"],
+    "py": ["python"],
+    "db": ["database"],
+    "ui": ["user interface"],
+    "ux": ["user experience"],
+    "qa": ["quality assurance"],
+    "tdd": ["test driven development"],
+    "bdd": ["behavior driven development"],
+    "oop": ["object oriented programming"],
+    "fp": ["functional programming"],
+    "sre": ["site reliability engineering"],
+    "swe": ["software engineer", "software engineering"],
+    "sde": ["software development engineer"],
+    "pm": ["project manager", "product manager"],
+    "saas": ["software as a service"],
+    "paas": ["platform as a service"],
+    "iaas": ["infrastructure as a service"],
+    "vpc": ["virtual private cloud"],
+    "ec2": ["elastic compute cloud"],
+    "s3": ["simple storage service"],
+    "rds": ["relational database service"],
+    "iam": ["identity and access management"],
+    "jwt": ["json web token"],
+    "oauth": ["open authorization"],
+    "sso": ["single sign on"],
+    "rbac": ["role based access control"],
+    "etl": ["extract transform load"],
+    "elt": ["extract load transform"],
+    "olap": ["online analytical processing"],
+    "oltp": ["online transaction processing"],
+    "llm": ["large language model"],
+    "rag": ["retrieval augmented generation"],
+}
 
 
 class TailoringError(Exception):
@@ -67,6 +129,38 @@ def _call_with_retry(func: Callable[[], T]) -> T:
     raise AssertionError("Unexpected control flow in retry logic")
 
 
+@dataclass
+class KeywordMatchResult:
+    """Detailed result of a single keyword match."""
+
+    job_keyword: str
+    resume_keyword: str | None
+    match_type: str
+    weight: float
+    is_required: bool
+
+    @property
+    def matched(self) -> bool:
+        return self.resume_keyword is not None
+
+
+@dataclass
+class MatchAnalysis:
+    """Complete keyword match analysis between resume and job."""
+
+    job_keywords: list[str]
+    resume_keywords: list[str]
+    matches: list[KeywordMatchResult]
+    match_rate: float
+    weighted_score: float
+    required_match_rate: float
+    preferred_match_rate: float
+    missing_required: list[str]
+    missing_preferred: list[str]
+    recommendations: list[str]
+    meets_target: bool
+
+
 class TailoredExperienceSchema(BaseModel):
     company: str
     title: str
@@ -96,15 +190,6 @@ class TailoringResultSchema(BaseModel):
     skills: TailoredSkillsSchema
     keyword_analysis: KeywordAnalysisSchema
     overall_fit_score: float = Field(default=0.5, ge=0.0, le=1.0)
-
-
-class KeywordMatch:
-    """Represents a keyword match between resume and job."""
-
-    def __init__(self, keyword: str, source: str, match_type: str = "exact"):
-        self.keyword = keyword
-        self.source = source
-        self.match_type = match_type
 
 
 class JobTailorer:
@@ -184,6 +269,242 @@ match specific job descriptions while maintaining truthfulness.
             "target_rate": self._settings.target_keyword_match_rate,
             "meets_target": match_rate >= self._settings.target_keyword_match_rate,
         }
+
+    def analyze_keyword_match_detailed(
+        self,
+        resume: ResumeDocument,
+        job: JobDescription,
+    ) -> MatchAnalysis:
+        """
+        Perform comprehensive keyword match analysis with weighted scoring.
+
+        Uses fuzzy matching, acronym expansion, and weighted scoring based on
+        keyword importance (required vs preferred).
+
+        Returns:
+            MatchAnalysis with detailed breakdown and actionable recommendations.
+        """
+        weighted_keywords = self.extract_keywords_detailed(job)
+        resume_keywords = resume.get_all_keywords()
+        resume_keywords_lower = {kw.lower() for kw in resume_keywords}
+
+        resume_text_lower = self._get_resume_text(resume).lower()
+
+        matches: list[KeywordMatchResult] = []
+        required_matched = 0
+        required_total = 0
+        preferred_matched = 0
+        preferred_total = 0
+
+        for job_kw, (_, weight) in weighted_keywords.items():
+            is_required = weight >= WEIGHT_REQUIRED
+            if is_required:
+                required_total += 1
+            else:
+                preferred_total += 1
+
+            match_result = self._find_best_match(
+                job_kw, resume_keywords, resume_keywords_lower, resume_text_lower
+            )
+
+            if match_result:
+                resume_kw, match_type, match_weight = match_result
+                matches.append(
+                    KeywordMatchResult(
+                        job_keyword=job_kw,
+                        resume_keyword=resume_kw,
+                        match_type=match_type,
+                        weight=weight * match_weight,
+                        is_required=is_required,
+                    )
+                )
+                if is_required:
+                    required_matched += 1
+                else:
+                    preferred_matched += 1
+            else:
+                matches.append(
+                    KeywordMatchResult(
+                        job_keyword=job_kw,
+                        resume_keyword=None,
+                        match_type="none",
+                        weight=0.0,
+                        is_required=is_required,
+                    )
+                )
+
+        total_keywords = len(weighted_keywords)
+        matched_count = sum(1 for m in matches if m.matched)
+        match_rate = matched_count / total_keywords if total_keywords > 0 else 0.0
+
+        max_possible_score = sum(w for _, (_, w) in weighted_keywords.items())
+        actual_score = sum(m.weight for m in matches if m.matched)
+        weighted_score = actual_score / max_possible_score if max_possible_score > 0 else 0.0
+
+        required_match_rate = required_matched / required_total if required_total > 0 else 1.0
+        preferred_match_rate = preferred_matched / preferred_total if preferred_total > 0 else 1.0
+
+        missing_required = [
+            m.job_keyword for m in matches if not m.matched and m.is_required
+        ]
+        missing_preferred = [
+            m.job_keyword for m in matches if not m.matched and not m.is_required
+        ]
+
+        recommendations = self._generate_recommendations(
+            match_rate,
+            weighted_score,
+            missing_required,
+            missing_preferred,
+            self._settings.target_keyword_match_rate,
+        )
+
+        return MatchAnalysis(
+            job_keywords=list(weighted_keywords.keys()),
+            resume_keywords=list(resume_keywords),
+            matches=matches,
+            match_rate=match_rate,
+            weighted_score=weighted_score,
+            required_match_rate=required_match_rate,
+            preferred_match_rate=preferred_match_rate,
+            missing_required=missing_required,
+            missing_preferred=missing_preferred,
+            recommendations=recommendations,
+            meets_target=match_rate >= self._settings.target_keyword_match_rate,
+        )
+
+    def _find_best_match(
+        self,
+        job_keyword: str,
+        resume_keywords: set[str],
+        resume_keywords_lower: set[str],
+        resume_text_lower: str,
+    ) -> tuple[str, str, float] | None:
+        """
+        Find the best match for a job keyword in the resume.
+
+        Returns:
+            Tuple of (matched_keyword, match_type, match_weight) or None.
+        """
+        job_kw_lower = job_keyword.lower()
+
+        if job_kw_lower in resume_keywords_lower:
+            for kw in resume_keywords:
+                if kw.lower() == job_kw_lower:
+                    return (kw, "exact", WEIGHT_EXACT_MATCH)
+
+        expansions = ACRONYM_EXPANSIONS.get(job_kw_lower, [])
+        for expansion in expansions:
+            if expansion in resume_text_lower:
+                return (expansion, "acronym_expansion", WEIGHT_EXACT_MATCH)
+
+        for acronym, exps in ACRONYM_EXPANSIONS.items():
+            if job_kw_lower in exps and acronym in resume_keywords_lower:
+                for kw in resume_keywords:
+                    if kw.lower() == acronym:
+                        return (kw, "acronym_match", WEIGHT_EXACT_MATCH)
+
+        best_fuzzy: tuple[str, float] | None = None
+        for kw in resume_keywords:
+            ratio = SequenceMatcher(None, job_kw_lower, kw.lower()).ratio()
+            if ratio >= FUZZY_MATCH_THRESHOLD and (best_fuzzy is None or ratio > best_fuzzy[1]):
+                best_fuzzy = (kw, ratio)
+
+        if best_fuzzy:
+            return (best_fuzzy[0], "fuzzy", WEIGHT_FUZZY_MATCH)
+
+        if len(job_kw_lower) > 3 and job_kw_lower in resume_text_lower:
+            return (job_keyword, "text_contains", WEIGHT_PARTIAL_MATCH)
+
+        return None
+
+    def _get_resume_text(self, resume: ResumeDocument) -> str:
+        """Extract all text content from resume for full-text matching."""
+        parts: list[str] = []
+
+        if resume.professional_summary:
+            parts.append(resume.professional_summary)
+
+        for exp in resume.experiences:
+            parts.append(exp.title)
+            parts.append(exp.company)
+            for bullet in exp.bullets:
+                parts.append(bullet.text)
+            parts.extend(exp.technologies)
+
+        for edu in resume.education:
+            parts.append(edu.degree)
+            parts.append(edu.institution)
+
+        for group in resume.skills:
+            parts.extend(group.skills)
+
+        for cert in resume.certifications:
+            parts.append(cert.name)
+            if cert.issuer:
+                parts.append(cert.issuer)
+
+        for project in resume.projects:
+            parts.append(project.name)
+            if project.description:
+                parts.append(project.description)
+            parts.extend(project.technologies)
+
+        return " ".join(parts)
+
+    def _generate_recommendations(
+        self,
+        match_rate: float,
+        weighted_score: float,
+        missing_required: list[str],
+        missing_preferred: list[str],
+        target_rate: float,
+    ) -> list[str]:
+        """Generate actionable recommendations based on match analysis."""
+        recommendations: list[str] = []
+
+        if missing_required:
+            top_missing = missing_required[:5]
+            recommendations.append(
+                f"Add missing required skills: {', '.join(top_missing)}"
+            )
+
+        if match_rate < target_rate:
+            gap = int((target_rate - match_rate) * 100)
+            recommendations.append(
+                f"Increase keyword match rate by {gap}% to reach target of {int(target_rate * 100)}%"
+            )
+
+        if missing_preferred and match_rate >= target_rate * 0.8:
+            top_preferred = missing_preferred[:3]
+            recommendations.append(
+                f"Consider adding preferred skills: {', '.join(top_preferred)}"
+            )
+
+        if weighted_score < 0.5 and match_rate >= 0.5:
+            recommendations.append(
+                "Focus on high-priority keywords (required skills) over general matches"
+            )
+
+        if not recommendations and match_rate >= target_rate:
+            recommendations.append(
+                f"Good match rate ({int(match_rate * 100)}%) - resume is well-aligned with job requirements"
+            )
+
+        return recommendations
+
+    def calculate_match_score(
+        self,
+        resume: ResumeDocument,
+        job: JobDescription,
+    ) -> float:
+        """
+        Calculate a normalized match score (0.0 to 1.0) between resume and job.
+
+        This combines keyword matching with weighted scoring based on requirement priority.
+        """
+        analysis = self.analyze_keyword_match_detailed(resume, job)
+        return (analysis.match_rate * 0.6) + (analysis.weighted_score * 0.4)
 
     def score_experience_relevance(
         self,
@@ -356,7 +677,120 @@ match specific job descriptions while maintaining truthfulness.
             tech_keywords = self._extract_tech_keywords(job.description)
             keywords.update(tech_keywords)
 
+            bigrams = self._extract_bigrams(job.description)
+            keywords.update(bigrams)
+
+        for resp in job.responsibilities:
+            resp_keywords = self._extract_tech_keywords(resp)
+            keywords.update(resp_keywords)
+
         return {kw for kw in keywords if len(kw) > 1}
+
+    def extract_keywords_detailed(
+        self, job: JobDescription
+    ) -> dict[str, tuple[set[str], float]]:
+        """
+        Extract keywords with their category and weight.
+        Returns dict mapping keyword to (sources, weight).
+        """
+        result: dict[str, tuple[set[str], float]] = {}
+
+        for skill in job.required_skills:
+            normalized = skill.strip()
+            if normalized:
+                if normalized in result:
+                    sources, _ = result[normalized]
+                    sources.add("required_skills")
+                else:
+                    result[normalized] = ({"required_skills"}, WEIGHT_REQUIRED)
+
+        for skill in job.preferred_skills:
+            normalized = skill.strip()
+            if normalized:
+                if normalized in result:
+                    sources, weight = result[normalized]
+                    sources.add("preferred_skills")
+                else:
+                    result[normalized] = ({"preferred_skills"}, WEIGHT_PREFERRED)
+
+        for cert in job.required_certifications:
+            normalized = cert.strip()
+            if normalized:
+                if normalized in result:
+                    sources, weight = result[normalized]
+                    sources.add("certifications")
+                    result[normalized] = (sources, max(weight, WEIGHT_REQUIRED))
+                else:
+                    result[normalized] = ({"certifications"}, WEIGHT_REQUIRED)
+
+        for req in job.requirements:
+            for kw in req.keywords:
+                normalized = kw.strip()
+                if normalized:
+                    weight = WEIGHT_REQUIRED if req.priority.value == "required" else WEIGHT_PREFERRED
+                    if normalized in result:
+                        sources, existing_weight = result[normalized]
+                        sources.add("requirements")
+                        result[normalized] = (sources, max(existing_weight, weight))
+                    else:
+                        result[normalized] = ({"requirements"}, weight)
+
+        if job.description:
+            for kw in self._extract_tech_keywords(job.description):
+                if kw not in result:
+                    result[kw] = ({"description"}, WEIGHT_GENERAL)
+
+        return {k: v for k, v in result.items() if len(k) > 1}
+
+    def _extract_bigrams(self, text: str) -> set[str]:
+        """Extract meaningful two-word phrases (bigrams) from text."""
+        bigram_patterns = [
+            r"\b(machine\s+learning)\b",
+            r"\b(deep\s+learning)\b",
+            r"\b(natural\s+language\s+processing)\b",
+            r"\b(computer\s+vision)\b",
+            r"\b(data\s+science)\b",
+            r"\b(data\s+engineering)\b",
+            r"\b(software\s+engineering)\b",
+            r"\b(software\s+development)\b",
+            r"\b(web\s+development)\b",
+            r"\b(mobile\s+development)\b",
+            r"\b(cloud\s+computing)\b",
+            r"\b(distributed\s+systems)\b",
+            r"\b(microservices?\s+architecture)\b",
+            r"\b(agile\s+methodology)\b",
+            r"\b(project\s+management)\b",
+            r"\b(product\s+management)\b",
+            r"\b(version\s+control)\b",
+            r"\b(test\s+driven\s+development)\b",
+            r"\b(continuous\s+integration)\b",
+            r"\b(continuous\s+deployment)\b",
+            r"\b(object\s+oriented\s+programming)\b",
+            r"\b(functional\s+programming)\b",
+            r"\b(system\s+design)\b",
+            r"\b(api\s+design)\b",
+            r"\b(database\s+design)\b",
+            r"\b(full\s+stack)\b",
+            r"\b(front\s*end)\b",
+            r"\b(back\s*end)\b",
+            r"\b(site\s+reliability)\b",
+            r"\b(user\s+experience)\b",
+            r"\b(user\s+interface)\b",
+            r"\b(quality\s+assurance)\b",
+            r"\b(code\s+review)\b",
+            r"\b(pair\s+programming)\b",
+        ]
+
+        bigrams: set[str] = set()
+        text_lower = text.lower()
+
+        for pattern in bigram_patterns:
+            matches = re.findall(pattern, text_lower, re.IGNORECASE)
+            for match in matches:
+                normalized = re.sub(r"\s+", " ", match).strip()
+                bigrams.add(normalized)
+
+        return bigrams
 
     def _extract_significant_words(self, text: str) -> set[str]:
         """Extract significant words (likely job-related terms) from text."""
