@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from datetime import date
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field, ValidationError
 
@@ -229,7 +229,9 @@ class ProfileExtractor:
     ) -> PersonProfile:
         """Convert extraction schema to full PersonProfile with validated types."""
         try:
-            contact = ContactInfo.model_validate(extracted.contact.model_dump())
+            contact_data = extracted.contact.model_dump()
+            contact_data = self._sanitize_contact_urls(contact_data)
+            contact = ContactInfo.model_validate(contact_data)
 
             experiences = []
             for exp in extracted.experiences:
@@ -333,6 +335,18 @@ class ProfileExtractor:
         except Exception as e:
             logger.exception("Failed to convert extracted data to PersonProfile")
             raise ExtractionError(f"Conversion failed: {e}") from e
+
+    @staticmethod
+    def _sanitize_contact_urls(contact_data: dict[str, Any]) -> dict[str, Any]:
+        """Sanitize contact URLs by removing invalid values."""
+        url_fields = ["linkedin_url", "github_url", "portfolio_url"]
+        for field in url_fields:
+            if field in contact_data and contact_data[field]:
+                url_value = contact_data[field]
+                if isinstance(url_value, str) and not url_value.startswith(("http://", "https://")):
+                    logger.warning("Invalid URL for %s: %s - setting to None", field, url_value)
+                    contact_data[field] = None
+        return contact_data
 
     @staticmethod
     def _parse_date(date_str: str | None) -> date | None:

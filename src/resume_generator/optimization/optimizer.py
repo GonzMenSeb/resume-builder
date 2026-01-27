@@ -200,6 +200,15 @@ class ResumeOptimizer:
                     max_bullets=max_bullets,
                 )
 
+            if len(bullets) < 2:
+                logger.warning(
+                    "Skipping experience '%s' at '%s' - insufficient bullets (%d < 2)",
+                    exp.title,
+                    exp.company,
+                    len(bullets),
+                )
+                continue
+
             optimized.append(
                 ResumeExperience(
                     company=exp.company,
