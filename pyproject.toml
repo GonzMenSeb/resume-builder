@@ -40,6 +40,7 @@ dev = [
     "pytest-cov>=4.0",
     "ruff>=0.1.0",
     "mypy>=1.8",
+    "pyright>=1.1.300",
 ]
 
 [project.scripts]
@@ -67,6 +68,39 @@ strict = true
 warn_return_any = true
 warn_unused_ignores = true
 disallow_untyped_defs = true
+
+[tool.pyright]
+include = ["src", "tests"]
+exclude = ["**/__pycache__"]
+typeCheckingMode = "strict"
+pythonVersion = "3.11"
+reportMissingImports = true
+reportMissingTypeStubs = true
+reportUnknownMemberType = false
+reportUnknownParameterType = false
+reportUnknownVariableType = false
+reportUnknownArgumentType = false
+reportUnknownLambdaType = false
+reportIncompatibleMethodOverride = true
+reportIncompatibleVariableOverride = true
+reportInconsistentConstructor = true
+reportUninitializedInstanceVariable = true
+reportInvalidTypeForm = true
+reportPrivateUsage = false
+reportConstantRedefinition = true
+reportInvalidStringEscapeSequence = true
+reportInvalidTypeVarUse = true
+reportAssertAlwaysTrue = true
+reportUnnecessaryIsInstance = true
+reportUnnecessaryCast = true
+reportUnnecessaryComparison = true
+reportUnusedImport = true
+reportUnusedClass = true
+reportUnusedFunction = true
+reportUnusedVariable = true
+reportUnusedExpression = true
+reportUnnecessaryTypeIgnoreComment = true
+reportMatchNotExhaustive = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
