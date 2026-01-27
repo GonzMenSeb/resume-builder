@@ -1,7 +1,7 @@
 # Progress Tracker
 
-**Session:** 31
-**Current Task:** 31 of 44
+**Session:** 32
+**Current Task:** 32 of 44
 
 ## Task List
 
@@ -35,8 +35,8 @@
 ✓ [x] **Task 28:** `[coding]` Implement summary panel showing extraction stats, optimization score, and output path
 ✓ [x] **Task 29:** `[coding]` Create `src/resume_generator/pipeline.py` with `ResumePipeline` class orchestrating: ingestion → extraction → optimization → generation → compilation
 ✓ [x] **Task 30:** `[coding]` Implement async pipeline execution with proper error handling and stage tracking
-→ [ ] **Task 31:** `[coding]` Create `src/resume_generator/main.py` with Typer CLI: `generate` command accepting input paths, job description (optional), output path, and template selection
-  [ ] **Task 32:** `[coding]` Add CLI options: `--job-url` for job posting URL, `--template` for template selection, `--output` for output path, `--verbose` for debug output
+✓ [x] **Task 31:** `[coding]` Create `src/resume_generator/main.py` with Typer CLI: `generate` command accepting input paths, job description (optional), output path, and template selection
+→ [ ] **Task 32:** `[coding]` Add CLI options: `--job-url` for job posting URL, `--template` for template selection, `--output` for output path, `--verbose` for debug output
   [ ] **Task 33:** `[quick]` Add CLI entry point in `pyproject.toml` under `[project.scripts]`: `resume-gen = "resume_generator.main:app"`
   [ ] **Task 34:** `[general]` Create `tests/conftest.py` with pytest fixtures for sample data, mock Claude responses, and temporary directories
   [ ] **Task 35:** `[general]` Create `tests/test_ingestion.py` with unit tests for `PDFExtractor`, `TextExtractor`, and `DataLoader`
@@ -51,36 +51,29 @@
   [ ] **Task 44:** `[quick]` Final cleanup: remove unused imports, ensure consistent formatting with `ruff`
 
 ## Latest Completed
-**Task 31:** `[coding]` Create `src/resume_generator/main.py` with Typer CLI: `generate` command accepting input paths, job description (optional), output path, and template selection
+**Task 32:** `[coding]` Add CLI options: `--job-url` for job posting URL, `--template` for template selection, `--output` for output path, `--verbose` for debug output
 
 ### Summary
 ## Summary
 
 **What was completed:**
-- Created `src/resume_generator/main.py` with a Typer CLI entry point
-- Implemented the `generate` command with all required options:
-  - Input paths (positional arguments) - accepts multiple files/directories
-  - `--output/-o` - output path for generated resume
-  - `--job/-j` - job description text for tailoring (optional)
-  - `--job-file/-J` - path to file containing job description (optional)
-  - `--template/-t` - template selection (modern/ats)
-  - `--no-compile` - skip PDF compilation
-  - `--verbose/-V` - enable verbose output
-  - `--version/-v` - show version
+- Added `--job-url` / `-u` CLI option that fetches job postings from URLs
+- Implemented HTML text extraction using regex to strip scripts, styles, and HTML tags
+- Updated help examples to showcase all CLI options including the new `--job-url`
+- Verified that all required CLI options are present:
+  - `--job-url` / `-u` for job posting URL ✓
+  - `--template` / `-t` for template selection (already existed) ✓
+  - `--output` / `-o` for output path (already existed) ✓
+  - `--verbose` / `-V` for debug output (already existed) ✓
 
-**Tests run and results:**
-- `ruff check` - All checks passed
-- `python3 -c "from resume_generator.main import app"` - Import OK
-- `python3 -m resume_generator.main --help` - Works correctly
-- `python3 -m resume_generator.main generate --help` - Works correctly
-- `python3 -m resume_generator.main --version` - Shows "resume-gen version 0.1.0"
-- `mypy src/resume_generator/main.py` - No errors in main.py
+**Tests run:**
+- `ruff check` - passed
+- Python import test - passed
+- CLI help verification - all options displayed correctly
 
 **Files modified:**
-- `src/resume_generator/main.py` (new file)
+- `src/resume_generator/main.py`
 
-**Commit hash:** `a9158a61e7ed672279f5a1ba9436916e44d6301d`
-
-**Blockers:** None
+**Commit hash:** `0571aa4`
 
 TASK COMPLETE

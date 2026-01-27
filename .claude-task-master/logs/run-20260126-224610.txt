@@ -1469,3 +1469,35 @@ Goal: Deeply understand the research results we have in this repo and, with them
 Current Task (#32): Add CLI options: `--job-url` for job posting URL, `--template` for template selection, `--output` for output path, `--verbose` for debug output
 
 Please complete this task.
+[RESPONSE]
+## Summary
+
+**What was completed:**
+- Added `--job-url` / `-u` CLI option that fetches job postings from URLs
+- Implemented HTML text extraction using regex to strip scripts, styles, and HTML tags
+- Updated help examples to showcase all CLI options including the new `--job-url`
+- Verified that all required CLI options are present:
+  - `--job-url` / `-u` for job posting URL ✓
+  - `--template` / `-t` for template selection (already existed) ✓
+  - `--output` / `-o` for output path (already existed) ✓
+  - `--verbose` / `-V` for debug output (already existed) ✓
+
+**Tests run:**
+- `ruff check` - passed
+- Python import test - passed
+- CLI help verification - all options displayed correctly
+
+**Files modified:**
+- `src/resume_generator/main.py`
+
+**Commit hash:** `0571aa4`
+
+TASK COMPLETE
+=== END | completed | 367.1s ===
+=== SESSION 33 | WORKING | 08:39:40 ===
+[PROMPT]
+Goal: Deeply understand the research results we have in this repo and, with them, together with python's claude sdk, let's create a proffessional python project to generate S+ tier resumes from a s...
+
+Current Task (#33): Add CLI entry point in `pyproject.toml` under `[project.scripts]`: `resume-gen = "resume_generator.main:app"`
+
+Please complete this task.
