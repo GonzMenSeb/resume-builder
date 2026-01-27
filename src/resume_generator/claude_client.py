@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import logging
 import os
-import re
 import shutil
 import subprocess
 import sys
@@ -15,8 +14,12 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 
+from resume_generator.utils.json_parser import parse_json_response as _parse_json_response
+
 if TYPE_CHECKING:
     from collections.abc import Iterator
+
+parse_json_response = _parse_json_response
 
 logger = logging.getLogger(__name__)
 
@@ -242,59 +245,6 @@ class ClaudeCLI:
         if "[Tool:" in text:
             sys.stdout.write(".")
             sys.stdout.flush()
-
-
-def parse_json_response(response: str) -> dict[str, object]:
-    """Extract and parse JSON from Claude's response.
-
-    Handles responses that may contain:
-    - Raw JSON
-    - JSON wrapped in markdown code blocks (```json ... ```)
-    - JSON with surrounding text
-
-    Args:
-        response: The raw response string from Claude.
-
-    Returns:
-        Parsed JSON as a dictionary.
-
-    Raises:
-        ValueError: If no valid JSON can be extracted.
-    """
-    text = response.strip()
-
-    if text.startswith("```"):
-        text = _extract_from_code_block(text)
-
-    try:
-        parsed: dict[str, object] = json.loads(text)
-        return parsed
-    except json.JSONDecodeError:
-        pass
-
-    json_match = re.search(r"\{[\s\S]*\}", text)
-    if json_match:
-        try:
-            parsed = json.loads(json_match.group())
-            return parsed
-        except json.JSONDecodeError:
-            pass
-
-    raise ValueError(f"Could not extract valid JSON from response: {text[:200]}...")
-
-
-def _extract_from_code_block(text: str) -> str:
-    """Extract content from markdown code block."""
-    lines = text.split("\n")
-    start_idx = 1
-    end_idx = len(lines)
-
-    for i, line in enumerate(lines[1:], 1):
-        if line.startswith("```"):
-            end_idx = i
-            break
-
-    return "\n".join(lines[start_idx:end_idx]).strip()
 
 
 def build_prompt_with_schema(user_prompt: str, schema: type[BaseModel]) -> str:
