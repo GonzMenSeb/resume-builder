@@ -12,7 +12,8 @@ from pydantic import HttpUrl
 from rich.console import Console
 
 from resume_generator import __version__
-from resume_generator.config import ResumeTemplate, Settings, get_settings
+from resume_generator.claude_client import ClaudeCLI
+from resume_generator.config import ClaudeModel, ResumeTemplate, Settings, get_settings
 from resume_generator.models.job import JobDescription
 from resume_generator.pipeline import PipelineError, ResumePipeline
 from resume_generator.ui.progress import PipelineUI
@@ -102,6 +103,15 @@ def generate(
             case_sensitive=False,
         ),
     ] = ResumeTemplate.MODERN,
+    claude_model: Annotated[
+        ClaudeModel,
+        typer.Option(
+            "--claude-model",
+            "-m",
+            help="Claude model to use for AI operations",
+            case_sensitive=False,
+        ),
+    ] = ClaudeModel.SONNET,
     no_compile: Annotated[
         bool,
         typer.Option(
@@ -135,11 +145,21 @@ def generate(
         [dim]# Generate with specific template and output path[/]
         resume-gen generate ./data/ -t ats -o ./output/resume.pdf
 
+        [dim]# Use a specific Claude model[/]
+        resume-gen generate ./data/ --claude-model opus
+
         [dim]# Verbose output for debugging[/]
         resume-gen generate ./data/ -V --job "Senior Python Developer..."
     """
+    if not ClaudeCLI.available():
+        console.print(
+            "[bold red]Claude CLI not found.[/] "
+            "Please install it first: https://github.com/anthropics/anthropic-sdk-python"
+        )
+        raise typer.Exit(1)
+
     try:
-        settings = _build_settings(no_compile, verbose)
+        settings = _build_settings(no_compile, verbose, claude_model)
     except Exception as e:
         console.print(f"[bold red]Configuration error:[/] {e}")
         raise typer.Exit(1) from e
@@ -177,20 +197,19 @@ def generate(
         raise typer.Exit(1) from e
 
 
-def _build_settings(no_compile: bool, verbose: bool) -> Settings:
+def _build_settings(no_compile: bool, verbose: bool, claude_model: ClaudeModel) -> Settings:
     """Build settings with CLI overrides."""
     settings = get_settings()
-    if no_compile:
-        settings = Settings(
-            anthropic_api_key=settings.anthropic_api_key,
-            compile_pdf=False,
-            verbose=verbose,
-        )
-    elif verbose:
-        settings = Settings(
-            anthropic_api_key=settings.anthropic_api_key,
-            verbose=True,
-        )
+    if no_compile or verbose or claude_model != settings.claude_model:
+        kwargs = {}
+        if no_compile:
+            kwargs["compile_pdf"] = False
+        if verbose:
+            kwargs["verbose"] = True
+        if claude_model != settings.claude_model:
+            kwargs["claude_model"] = claude_model
+        if kwargs:
+            settings = Settings(**{**settings.model_dump(), **kwargs})
     return settings
 
 
