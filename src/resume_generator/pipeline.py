@@ -10,6 +10,7 @@ from pathlib import Path
 from time import time
 from typing import TYPE_CHECKING, Any
 
+from resume_generator.claude_client import ClaudeCLI, ClaudeCLINotFoundError
 from resume_generator.config import ResumeTemplate, Settings, get_settings
 from resume_generator.extraction.profile import ExtractionError, ProfileExtractor
 from resume_generator.generation.compiler import CompilationResult, PDFCompiler
@@ -107,15 +108,43 @@ class ResumePipeline:
         self,
         settings: Settings | None = None,
         ui: PipelineUI | None = None,
+        claude_cli: ClaudeCLI | None = None,
     ) -> None:
         self._settings = settings or get_settings()
         self._ui = ui
+
+        self._claude_cli = claude_cli or ClaudeCLI(
+            model=self._settings.claude_model.value,
+            timeout=self._settings.claude_cli_timeout,
+        )
+        self._verify_claude_cli()
+
         self._loader = DataLoader()
         self._extractor = ProfileExtractor(self._settings)
         self._optimizer = ResumeOptimizer(self._settings)
         self._tailorer = JobTailorer(self._settings)
         self._generator = LaTeXGenerator(self._settings)
         self._compiler = PDFCompiler()
+
+    def _verify_claude_cli(self) -> None:
+        """Verify Claude CLI is available before running pipeline."""
+        if not ClaudeCLI.available():
+            raise ClaudeCLINotFoundError(
+                "Claude CLI is not installed or not in PATH. "
+                "Please install Claude CLI to use this application. "
+                "Visit https://claude.ai/code for installation instructions."
+            )
+        logger.debug("Claude CLI verified: %s", ClaudeCLI.version())
+
+    @property
+    def claude_cli(self) -> ClaudeCLI:
+        """Access the Claude CLI client instance."""
+        return self._claude_cli
+
+    @property
+    def settings(self) -> Settings:
+        """Access the pipeline settings."""
+        return self._settings
 
     def run(
         self,
