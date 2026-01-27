@@ -23,7 +23,6 @@ classifiers = [
     "Topic :: Office/Business",
 ]
 dependencies = [
-    "anthropic>=0.40.0",
     "pydantic>=2.0",
     "pydantic-settings>=2.0",
     "rich>=13.0",
