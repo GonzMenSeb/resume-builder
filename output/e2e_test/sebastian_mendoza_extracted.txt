@@ -1,0 +1,47 @@
+SEBASTIÁN MENDOZA GONZÁLEZ
+/envel⌢peeurusaci@gmail.com ♂phone+57 305 226 9855 ♂¶ap-¶arker-altMedellín, Antioquia, Colombia
+/githubGitHub /linkedinLinkedIn
+SUMMARY
+DevOpsEngineerwithC1+Englishproficiency,experiencedinLinuxserveradministrationandAzureCloud
+infrastructure. Skilled in CI/CD pipelines, containerization, proxy infrastructure, and cloud automation.
+Computer Science student at Universidad Nacional de Colombia.
+WORK EXPERIENCE
+DevOps Engineer Tesote
+Full-time Jul 2025 – Present
+• Configured and administered distributed network of Linux-based proxy servers across on-premise
+mini-PCs and cloud VPS instances on DigitalOcean and Hetzner
+• Orchestrated proxy infrastructure using Coolify, integrating a proxy gateway and custom intermediary
+application exposing proxies through a centralized API
+Jr. Cloud Orchestrator & Developer Quantum Outsourcing Group
+Remote – Florida-based team May 2024 – Jul 2025
+• Administered Azure tenant, deploying App Services and Logic Apps using ARM templates and Bicep
+• Engineered CI/CD pipelines with Azure DevOps and GitHub Actions for web apps, APIs, and Function
+Apps
+• Automated cross-departmental workflows using Python scripts, Logic Apps, and n8n, improving
+operational efficiency across multiple departments
+• Containerized applications using Docker with Azure Container Registry and Container Apps
+• Built data pipelines processing SQL Server, Blob Storage, Salesforce, and Unicourt API data using Data
+Factory, Python, and SQL stored procedures
+• Generated productivity reports, billing reports, and time-off reports for the reporting department
+• Collaborated daily in English with Florida-based team members
+Bilingual Backoffice Agent Almacontact Colombia
+Part-time – Sabaneta, Colombia Feb 2023 – Nov 2024
+• Provided English-language backoffice support
+Software Development Apprentice Choucair Testing S.A.
+Medellín, Colombia Jun 2019 – May 2020
+• Developed applications using Java and Python during 1-year apprenticeship program
+EDUCATION
+Bachelor of Computer Science Jan 2021 – Present
+Universidad Nacional de Colombia
+
+Medium-Technical Degree in Programming Jan 2019 – Nov 2020
+Politécnico Colombiano Jaime Isaza Cadavid
+Acquired alongside Programming Specialization at I.E. INEM José Félix de Restrepo
+KEY SKILLS
+Languages: Python, JavaScript, SQL, Ruby on Rails
+Cloud & DevOps:Azure (Logic Apps, Function Apps, Container Apps, Data Factory, DevOps), Docker,
+GitHub Actions, Coolify
+Infrastructure: Linux Server Administration, Proxy Server, Squid, DigitalOcean, Hetzner Cloud, Terraform
+Infrastructure as Code:ARM Templates, Bicep, Terraform
+Data & Integration:SQL Server, PostgreSQL, Azure SQL, Blob Storage, Salesforce, Microsoft Graph API
+Tools: Postman, n8n, Git, Azure Data Studio

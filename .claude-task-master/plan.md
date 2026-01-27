@@ -160,17 +160,17 @@ From the research documents, key principles to implement:
 - [x] `[general]` Create `tests/conftest.py` with pytest fixtures for sample data, mock Claude responses, and temporary directories
 - [x] `[general]` Create `tests/test_ingestion.py` with unit tests for `PDFExtractor`, `TextExtractor`, and `DataLoader`
 - [x] `[general]` Create `tests/test_extraction.py` with tests for `ProfileExtractor` using mocked API responses
-- [ ] `[general]` Create `tests/test_optimization.py` with tests for `ResumeOptimizer` and `JobTailorer`
-- [ ] `[general]` Create `tests/test_generation.py` with tests for `LaTeXGenerator` and `PDFCompiler`
-- [ ] `[coding]` Run full test suite and fix any failures: `pytest tests/ -v`
-- [ ] `[quick]` Add type checking with `pyright` or `mypy` configuration in `pyproject.toml`
+- [x] `[general]` Create `tests/test_optimization.py` with tests for `ResumeOptimizer` and `JobTailorer`
+- [x] `[general]` Create `tests/test_generation.py` with tests for `LaTeXGenerator` and `PDFCompiler`
+- [x] `[coding]` Run full test suite and fix any failures: `pytest tests/ -v`
+- [x] `[quick]` Add type checking with `pyright` or `mypy` configuration in `pyproject.toml`
 
 ---
 
 ### PR 9: Documentation & Final Polish
 
-- [ ] `[general]` Create comprehensive `README.md` with installation, usage examples, and configuration guide
-- [ ] `[quick]` Add example input files in `examples/` directory
+- [x] `[general]` Create comprehensive `README.md` with installation, usage examples, and configuration guide
+- [x] `[quick]` Add example input files in `examples/` directory
 - [ ] `[general]` Run end-to-end test with real data from `resumes/` directory
 - [ ] `[quick]` Final cleanup: remove unused imports, ensure consistent formatting with `ruff`
 
