@@ -1,6 +1,6 @@
 .PHONY: help install install-dev test test-unit test-e2e test-cov test-fast \
         lint lint-fix format format-check typecheck typecheck-mypy typecheck-pyright \
-        check clean clean-cache clean-all
+        check clean clean-cache clean-all shell
 
 VENV := .venv
 PYTHON := $(VENV)/bin/python
@@ -113,6 +113,7 @@ clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 	find . -type f -name "*.pyc" -delete 2>/dev/null || true
 	find . -type f -name "*.pyo" -delete 2>/dev/null || true
+	rm E2E_TEST_RESULTS.md
 
 clean-cache:
 	rm -rf .pytest_cache/
@@ -121,5 +122,6 @@ clean-cache:
 	rm -rf htmlcov/
 	rm -rf .coverage
 	rm -rf coverage.xml
+	rm -rf .resume_cache/
 
 clean-all: clean clean-cache
