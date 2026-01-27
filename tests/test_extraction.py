@@ -4,11 +4,13 @@ from datetime import date
 from unittest.mock import MagicMock, patch
 
 import pytest
-from anthropic import APIConnectionError, APITimeoutError, RateLimitError
-from anthropic.types.beta import BetaUsage
-from anthropic.types.beta.parsed_beta_message import ParsedBetaMessage, ParsedBetaTextBlock
-from pydantic import SecretStr
 
+from resume_generator.claude_client import (
+    ClaudeCLIError,
+    ClaudeCLINotFoundError,
+    ClaudeCLITimeoutError,
+    InvokeResult,
+)
 from resume_generator.config import Settings
 from resume_generator.extraction.profile import (
     ContactInfoSchema,
@@ -18,9 +20,6 @@ from resume_generator.extraction.profile import (
     ProfileExtractionSchema,
     ProfileExtractor,
     SkillSchema,
-    _call_with_retry,
-    _exponential_backoff,
-    _is_retryable_error,
 )
 from resume_generator.models.profile import (
     PersonProfile,
@@ -28,81 +27,8 @@ from resume_generator.models.profile import (
 )
 
 
-class TestRetryHelpers:
-    """Tests for retry helper functions."""
-
-    def test_is_retryable_error_timeout(self) -> None:
-        mock_request = MagicMock()
-        error = APITimeoutError(request=mock_request)
-        assert _is_retryable_error(error)
-
-    def test_is_retryable_error_connection(self) -> None:
-        mock_request = MagicMock()
-        error = APIConnectionError(message="connection", request=mock_request)
-        assert _is_retryable_error(error)
-
-    def test_is_retryable_error_rate_limit(self) -> None:
-        mock_response = MagicMock()
-        error = RateLimitError("rate limit", response=mock_response, body=None)
-        assert _is_retryable_error(error)
-
-    def test_is_retryable_error_generic_exception(self) -> None:
-        assert not _is_retryable_error(ValueError("not retryable"))
-
-    def test_exponential_backoff_initial(self) -> None:
-        backoff = _exponential_backoff(0)
-        assert backoff == 1.0
-
-    def test_exponential_backoff_second_attempt(self) -> None:
-        backoff = _exponential_backoff(1)
-        assert backoff == 2.0
-
-    def test_exponential_backoff_caps_at_max(self) -> None:
-        backoff = _exponential_backoff(10)
-        assert backoff == 32.0
-
-    def test_call_with_retry_success_first_attempt(self) -> None:
-        mock_func = MagicMock(return_value="success")
-        result = _call_with_retry(mock_func)
-        assert result == "success"
-        assert mock_func.call_count == 1
-
-    def test_call_with_retry_success_after_retries(self) -> None:
-        mock_request = MagicMock()
-        mock_func = MagicMock(
-            side_effect=[
-                APITimeoutError(request=mock_request),
-                APITimeoutError(request=mock_request),
-                "success",
-            ]
-        )
-        result = _call_with_retry(mock_func)
-        assert result == "success"
-        assert mock_func.call_count == 3
-
-    def test_call_with_retry_non_retryable_error(self) -> None:
-        mock_func = MagicMock(side_effect=ValueError("bad value"))
-        with pytest.raises(ValueError, match="bad value"):
-            _call_with_retry(mock_func)
-        assert mock_func.call_count == 1
-
-    def test_call_with_retry_max_retries_exceeded(self) -> None:
-        mock_request = MagicMock()
-        mock_func = MagicMock(side_effect=APITimeoutError(request=mock_request))
-        with pytest.raises(APITimeoutError):
-            _call_with_retry(mock_func)
-        assert mock_func.call_count == 3
-
-
 class TestProfileExtractor:
     """Tests for ProfileExtractor."""
-
-    @pytest.fixture
-    def test_settings(self) -> Settings:
-        return Settings(
-            anthropic_api_key=SecretStr("sk-ant-test-key-12345"),
-            max_tokens=4096,
-        )
 
     @pytest.fixture
     def extractor(self, test_settings: Settings) -> ProfileExtractor:
@@ -161,19 +87,6 @@ class TestProfileExtractor:
             languages=[["English", "Native"], ["Spanish", "Professional"]],
         )
 
-    @pytest.fixture
-    def mock_beta_response(self, mock_extraction_schema: ProfileExtractionSchema) -> MagicMock:
-        mock_response = MagicMock(spec=ParsedBetaMessage)
-        mock_response.id = "msg_test123"
-        mock_response.type = "message"
-        mock_response.role = "assistant"
-        mock_response.content = [ParsedBetaTextBlock(type="text", text="extracted")]
-        mock_response.model = "claude-sonnet-4-20250514"
-        mock_response.stop_reason = "end_turn"
-        mock_response.usage = BetaUsage(input_tokens=500, output_tokens=800)
-        mock_response.parsed_output = mock_extraction_schema
-        return mock_response
-
     def test_extract_empty_text_raises_error(self, extractor: ProfileExtractor) -> None:
         with pytest.raises(ExtractionError, match="Cannot extract profile from empty text"):
             extractor.extract("")
@@ -182,19 +95,19 @@ class TestProfileExtractor:
         with pytest.raises(ExtractionError, match="Cannot extract profile from empty text"):
             extractor.extract("   \n\t  ")
 
-    @patch("resume_generator.extraction.profile.Anthropic")
     def test_extract_success(
         self,
-        mock_anthropic: MagicMock,
         extractor: ProfileExtractor,
-        mock_beta_response: MagicMock,
+        mock_extraction_schema: ProfileExtractionSchema,
         sample_raw_text: str,
     ) -> None:
-        mock_client = MagicMock()
-        mock_client.beta.messages.parse.return_value = mock_beta_response
-        mock_anthropic.return_value = mock_client
+        mock_cli = MagicMock()
+        json_response = mock_extraction_schema.model_dump_json()
+        mock_cli.invoke.return_value = InvokeResult(
+            success=True, output=json_response, exit_code=0
+        )
+        extractor._cli = mock_cli
 
-        extractor._client = mock_client
         profile = extractor.extract(sample_raw_text)
 
         assert isinstance(profile, PersonProfile)
@@ -206,109 +119,90 @@ class TestProfileExtractor:
         assert len(profile.skills) == 2
         assert profile.raw_text is not None
 
-    @patch("resume_generator.extraction.profile.Anthropic")
-    def test_extract_api_refusal(
-        self, mock_anthropic: MagicMock, extractor: ProfileExtractor, sample_raw_text: str
+    def test_extract_cli_failure(
+        self, extractor: ProfileExtractor, sample_raw_text: str
     ) -> None:
-        mock_client = MagicMock()
-        refusal_response = MagicMock(spec=ParsedBetaMessage)
-        refusal_response.stop_reason = "refusal"
-        refusal_response.parsed_output = None
-        mock_client.beta.messages.parse.return_value = refusal_response
-        mock_anthropic.return_value = mock_client
+        mock_cli = MagicMock()
+        mock_cli.invoke.return_value = InvokeResult(
+            success=False, output="Error occurred", exit_code=1
+        )
+        extractor._cli = mock_cli
 
-        extractor._client = mock_client
-
-        with pytest.raises(ExtractionError, match="refused to process"):
+        with pytest.raises(ExtractionError, match="returned non-zero exit code"):
             extractor.extract(sample_raw_text)
 
-    @patch("resume_generator.extraction.profile.Anthropic")
-    def test_extract_max_tokens_exceeded(
-        self, mock_anthropic: MagicMock, extractor: ProfileExtractor, sample_raw_text: str
+    def test_extract_cli_error_exception(
+        self, extractor: ProfileExtractor, sample_raw_text: str
     ) -> None:
-        mock_client = MagicMock()
-        truncated_response = MagicMock(spec=ParsedBetaMessage)
-        truncated_response.stop_reason = "max_tokens"
-        truncated_response.parsed_output = None
-        mock_client.beta.messages.parse.return_value = truncated_response
-        mock_anthropic.return_value = mock_client
+        mock_cli = MagicMock()
+        mock_cli.invoke.side_effect = ClaudeCLIError("CLI invocation failed")
+        extractor._cli = mock_cli
 
-        extractor._client = mock_client
-
-        with pytest.raises(ExtractionError, match="truncated due to max_tokens"):
+        with pytest.raises(ExtractionError, match="Claude CLI error"):
             extractor.extract(sample_raw_text)
 
-    @patch("resume_generator.extraction.profile.Anthropic")
-    def test_extract_no_parsed_output(
-        self, mock_anthropic: MagicMock, extractor: ProfileExtractor, sample_raw_text: str
+    def test_extract_timeout_error(
+        self, extractor: ProfileExtractor, sample_raw_text: str
     ) -> None:
-        mock_client = MagicMock()
-        no_output_response = MagicMock(spec=ParsedBetaMessage)
-        no_output_response.stop_reason = "end_turn"
-        no_output_response.parsed_output = None
-        mock_client.beta.messages.parse.return_value = no_output_response
-        mock_anthropic.return_value = mock_client
+        mock_cli = MagicMock()
+        mock_cli.invoke.side_effect = ClaudeCLITimeoutError("Timeout after 3600s")
+        extractor._cli = mock_cli
 
-        extractor._client = mock_client
-
-        with pytest.raises(ExtractionError, match="No parsed output"):
+        with pytest.raises(ExtractionError, match="Claude CLI error"):
             extractor.extract(sample_raw_text)
 
-    @patch("resume_generator.extraction.profile.Anthropic")
-    def test_extract_api_timeout_retry_success(
+    def test_extract_not_found_error(
+        self, extractor: ProfileExtractor, sample_raw_text: str
+    ) -> None:
+        mock_cli = MagicMock()
+        mock_cli.invoke.side_effect = ClaudeCLINotFoundError("Claude CLI not found")
+        extractor._cli = mock_cli
+
+        with pytest.raises(ExtractionError, match="Claude CLI error"):
+            extractor.extract(sample_raw_text)
+
+    def test_extract_invalid_json_response(
+        self, extractor: ProfileExtractor, sample_raw_text: str
+    ) -> None:
+        mock_cli = MagicMock()
+        mock_cli.invoke.return_value = InvokeResult(
+            success=True, output="This is not valid JSON", exit_code=0
+        )
+        extractor._cli = mock_cli
+
+        with pytest.raises(ExtractionError, match="Failed to parse response"):
+            extractor.extract(sample_raw_text)
+
+    def test_extract_invalid_schema(
+        self, extractor: ProfileExtractor, sample_raw_text: str
+    ) -> None:
+        mock_cli = MagicMock()
+        mock_cli.invoke.return_value = InvokeResult(
+            success=True, output='{"invalid": "schema"}', exit_code=0
+        )
+        extractor._cli = mock_cli
+
+        with pytest.raises(ExtractionError, match="Response validation failed"):
+            extractor.extract(sample_raw_text)
+
+    def test_extract_json_in_markdown_code_block(
         self,
-        mock_anthropic: MagicMock,
         extractor: ProfileExtractor,
-        mock_beta_response: MagicMock,
+        mock_extraction_schema: ProfileExtractionSchema,
         sample_raw_text: str,
     ) -> None:
-        mock_client = MagicMock()
-        mock_request = MagicMock()
-        mock_client.beta.messages.parse.side_effect = [
-            APITimeoutError(request=mock_request),
-            mock_beta_response,
-        ]
-        mock_anthropic.return_value = mock_client
+        mock_cli = MagicMock()
+        json_content = mock_extraction_schema.model_dump_json()
+        markdown_wrapped = f"```json\n{json_content}\n```"
+        mock_cli.invoke.return_value = InvokeResult(
+            success=True, output=markdown_wrapped, exit_code=0
+        )
+        extractor._cli = mock_cli
 
-        extractor._client = mock_client
         profile = extractor.extract(sample_raw_text)
 
         assert isinstance(profile, PersonProfile)
-        assert mock_client.beta.messages.parse.call_count == 2
-
-    @patch("resume_generator.extraction.profile.Anthropic")
-    def test_extract_api_connection_error_retry_exhausted(
-        self, mock_anthropic: MagicMock, extractor: ProfileExtractor, sample_raw_text: str
-    ) -> None:
-        mock_client = MagicMock()
-        mock_request = MagicMock()
-        mock_client.beta.messages.parse.side_effect = APIConnectionError(
-            message="connection failed", request=mock_request
-        )
-        mock_anthropic.return_value = mock_client
-
-        extractor._client = mock_client
-
-        with pytest.raises(ExtractionError, match="API call failed"):
-            extractor.extract(sample_raw_text)
-        assert mock_client.beta.messages.parse.call_count == 3
-
-    @patch("resume_generator.extraction.profile.Anthropic")
-    def test_extract_rate_limit_error(
-        self, mock_anthropic: MagicMock, extractor: ProfileExtractor, sample_raw_text: str
-    ) -> None:
-        mock_client = MagicMock()
-        mock_response = MagicMock()
-        mock_client.beta.messages.parse.side_effect = RateLimitError(
-            "rate limited", response=mock_response, body=None
-        )
-        mock_anthropic.return_value = mock_client
-
-        extractor._client = mock_client
-
-        with pytest.raises(ExtractionError, match="API call failed"):
-            extractor.extract(sample_raw_text)
-        assert mock_client.beta.messages.parse.call_count == 3
+        assert profile.contact.full_name == "John Doe"
 
     def test_parse_date_valid_iso(self, extractor: ProfileExtractor) -> None:
         parsed = extractor._parse_date("2023-06-15")
@@ -340,9 +234,8 @@ class TestProfileExtractor:
         assert extractor._parse_skill_category("unknown") == SkillCategory.OTHER
         assert extractor._parse_skill_category("invalid") == SkillCategory.OTHER
 
-    @patch("resume_generator.extraction.profile.Anthropic")
     def test_convert_to_profile_with_minimal_data(
-        self, mock_anthropic: MagicMock, extractor: ProfileExtractor
+        self, extractor: ProfileExtractor
     ) -> None:
         minimal_schema = ProfileExtractionSchema(
             contact=ContactInfoSchema(
@@ -359,9 +252,8 @@ class TestProfileExtractor:
         assert profile.skills == []
         assert profile.raw_text == "raw text"
 
-    @patch("resume_generator.extraction.profile.Anthropic")
     def test_convert_to_profile_skips_invalid_experience(
-        self, mock_anthropic: MagicMock, extractor: ProfileExtractor
+        self, extractor: ProfileExtractor
     ) -> None:
         schema = ProfileExtractionSchema(
             contact=ContactInfoSchema(full_name="Test", email="test@example.com"),
@@ -378,9 +270,8 @@ class TestProfileExtractor:
         assert profile.experiences[0].company == "Corp1"
         assert profile.experiences[1].company == "Corp3"
 
-    @patch("resume_generator.extraction.profile.Anthropic")
     def test_convert_to_profile_handles_languages(
-        self, mock_anthropic: MagicMock, extractor: ProfileExtractor
+        self, extractor: ProfileExtractor
     ) -> None:
         schema = ProfileExtractionSchema(
             contact=ContactInfoSchema(full_name="Test", email="test@example.com"),
@@ -394,9 +285,8 @@ class TestProfileExtractor:
         assert profile.languages[1] == ("Spanish", "Professional")
         assert profile.languages[2] == ("French", "")
 
-    @patch("resume_generator.extraction.profile.Anthropic")
     def test_convert_to_profile_validation_error(
-        self, mock_anthropic: MagicMock, extractor: ProfileExtractor
+        self, extractor: ProfileExtractor
     ) -> None:
         invalid_schema = ProfileExtractionSchema(
             contact=ContactInfoSchema(
@@ -408,14 +298,11 @@ class TestProfileExtractor:
         with pytest.raises(ExtractionError, match="validation failed"):
             extractor._convert_to_profile(invalid_schema, "raw")
 
-    @patch("resume_generator.extraction.profile.Anthropic")
     def test_extract_preserves_all_fields(
         self,
-        mock_anthropic: MagicMock,
         extractor: ProfileExtractor,
         sample_raw_text: str,
     ) -> None:
-        mock_client = MagicMock()
         complete_schema = ProfileExtractionSchema(
             contact=ContactInfoSchema(
                 full_name="Alice Developer",
@@ -443,12 +330,12 @@ class TestProfileExtractor:
             volunteer_experience=["Tech mentor at Code.org"],
             interests=["Open source", "Machine learning"],
         )
-        response = MagicMock(spec=ParsedBetaMessage)
-        response.stop_reason = "end_turn"
-        response.parsed_output = complete_schema
-        mock_client.beta.messages.parse.return_value = response
-        mock_anthropic.return_value = mock_client
-        extractor._client = mock_client
+
+        mock_cli = MagicMock()
+        mock_cli.invoke.return_value = InvokeResult(
+            success=True, output=complete_schema.model_dump_json(), exit_code=0
+        )
+        extractor._cli = mock_cli
 
         profile = extractor.extract(sample_raw_text)
 
@@ -464,26 +351,22 @@ class TestProfileExtractor:
         assert profile.volunteer_experience == ["Tech mentor at Code.org"]
         assert profile.interests == ["Open source", "Machine learning"]
 
-    @patch("resume_generator.extraction.profile.Anthropic")
-    def test_call_claude_structured_uses_correct_parameters(
+    def test_call_claude_uses_correct_parameters(
         self,
-        mock_anthropic: MagicMock,
         extractor: ProfileExtractor,
-        mock_beta_response: MagicMock,
-        test_settings: Settings,
+        mock_extraction_schema: ProfileExtractionSchema,
+        sample_raw_text: str,
     ) -> None:
-        mock_client = MagicMock()
-        mock_client.beta.messages.parse.return_value = mock_beta_response
-        mock_anthropic.return_value = mock_client
-        extractor._client = mock_client
+        mock_cli = MagicMock()
+        mock_cli.invoke.return_value = InvokeResult(
+            success=True, output=mock_extraction_schema.model_dump_json(), exit_code=0
+        )
+        extractor._cli = mock_cli
 
-        extractor._call_claude_structured("test text")
+        extractor.extract(sample_raw_text)
 
-        call_args = mock_client.beta.messages.parse.call_args
-        assert call_args.kwargs["model"] == test_settings.claude_model.value
-        assert call_args.kwargs["max_tokens"] == test_settings.max_tokens
-        assert call_args.kwargs["betas"] == ["structured-outputs-2025-11-13"]
-        assert call_args.kwargs["output_format"] == ProfileExtractionSchema
-        assert len(call_args.kwargs["messages"]) == 1
-        assert call_args.kwargs["messages"][0]["role"] == "user"
-        assert "test text" in call_args.kwargs["messages"][0]["content"]
+        mock_cli.invoke.assert_called_once()
+        call_kwargs = mock_cli.invoke.call_args.kwargs
+        assert "prompt" in call_kwargs
+        assert "system" in call_kwargs
+        assert sample_raw_text in call_kwargs["prompt"]
