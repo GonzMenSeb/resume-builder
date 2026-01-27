@@ -1,7 +1,7 @@
 # Progress Tracker
 
-**Session:** 20
-**Current Task:** 20 of 44
+**Session:** 22
+**Current Task:** 22 of 44
 
 ## Task List
 
@@ -24,9 +24,9 @@
 ✓ [x] **Task 17:** `[coding]` Create `src/resume_generator/optimization/optimizer.py` with `ResumeOptimizer` class that transforms `PersonProfile` into `ResumeDocument` using Claude
 ✓ [x] **Task 18:** `[coding]` Create `src/resume_generator/optimization/tailoring.py` with `JobTailorer` class that optimizes resume content for specific job descriptions (keyword matching, bullet reordering, summary customization)
 ✓ [x] **Task 19:** `[coding]` Implement keyword extraction and matching score calculation in `tailoring.py`
-→ [ ] **Task 20:** `[coding]` Create `src/resume_generator/generation/templates/modern.tex` - a modern, ATS-compatible single-column LaTeX template with configurable colors and styling following research guidelines
-  [ ] **Task 21:** `[coding]` Create `src/resume_generator/generation/templates/ats.tex` - a minimal ATS-optimized template (no graphics, single column, standard fonts)
-  [ ] **Task 22:** `[coding]` Create `src/resume_generator/generation/generator.py` with `LaTeXGenerator` class that converts `ResumeDocument` to LaTeX source using Jinja2 templating
+✓ [x] **Task 20:** `[coding]` Create `src/resume_generator/generation/templates/modern.tex` - a modern, ATS-compatible single-column LaTeX template with configurable colors and styling following research guidelines
+✓ [x] **Task 21:** `[coding]` Create `src/resume_generator/generation/templates/ats.tex` - a minimal ATS-optimized template (no graphics, single column, standard fonts)
+→ [ ] **Task 22:** `[coding]` Create `src/resume_generator/generation/generator.py` with `LaTeXGenerator` class that converts `ResumeDocument` to LaTeX source using Jinja2 templating
   [ ] **Task 23:** `[coding]` Create `src/resume_generator/generation/compiler.py` with `PDFCompiler` class that invokes `pdflatex` and handles compilation errors
   [ ] **Task 24:** `[coding]` Implement proper LaTeX escaping for special characters in `generator.py`
   [ ] **Task 25:** `[coding]` Create `src/resume_generator/ui/progress.py` with `PipelineUI` class using Rich library for colorful console output
@@ -51,32 +51,34 @@
   [ ] **Task 44:** `[quick]` Final cleanup: remove unused imports, ensure consistent formatting with `ruff`
 
 ## Latest Completed
-**Task 20:** `[coding]` Create `src/resume_generator/generation/templates/modern.tex` - a modern, ATS-compatible single-column LaTeX template with configurable colors and styling following research guidelines
+**Task 22:** `[coding]` Create `src/resume_generator/generation/generator.py` with `LaTeXGenerator` class that converts `ResumeDocument` to LaTeX source using Jinja2 templating
 
 ### Summary
-## Task Complete
+## Summary
 
-**What was completed:**
-- Created `src/resume_generator/generation/` module with `__init__.py`
-- Created `src/resume_generator/generation/templates/modern.tex` - a modern, ATS-compatible single-column LaTeX template with:
-  - Jinja2 templating syntax (using `((*` and `(((` delimiters for LaTeX compatibility)
-  - Configurable colors (primary, secondary, accent) following the research guideline of max 3 colors
-  - Font sizing per research guidelines: 22pt name, 14pt section headers, 11pt body text
-  - Margins optimized for content density (0.6-0.65in)
-  - Support for all ResumeDocument model sections: contact, summary, experience, education, skills, certifications, projects, and additional sections
-  - Sans-serif (Helvetica) default with serif option
-  - Clean, professional styling with proper visual hierarchy
+**Task #22 Completed:** Create `src/resume_generator/generation/generator.py` with `LaTeXGenerator` class
 
-**Tests run and results:**
-- Verified template LaTeX syntax compiles successfully with `pdflatex`
-- Generated test PDF (40KB, 1 page) confirmed proper formatting
+### What was completed:
+1. Created `LaTeXGenerator` class that converts `ResumeDocument` to LaTeX source using Jinja2 templating
+2. Implemented `latex_escape` filter handling all special LaTeX characters (`&`, `%`, `$`, `#`, `_`, `{`, `}`, `~`, `^`, `\`, `<`, `>`, `|`, `"`)
+3. Created `TemplateConfig` dataclass for template configuration (fonts, margins, colors)
+4. Added `hex_to_rgb` helper function for color conversion
+5. Added Jinja2 dependency to `pyproject.toml`
+6. Updated `__init__.py` exports
 
-**Files modified:**
-- `src/resume_generator/generation/__init__.py` (new)
-- `src/resume_generator/generation/templates/modern.tex` (new)
+### Tests run and results:
+- `latex_escape` function tests: ✅ All 9 test cases passed
+- `LaTeXGenerator` initialization tests: ✅ Passed
+- `generate()` method tests: ✅ Passed (both modern and ATS templates)
+- `generate_to_file()` method tests: ✅ Passed
+- `ruff check`: ✅ All checks passed
 
-**Commit hash:** `f5ada887f43cf321b3d1389084778b354c6ddb5a`
+### Files modified:
+1. `pyproject.toml` - Added `jinja2>=3.1.0` dependency
+2. `src/resume_generator/generation/__init__.py` - Added exports for `LaTeXGenerator`, `TemplateConfig`, `latex_escape`
+3. `src/resume_generator/generation/generator.py` - **New file** (207 lines)
 
-**Blockers:** None
+### Commit hash:
+`5a52dedff3b42752d74d3d9ffee1b247c702702d`
 
 TASK COMPLETE

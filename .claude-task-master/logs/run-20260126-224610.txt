@@ -1012,3 +1012,80 @@ Goal: Deeply understand the research results we have in this repo and, with them
 Current Task (#21): Create `src/resume_generator/generation/templates/ats.tex` - a minimal ATS-optimized template (no graphics, single column, standard fonts)
 
 Please complete this task.
+[RESPONSE]
+## Summary
+
+**Task #21 completed**: Created `src/resume_generator/generation/templates/ats.tex`
+
+### What was completed:
+- Created a minimal ATS-optimized LaTeX resume template with:
+  - Single-column layout (most ATS-compatible)
+  - Standard serif font (Palatino via `newpxtext`)
+  - No graphics, icons, or colors - all black text for maximum parsing compatibility
+  - 1-inch margins (traditional/conservative)
+  - Left-aligned text throughout
+  - Standard recognizable section headers: Summary, Experience, Education, Skills, Certifications, Projects
+  - Simple horizontal rules as section dividers (no decorative elements)
+  - Support for all resume data fields (contact info, experiences, education, skills, certifications, projects, additional sections)
+
+### Tests run:
+- ✓ Jinja2 template syntax validation passed
+- The template enum (`ResumeTemplate.ATS`) was already registered in `config.py`
+
+### Files modified:
+- `src/resume_generator/generation/templates/ats.tex` (new file)
+
+### Commit hash:
+`3c999eed0e20432cca00f05662a64290f91a1550`
+
+### Blockers:
+None
+
+```
+TASK COMPLETE
+```
+=== END | completed | 95.4s ===
+=== SESSION 22 | WORKING | 07:59:10 ===
+[PROMPT]
+Goal: Deeply understand the research results we have in this repo and, with them, together with python's claude sdk, let's create a proffessional python project to generate S+ tier resumes from a s...
+
+Current Task (#22): Create `src/resume_generator/generation/generator.py` with `LaTeXGenerator` class that converts `ResumeDocument` to LaTeX source using Jinja2 templating
+
+Please complete this task.
+[RESPONSE]
+## Summary
+
+**Task #22 Completed:** Create `src/resume_generator/generation/generator.py` with `LaTeXGenerator` class
+
+### What was completed:
+1. Created `LaTeXGenerator` class that converts `ResumeDocument` to LaTeX source using Jinja2 templating
+2. Implemented `latex_escape` filter handling all special LaTeX characters (`&`, `%`, `$`, `#`, `_`, `{`, `}`, `~`, `^`, `\`, `<`, `>`, `|`, `"`)
+3. Created `TemplateConfig` dataclass for template configuration (fonts, margins, colors)
+4. Added `hex_to_rgb` helper function for color conversion
+5. Added Jinja2 dependency to `pyproject.toml`
+6. Updated `__init__.py` exports
+
+### Tests run and results:
+- `latex_escape` function tests: ✅ All 9 test cases passed
+- `LaTeXGenerator` initialization tests: ✅ Passed
+- `generate()` method tests: ✅ Passed (both modern and ATS templates)
+- `generate_to_file()` method tests: ✅ Passed
+- `ruff check`: ✅ All checks passed
+
+### Files modified:
+1. `pyproject.toml` - Added `jinja2>=3.1.0` dependency
+2. `src/resume_generator/generation/__init__.py` - Added exports for `LaTeXGenerator`, `TemplateConfig`, `latex_escape`
+3. `src/resume_generator/generation/generator.py` - **New file** (207 lines)
+
+### Commit hash:
+`5a52dedff3b42752d74d3d9ffee1b247c702702d`
+
+TASK COMPLETE
+=== END | completed | 240.9s ===
+=== SESSION 23 | WORKING | 08:03:11 ===
+[PROMPT]
+Goal: Deeply understand the research results we have in this repo and, with them, together with python's claude sdk, let's create a proffessional python project to generate S+ tier resumes from a s...
+
+Current Task (#23): Create `src/resume_generator/generation/compiler.py` with `PDFCompiler` class that invokes `pdflatex` and handles compilation errors
+
+Please complete this task.
