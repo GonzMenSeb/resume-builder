@@ -1,0 +1,125 @@
+JOB POSTING: Senior Full Stack Engineer
+
+Company: TechCorp Innovation Labs
+Location: San Francisco, CA (Hybrid - 3 days on-site)
+Employment Type: Full-Time
+Experience Level: Senior (5+ years)
+Salary Range: $180,000 - $240,000 + equity
+
+---
+
+ABOUT THE ROLE
+
+We're looking for a Senior Full Stack Engineer to join our platform team and help us build the next generation of our infrastructure serving millions of users worldwide. You'll work with a talented team of engineers on both frontend and backend systems, taking ownership of critical features and mentoring junior engineers.
+
+This is a high-impact role where you'll have the opportunity to make architectural decisions, drive technical excellence, and shape the future of our platform. You'll own projects end-to-end, from design to production deployment.
+
+---
+
+RESPONSIBILITIES
+
+- Design and implement scalable backend services and APIs using modern Node.js frameworks
+- Build responsive, high-performance user interfaces using React and TypeScript
+- Lead architectural discussions and propose solutions for complex technical challenges
+- Mentor junior and mid-level engineers through code reviews, pair programming, and technical guidance
+- Collaborate with product managers, designers, and other engineers to deliver features that customers love
+- Participate in code reviews, design reviews, and technical discussions to maintain code quality
+- Contribute to improving developer experience, CI/CD pipelines, and infrastructure
+- Take ownership of production systems and participate in on-call rotation
+- Identify and drive improvements to system performance, scalability, and reliability
+
+---
+
+REQUIRED QUALIFICATIONS
+
+- 5+ years of professional software engineering experience
+- Strong expertise in modern JavaScript/TypeScript and at least one backend language (Node.js preferred)
+- Proven experience building and maintaining scalable web applications at scale
+- Deep knowledge of React or similar modern frontend frameworks
+- Experience with relational databases (PostgreSQL, MySQL) and noSQL databases (MongoDB, Redis)
+- Solid understanding of system design, scalability, and distributed systems concepts
+- Experience with containerization and orchestration (Docker, Kubernetes) or willingness to learn
+- Experience with CI/CD pipelines and cloud platforms (AWS, GCP, Azure)
+- Bachelor's degree in Computer Science or equivalent professional experience
+- Strong communication skills and ability to work effectively in a collaborative environment
+- Commitment to writing clean, testable, maintainable code
+- Experience with Git and modern development workflows
+
+---
+
+PREFERRED QUALIFICATIONS
+
+- Experience at a fast-growing startup or scaling company
+- Contributions to open source projects
+- Experience with GraphQL APIs
+- Knowledge of AWS services (Lambda, RDS, S3, ECS, etc.)
+- Experience with microservices architecture
+- Knowledge of security best practices and experience with secure coding
+- Experience mentoring junior engineers
+- Familiarity with TypeScript and strict type checking
+- Experience with testing frameworks (Jest, Testing Library, etc.)
+- Knowledge of performance optimization techniques
+- Experience with database design and optimization
+
+---
+
+TECHNICAL STACK
+
+Our team primarily works with:
+- Frontend: React, TypeScript, CSS-in-JS, Tailwind CSS
+- Backend: Node.js, Express, GraphQL
+- Databases: PostgreSQL (primary), MongoDB (secondary), Redis (caching)
+- Infrastructure: AWS (EC2, RDS, S3, Lambda), Docker, Kubernetes
+- DevOps: GitHub Actions, Terraform, ArgoCD
+- Monitoring: DataDog, Grafana, CloudWatch
+- Tools: Git, Jira, Slack, Figma
+
+---
+
+WHY YOU'LL LOVE WORKING HERE
+
+- Work on products used by millions of people worldwide
+- Competitive salary and generous equity packages
+- Comprehensive health benefits including medical, dental, and vision
+- Unlimited PTO and flexible work schedule
+- Professional development budget ($5K annually)
+- Home office setup allowance
+- Free catered lunches (in-office days)
+- Collaborative and inclusive engineering culture
+- Regular tech talks and learning opportunities
+- Opportunity to grow into leadership roles
+
+---
+
+INTERVIEW PROCESS
+
+1. Initial screening call with recruiter (30 minutes)
+2. Technical phone screen with senior engineer (60 minutes)
+3. Design interview covering system architecture (90 minutes)
+4. Full-day onsite interviews:
+   - Technical deep-dive interview (90 minutes)
+   - Product sense interview (60 minutes)
+   - Collaboration interview with future teammates (60 minutes)
+   - Meet with hiring manager (30 minutes)
+
+---
+
+COMPANY OVERVIEW
+
+TechCorp Innovation Labs is a Series C startup focused on building the infrastructure layer for next-generation cloud applications. We've raised $150M to date and are growing rapidly. Our products are used by over 100K developers and power applications serving billions of end users.
+
+We're backed by leading VCs including Sequoia Capital, Andreessen Horowitz, and others. Founded in 2018, we've grown to 200+ employees and are headquartered in San Francisco with offices in London and Singapore.
+
+---
+
+EQUAL OPPORTUNITY STATEMENT
+
+TechCorp is an equal opportunity employer committed to building a diverse and inclusive workforce. We welcome applications from people of all races, genders, ages, religions, identities, sexual orientations, and experiences. We believe that diversity drives innovation and makes us stronger as a company.
+
+---
+
+HOW TO APPLY
+
+Submit your resume, cover letter, and a link to your portfolio or GitHub profile to careers@techcorp.com with the subject line "Senior Full Stack Engineer Application".
+
+We review applications on a rolling basis and will respond to qualified candidates within one week.
