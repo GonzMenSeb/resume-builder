@@ -1129,3 +1129,44 @@ Goal: Deeply understand the research results we have in this repo and, with them
 Current Task (#24): Implement proper LaTeX escaping for special characters in `generator.py`
 
 Please complete this task.
+[RESPONSE]
+## Summary
+
+**What was completed:**
+- Enhanced the `latex_escape` function in `generator.py` with comprehensive Unicode character handling:
+  - Converted `LATEX_SIMPLE_ESCAPES` list to `LATEX_SPECIAL_CHARS` dict for better clarity
+  - Added `UNICODE_REPLACEMENTS` dict handling:
+    - Smart/curly quotes (`"` `"` `'` `'`) → LaTeX quotes (`` `` '' ` ')
+    - En-dash/em-dash (– —) → `--` and `---`
+    - Ellipsis (…) → `\ldots{}`
+    - Non-breaking space → `~` (LaTeX tie)
+    - Common symbols: degree (°), bullet (•), copyright (©), registered (®), trademark (™)
+    - Math operators: plus-minus (±), times (×), division (÷)
+  - Maintained proper handling for all LaTeX special characters: `& % $ # _ { } < > | \ ~ ^`
+
+**Tests run and results:**
+- ✓ `ruff check` - All checks passed
+- ✓ `mypy` - No errors in generator.py
+- ✓ Integration test with full `ResumeDocument` containing special characters:
+  - `&` properly escaped to `\&`
+  - `$` properly escaped to `\$`
+  - Em-dash `—` converted to `---`
+  - Ellipsis `…` converted to `\ldots{}`
+  - Trademark `™` converted to `\texttrademark{}`
+  - `#` in `C#` escaped to `\#`
+  - `<` escaped to `\textless{}`
+
+**Files modified:**
+- `src/resume_generator/generation/generator.py`
+
+**Commit hash:** `209bfd2`
+
+TASK COMPLETE
+=== END | completed | 196.4s ===
+=== SESSION 25 | WORKING | 08:08:37 ===
+[PROMPT]
+Goal: Deeply understand the research results we have in this repo and, with them, together with python's claude sdk, let's create a proffessional python project to generate S+ tier resumes from a s...
+
+Current Task (#25): Create `src/resume_generator/ui/progress.py` with `PipelineUI` class using Rich library for colorful console output
+
+Please complete this task.

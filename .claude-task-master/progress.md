@@ -1,7 +1,7 @@
 # Progress Tracker
 
-**Session:** 23
-**Current Task:** 23 of 44
+**Session:** 24
+**Current Task:** 24 of 44
 
 ## Task List
 
@@ -27,8 +27,8 @@
 ✓ [x] **Task 20:** `[coding]` Create `src/resume_generator/generation/templates/modern.tex` - a modern, ATS-compatible single-column LaTeX template with configurable colors and styling following research guidelines
 ✓ [x] **Task 21:** `[coding]` Create `src/resume_generator/generation/templates/ats.tex` - a minimal ATS-optimized template (no graphics, single column, standard fonts)
 ✓ [x] **Task 22:** `[coding]` Create `src/resume_generator/generation/generator.py` with `LaTeXGenerator` class that converts `ResumeDocument` to LaTeX source using Jinja2 templating
-→ [ ] **Task 23:** `[coding]` Create `src/resume_generator/generation/compiler.py` with `PDFCompiler` class that invokes `pdflatex` and handles compilation errors
-  [ ] **Task 24:** `[coding]` Implement proper LaTeX escaping for special characters in `generator.py`
+✓ [x] **Task 23:** `[coding]` Create `src/resume_generator/generation/compiler.py` with `PDFCompiler` class that invokes `pdflatex` and handles compilation errors
+→ [ ] **Task 24:** `[coding]` Implement proper LaTeX escaping for special characters in `generator.py`
   [ ] **Task 25:** `[coding]` Create `src/resume_generator/ui/progress.py` with `PipelineUI` class using Rich library for colorful console output
   [ ] **Task 26:** `[coding]` Implement `PipelineUI` methods: `start_pipeline()`, `update_stage()`, `show_progress()`, `show_success()`, `show_error()` with Rich panels, progress bars, and spinners
   [ ] **Task 27:** `[coding]` Add stage-by-stage progress visualization with Rich Live display: "📄 Loading Data", "🔍 Extracting Profile", "✨ Optimizing Content", "📝 Generating LaTeX", "🖨️ Compiling PDF"
@@ -51,37 +51,38 @@
   [ ] **Task 44:** `[quick]` Final cleanup: remove unused imports, ensure consistent formatting with `ruff`
 
 ## Latest Completed
-**Task 23:** `[coding]` Create `src/resume_generator/generation/compiler.py` with `PDFCompiler` class that invokes `pdflatex` and handles compilation errors
+**Task 24:** `[coding]` Implement proper LaTeX escaping for special characters in `generator.py`
 
 ### Summary
 ## Summary
 
 **What was completed:**
-- Created `src/resume_generator/generation/compiler.py` with the `PDFCompiler` class that:
-  - Invokes `pdflatex` for LaTeX to PDF compilation
-  - Parses and surfaces compilation errors/warnings from log files
-  - Supports both sync (`compile()`) and async (`compile_async()`) interfaces
-  - Handles input as either a file path or raw LaTeX string
-  - Cleans up auxiliary files (`.aux`, `.log`, `.out`, etc.) after compilation
-  - Provides configurable timeout, number of compile runs, and pdflatex path
-- Created `CompilationResult` and `CompilationError` dataclasses for structured error handling
-- Updated `src/resume_generator/generation/__init__.py` to export the new classes
+- Enhanced the `latex_escape` function in `generator.py` with comprehensive Unicode character handling:
+  - Converted `LATEX_SIMPLE_ESCAPES` list to `LATEX_SPECIAL_CHARS` dict for better clarity
+  - Added `UNICODE_REPLACEMENTS` dict handling:
+    - Smart/curly quotes (`"` `"` `'` `'`) → LaTeX quotes (`` `` '' ` ')
+    - En-dash/em-dash (– —) → `--` and `---`
+    - Ellipsis (…) → `\ldots{}`
+    - Non-breaking space → `~` (LaTeX tie)
+    - Common symbols: degree (°), bullet (•), copyright (©), registered (®), trademark (™)
+    - Math operators: plus-minus (±), times (×), division (÷)
+  - Maintained proper handling for all LaTeX special characters: `& % $ # _ { } < > | \ ~ ^`
 
 **Tests run and results:**
-- `ruff check`: All checks passed
-- `mypy`: No new errors in `compiler.py` (pre-existing errors in other files unrelated to this task)
-- Functional tests:
-  - ✓ PDFCompiler instantiation
-  - ✓ Dependency check
-  - ✓ Successful compilation of valid LaTeX
-  - ✓ Error handling and parsing for invalid LaTeX
-  - ✓ Output path functionality
-  - ✓ Module exports from package
+- ✓ `ruff check` - All checks passed
+- ✓ `mypy` - No errors in generator.py
+- ✓ Integration test with full `ResumeDocument` containing special characters:
+  - `&` properly escaped to `\&`
+  - `$` properly escaped to `\$`
+  - Em-dash `—` converted to `---`
+  - Ellipsis `…` converted to `\ldots{}`
+  - Trademark `™` converted to `\texttrademark{}`
+  - `#` in `C#` escaped to `\#`
+  - `<` escaped to `\textless{}`
 
 **Files modified:**
-- `src/resume_generator/generation/compiler.py` (new file)
-- `src/resume_generator/generation/__init__.py` (updated exports)
+- `src/resume_generator/generation/generator.py`
 
-**Commit hash:** `e465fc1`
+**Commit hash:** `209bfd2`
 
 TASK COMPLETE
