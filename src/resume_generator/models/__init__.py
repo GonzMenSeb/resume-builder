@@ -1,5 +1,14 @@
 """Pydantic data models for the resume generator."""
 
+from resume_generator.models.job import (
+    EmploymentType,
+    ExperienceLevel,
+    JobDescription,
+    JobRequirement,
+    RequirementPriority,
+    SalaryRange,
+    WorkArrangement,
+)
 from resume_generator.models.profile import (
     Certification,
     ContactInfo,
@@ -46,4 +55,12 @@ __all__ = [
     "ResumeSection",
     "ResumeSkillGroup",
     "SectionType",
+    # Job models (for tailoring)
+    "EmploymentType",
+    "ExperienceLevel",
+    "JobDescription",
+    "JobRequirement",
+    "RequirementPriority",
+    "SalaryRange",
+    "WorkArrangement",
 ]
