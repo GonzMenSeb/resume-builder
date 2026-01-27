@@ -122,13 +122,13 @@ From the research documents, key principles to implement:
 - [x] `[coding]` Create `src/resume_generator/optimization/prompts.py` with prompts implementing research principles: X-Y-Z formula, action verbs, quantified achievements
 - [x] `[coding]` Create `src/resume_generator/optimization/optimizer.py` with `ResumeOptimizer` class that transforms `PersonProfile` into `ResumeDocument` using Claude
 - [x] `[coding]` Create `src/resume_generator/optimization/tailoring.py` with `JobTailorer` class that optimizes resume content for specific job descriptions (keyword matching, bullet reordering, summary customization)
-- [ ] `[coding]` Implement keyword extraction and matching score calculation in `tailoring.py`
+- [x] `[coding]` Implement keyword extraction and matching score calculation in `tailoring.py`
 
 ---
 
 ### PR 5: LaTeX Generation & Compilation
 
-- [ ] `[coding]` Create `src/resume_generator/generation/templates/modern.tex` - a modern, ATS-compatible single-column LaTeX template with configurable colors and styling following research guidelines
+- [x] `[coding]` Create `src/resume_generator/generation/templates/modern.tex` - a modern, ATS-compatible single-column LaTeX template with configurable colors and styling following research guidelines
 - [ ] `[coding]` Create `src/resume_generator/generation/templates/ats.tex` - a minimal ATS-optimized template (no graphics, single column, standard fonts)
 - [ ] `[coding]` Create `src/resume_generator/generation/generator.py` with `LaTeXGenerator` class that converts `ResumeDocument` to LaTeX source using Jinja2 templating
 - [ ] `[coding]` Create `src/resume_generator/generation/compiler.py` with `PDFCompiler` class that invokes `pdflatex` and handles compilation errors

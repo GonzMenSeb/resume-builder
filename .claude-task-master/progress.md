@@ -1,7 +1,7 @@
 # Progress Tracker
 
-**Session:** 18
-**Current Task:** 18 of 44
+**Session:** 20
+**Current Task:** 20 of 44
 
 ## Task List
 
@@ -22,9 +22,9 @@
 ✓ [x] **Task 15:** `[quick]` Add retry logic with exponential backoff for API calls in `ProfileExtractor`
 ✓ [x] **Task 16:** `[coding]` Create `src/resume_generator/optimization/prompts.py` with prompts implementing research principles: X-Y-Z formula, action verbs, quantified achievements
 ✓ [x] **Task 17:** `[coding]` Create `src/resume_generator/optimization/optimizer.py` with `ResumeOptimizer` class that transforms `PersonProfile` into `ResumeDocument` using Claude
-→ [ ] **Task 18:** `[coding]` Create `src/resume_generator/optimization/tailoring.py` with `JobTailorer` class that optimizes resume content for specific job descriptions (keyword matching, bullet reordering, summary customization)
-  [ ] **Task 19:** `[coding]` Implement keyword extraction and matching score calculation in `tailoring.py`
-  [ ] **Task 20:** `[coding]` Create `src/resume_generator/generation/templates/modern.tex` - a modern, ATS-compatible single-column LaTeX template with configurable colors and styling following research guidelines
+✓ [x] **Task 18:** `[coding]` Create `src/resume_generator/optimization/tailoring.py` with `JobTailorer` class that optimizes resume content for specific job descriptions (keyword matching, bullet reordering, summary customization)
+✓ [x] **Task 19:** `[coding]` Implement keyword extraction and matching score calculation in `tailoring.py`
+→ [ ] **Task 20:** `[coding]` Create `src/resume_generator/generation/templates/modern.tex` - a modern, ATS-compatible single-column LaTeX template with configurable colors and styling following research guidelines
   [ ] **Task 21:** `[coding]` Create `src/resume_generator/generation/templates/ats.tex` - a minimal ATS-optimized template (no graphics, single column, standard fonts)
   [ ] **Task 22:** `[coding]` Create `src/resume_generator/generation/generator.py` with `LaTeXGenerator` class that converts `ResumeDocument` to LaTeX source using Jinja2 templating
   [ ] **Task 23:** `[coding]` Create `src/resume_generator/generation/compiler.py` with `PDFCompiler` class that invokes `pdflatex` and handles compilation errors
@@ -51,34 +51,32 @@
   [ ] **Task 44:** `[quick]` Final cleanup: remove unused imports, ensure consistent formatting with `ruff`
 
 ## Latest Completed
-**Task 18:** `[coding]` Create `src/resume_generator/optimization/tailoring.py` with `JobTailorer` class that optimizes resume content for specific job descriptions (keyword matching, bullet reordering, summary customization)
+**Task 20:** `[coding]` Create `src/resume_generator/generation/templates/modern.tex` - a modern, ATS-compatible single-column LaTeX template with configurable colors and styling following research guidelines
 
 ### Summary
-## Task Complete Summary
+## Task Complete
 
 **What was completed:**
-- Created `src/resume_generator/optimization/tailoring.py` with the `JobTailorer` class
-- Key features implemented:
-  - **Keyword extraction** from job descriptions (required skills, preferred skills, tech keywords)
-  - **Keyword match analysis** between resume and job (calculates match rate, identifies missing keywords)
-  - **Experience relevance scoring** based on title overlap, technology match, and bullet keyword density
-  - **Bullet reordering** by job relevance - most relevant bullets first
-  - **Skills reordering** prioritizing required → preferred → other job keywords
-  - **Rule-based tailoring** for when AI is unavailable
-  - **AI-enhanced tailoring** using Claude structured outputs (with retry logic)
-  - **Summary customization** placeholder for job-relevant professional summaries
-- Updated `__init__.py` to export `JobTailorer` and `TailoringError`
+- Created `src/resume_generator/generation/` module with `__init__.py`
+- Created `src/resume_generator/generation/templates/modern.tex` - a modern, ATS-compatible single-column LaTeX template with:
+  - Jinja2 templating syntax (using `((*` and `(((` delimiters for LaTeX compatibility)
+  - Configurable colors (primary, secondary, accent) following the research guideline of max 3 colors
+  - Font sizing per research guidelines: 22pt name, 14pt section headers, 11pt body text
+  - Margins optimized for content density (0.6-0.65in)
+  - Support for all ResumeDocument model sections: contact, summary, experience, education, skills, certifications, projects, and additional sections
+  - Sans-serif (Helvetica) default with serif option
+  - Clean, professional styling with proper visual hierarchy
 
 **Tests run and results:**
-- ✓ Ruff linting passed
-- ✓ Mypy type checking passed (only unrelated pydantic decorator warnings)
-- ✓ Import verification passed
-- ✓ Manual functional tests passed (keyword extraction, match analysis, bullet/skills reordering, rule-based tailoring)
+- Verified template LaTeX syntax compiles successfully with `pdflatex`
+- Generated test PDF (40KB, 1 page) confirmed proper formatting
 
 **Files modified:**
-1. `src/resume_generator/optimization/tailoring.py` (new - 616 lines)
-2. `src/resume_generator/optimization/__init__.py` (updated exports)
+- `src/resume_generator/generation/__init__.py` (new)
+- `src/resume_generator/generation/templates/modern.tex` (new)
 
-**Commit hash:** `72b4fc7`
+**Commit hash:** `f5ada887f43cf321b3d1389084778b354c6ddb5a`
+
+**Blockers:** None
 
 TASK COMPLETE

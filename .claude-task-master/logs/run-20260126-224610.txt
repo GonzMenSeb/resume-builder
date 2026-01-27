@@ -923,3 +923,92 @@ Goal: Deeply understand the research results we have in this repo and, with them
 Current Task (#19): Implement keyword extraction and matching score calculation in `tailoring.py`
 
 Please complete this task.
+[RESPONSE]
+## Summary
+
+**Task #19 Complete: Implement keyword extraction and matching score calculation in `tailoring.py`**
+
+### What was completed:
+
+1. **Enhanced Keyword Extraction**:
+   - Added `extract_keywords_detailed()` method returning keywords with sources and weights
+   - Implemented `_extract_bigrams()` for multi-word phrase detection (33 common tech phrases)
+   - Added comprehensive `ACRONYM_EXPANSIONS` dictionary (49 common tech acronyms like ML→"machine learning", AWS→"amazon web services", etc.)
+
+2. **Advanced Matching Algorithm**:
+   - Implemented `_find_best_match()` with 4 match types: exact, acronym_expansion, acronym_match, fuzzy, text_contains
+   - Added fuzzy matching using `SequenceMatcher` with 0.85 threshold
+   - Implemented bidirectional acronym matching (matches both "ML" to "machine learning" and vice versa)
+
+3. **Weighted Scoring System**:
+   - `WEIGHT_REQUIRED = 3.0` for required skills
+   - `WEIGHT_PREFERRED = 2.0` for preferred skills  
+   - `WEIGHT_GENERAL = 1.0` for general keywords
+   - Match type weights: exact=1.0, fuzzy=0.7, partial=0.5
+
+4. **New Data Structures**:
+   - `KeywordMatchResult` dataclass for individual match details
+   - `MatchAnalysis` dataclass with comprehensive analysis: match_rate, weighted_score, required_match_rate, preferred_match_rate, missing_required, missing_preferred, recommendations
+
+5. **New Methods**:
+   - `analyze_keyword_match_detailed()` - comprehensive analysis with weighted scoring
+   - `calculate_match_score()` - normalized 0-1 score combining match rate (60%) and weighted score (40%)
+   - `_get_resume_text()` - extracts all text for full-text matching
+   - `_generate_recommendations()` - actionable recommendations based on analysis
+
+### Tests run:
+- Import verification: ✅
+- Ruff linting: ✅ All checks passed
+- Functional tests: ✅ All features working correctly
+
+### Files modified:
+- `src/resume_generator/optimization/tailoring.py` - Main implementation
+- `src/resume_generator/optimization/__init__.py` - Export new classes
+
+### Commit hash:
+`c5bbc39fbe343168d2b92083cbdffbd839e154af`
+
+TASK COMPLETE
+=== END | completed | 235.0s ===
+=== SESSION 20 | WORKING | 07:54:57 ===
+[PROMPT]
+Goal: Deeply understand the research results we have in this repo and, with them, together with python's claude sdk, let's create a proffessional python project to generate S+ tier resumes from a s...
+
+Current Task (#20): Create `src/resume_generator/generation/templates/modern.tex` - a modern, ATS-compatible single-column LaTeX template with configurable colors and styling following research gui...
+
+Please complete this task.
+[RESPONSE]
+## Task Complete
+
+**What was completed:**
+- Created `src/resume_generator/generation/` module with `__init__.py`
+- Created `src/resume_generator/generation/templates/modern.tex` - a modern, ATS-compatible single-column LaTeX template with:
+  - Jinja2 templating syntax (using `((*` and `(((` delimiters for LaTeX compatibility)
+  - Configurable colors (primary, secondary, accent) following the research guideline of max 3 colors
+  - Font sizing per research guidelines: 22pt name, 14pt section headers, 11pt body text
+  - Margins optimized for content density (0.6-0.65in)
+  - Support for all ResumeDocument model sections: contact, summary, experience, education, skills, certifications, projects, and additional sections
+  - Sans-serif (Helvetica) default with serif option
+  - Clean, professional styling with proper visual hierarchy
+
+**Tests run and results:**
+- Verified template LaTeX syntax compiles successfully with `pdflatex`
+- Generated test PDF (40KB, 1 page) confirmed proper formatting
+
+**Files modified:**
+- `src/resume_generator/generation/__init__.py` (new)
+- `src/resume_generator/generation/templates/modern.tex` (new)
+
+**Commit hash:** `f5ada887f43cf321b3d1389084778b354c6ddb5a`
+
+**Blockers:** None
+
+TASK COMPLETE
+=== END | completed | 157.7s ===
+=== SESSION 21 | WORKING | 07:57:35 ===
+[PROMPT]
+Goal: Deeply understand the research results we have in this repo and, with them, together with python's claude sdk, let's create a proffessional python project to generate S+ tier resumes from a s...
+
+Current Task (#21): Create `src/resume_generator/generation/templates/ats.tex` - a minimal ATS-optimized template (no graphics, single column, standard fonts)
+
+Please complete this task.
