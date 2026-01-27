@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Annotated
 
+import httpx
 import typer
+from pydantic import HttpUrl
 from rich.console import Console
 
 from resume_generator import __version__
@@ -82,6 +85,14 @@ def generate(
             readable=True,
         ),
     ] = None,
+    job_url: Annotated[
+        str | None,
+        typer.Option(
+            "--job-url",
+            "-u",
+            help="URL to job posting (will fetch and extract text)",
+        ),
+    ] = None,
     template: Annotated[
         ResumeTemplate,
         typer.Option(
@@ -118,11 +129,14 @@ def generate(
         [dim]# Generate from a single PDF[/]
         resume-gen generate ./my_resume.pdf
 
-        [dim]# Generate with job tailoring[/]
-        resume-gen generate ./data/ --job "Senior Python Developer at..."
+        [dim]# Generate with job tailoring from URL[/]
+        resume-gen generate ./data/ --job-url https://example.com/job-posting
 
         [dim]# Generate with specific template and output path[/]
         resume-gen generate ./data/ -t ats -o ./output/resume.pdf
+
+        [dim]# Verbose output for debugging[/]
+        resume-gen generate ./data/ -V --job "Senior Python Developer..."
     """
     try:
         settings = _build_settings(no_compile, verbose)
@@ -130,7 +144,7 @@ def generate(
         console.print(f"[bold red]Configuration error:[/] {e}")
         raise typer.Exit(1) from e
 
-    job = _parse_job_description(job_description, job_file)
+    job = _parse_job_description(job_description, job_file, job_url, verbose)
 
     ui = PipelineUI(verbose=verbose)
     pipeline = ResumePipeline(settings=settings, ui=ui)
@@ -183,14 +197,63 @@ def _build_settings(no_compile: bool, verbose: bool) -> Settings:
 def _parse_job_description(
     job_text: str | None,
     job_file: Path | None,
+    job_url: str | None,
+    verbose: bool,
 ) -> JobDescription | None:
-    """Parse job description from text or file."""
+    """Parse job description from text, file, or URL."""
     if job_file:
         text = job_file.read_text(encoding="utf-8")
         return JobDescription(title="Target Position", raw_text=text)
+    if job_url:
+        text = _fetch_job_url(job_url, verbose)
+        return JobDescription(
+            title="Target Position",
+            raw_text=text,
+            posting_url=HttpUrl(job_url),
+        )
     if job_text:
         return JobDescription(title="Target Position", raw_text=job_text)
     return None
+
+
+def _fetch_job_url(url: str, verbose: bool) -> str:
+    """Fetch job posting content from URL."""
+    if verbose:
+        console.print(f"[dim]Fetching job posting from: {url}[/]")
+
+    try:
+        with httpx.Client(follow_redirects=True, timeout=30.0) as client:
+            headers = {
+                "User-Agent": "Mozilla/5.0 (compatible; ResumeGen/1.0)",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            }
+            response = client.get(url, headers=headers)
+            response.raise_for_status()
+            content = response.text
+    except httpx.HTTPStatusError as e:
+        raise typer.BadParameter(f"Failed to fetch URL (HTTP {e.response.status_code}): {url}") from e
+    except httpx.RequestError as e:
+        raise typer.BadParameter(f"Failed to fetch URL: {e}") from e
+
+    text = _extract_text_from_html(content)
+    if verbose:
+        console.print(f"[dim]Extracted {len(text)} characters from job posting[/]")
+    return text
+
+
+def _extract_text_from_html(html: str) -> str:
+    """Extract readable text from HTML content."""
+    text = re.sub(r"<script[^>]*>.*?</script>", "", html, flags=re.DOTALL | re.IGNORECASE)
+    text = re.sub(r"<style[^>]*>.*?</style>", "", text, flags=re.DOTALL | re.IGNORECASE)
+    text = re.sub(r"<[^>]+>", " ", text)
+    text = re.sub(r"&nbsp;", " ", text)
+    text = re.sub(r"&amp;", "&", text)
+    text = re.sub(r"&lt;", "<", text)
+    text = re.sub(r"&gt;", ">", text)
+    text = re.sub(r"&quot;", '"', text)
+    text = re.sub(r"&#\d+;", "", text)
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
 
 
 if __name__ == "__main__":

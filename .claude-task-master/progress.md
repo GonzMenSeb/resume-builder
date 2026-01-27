@@ -1,7 +1,7 @@
 # Progress Tracker
 
-**Session:** 30
-**Current Task:** 30 of 44
+**Session:** 31
+**Current Task:** 31 of 44
 
 ## Task List
 
@@ -34,8 +34,8 @@
 ✓ [x] **Task 27:** `[coding]` Add stage-by-stage progress visualization with Rich Live display: "📄 Loading Data", "🔍 Extracting Profile", "✨ Optimizing Content", "📝 Generating LaTeX", "🖨️ Compiling PDF"
 ✓ [x] **Task 28:** `[coding]` Implement summary panel showing extraction stats, optimization score, and output path
 ✓ [x] **Task 29:** `[coding]` Create `src/resume_generator/pipeline.py` with `ResumePipeline` class orchestrating: ingestion → extraction → optimization → generation → compilation
-→ [ ] **Task 30:** `[coding]` Implement async pipeline execution with proper error handling and stage tracking
-  [ ] **Task 31:** `[coding]` Create `src/resume_generator/main.py` with Typer CLI: `generate` command accepting input paths, job description (optional), output path, and template selection
+✓ [x] **Task 30:** `[coding]` Implement async pipeline execution with proper error handling and stage tracking
+→ [ ] **Task 31:** `[coding]` Create `src/resume_generator/main.py` with Typer CLI: `generate` command accepting input paths, job description (optional), output path, and template selection
   [ ] **Task 32:** `[coding]` Add CLI options: `--job-url` for job posting URL, `--template` for template selection, `--output` for output path, `--verbose` for debug output
   [ ] **Task 33:** `[quick]` Add CLI entry point in `pyproject.toml` under `[project.scripts]`: `resume-gen = "resume_generator.main:app"`
   [ ] **Task 34:** `[general]` Create `tests/conftest.py` with pytest fixtures for sample data, mock Claude responses, and temporary directories
@@ -51,60 +51,36 @@
   [ ] **Task 44:** `[quick]` Final cleanup: remove unused imports, ensure consistent formatting with `ruff`
 
 ## Latest Completed
-**Task 30:** `[coding]` Implement async pipeline execution with proper error handling and stage tracking
+**Task 31:** `[coding]` Create `src/resume_generator/main.py` with Typer CLI: `generate` command accepting input paths, job description (optional), output path, and template selection
 
 ### Summary
 ## Summary
 
 **What was completed:**
-- Implemented async pipeline execution with `run_async()` method that:
-  - Runs CPU-bound stages (extraction, optimization, tailoring) in a thread pool via `loop.run_in_executor()`
-  - Maintains proper error handling with stage context
-  - Tracks timing for each stage
-  - Returns detailed `StageResult` objects for each completed/failed stage
-
-- Added `run_with_callbacks()` method for custom progress tracking:
-  - Supports `on_stage_start`, `on_stage_complete`, and `on_error` callbacks
-  - Useful for integrating with external logging/monitoring systems
-
-- Added `StageStatus` enum with values: PENDING, RUNNING, COMPLETED, FAILED, SKIPPED
-
-- Added `StageResult` dataclass containing:
-  - stage (PipelineStage)
-  - status (StageStatus)
-  - duration_seconds
-  - error (optional Exception)
-  - data (stage output)
-
-- Enhanced `PipelineError`:
-  - Added `cause` parameter for exception chaining
-  - Properly sets `__cause__` for Python exception chaining
-
-- Enhanced `PipelineResult`:
-  - Added `stage_results` list for detailed stage tracking
-  - Added `total_duration_seconds` for overall pipeline timing
-  - Added `completed_stages` property to list successful stages
-  - Added `failed_stage` property to identify which stage failed
-
-- Updated `__init__.py` exports to include `StageStatus` and `StageResult`
+- Created `src/resume_generator/main.py` with a Typer CLI entry point
+- Implemented the `generate` command with all required options:
+  - Input paths (positional arguments) - accepts multiple files/directories
+  - `--output/-o` - output path for generated resume
+  - `--job/-j` - job description text for tailoring (optional)
+  - `--job-file/-J` - path to file containing job description (optional)
+  - `--template/-t` - template selection (modern/ats)
+  - `--no-compile` - skip PDF compilation
+  - `--verbose/-V` - enable verbose output
+  - `--version/-v` - show version
 
 **Tests run and results:**
-- ✓ `ruff check src/resume_generator/pipeline.py` - All checks passed
-- ✓ `mypy src/resume_generator/pipeline.py` - No errors in pipeline.py (pre-existing model errors unrelated)
-- ✓ Import verification - All classes import correctly
-- ✓ StageStatus enum test - Works correctly
-- ✓ StageResult dataclass test - Works correctly
-- ✓ PipelineError with stage and cause test - Works correctly
-- ✓ PipelineResult stage tracking test - Works correctly
-- ✓ Async method signature verification - Correct signatures
-- ✓ Coroutine function verification - Properly defined as async
+- `ruff check` - All checks passed
+- `python3 -c "from resume_generator.main import app"` - Import OK
+- `python3 -m resume_generator.main --help` - Works correctly
+- `python3 -m resume_generator.main generate --help` - Works correctly
+- `python3 -m resume_generator.main --version` - Shows "resume-gen version 0.1.0"
+- `mypy src/resume_generator/main.py` - No errors in main.py
 
 **Files modified:**
-- `src/resume_generator/pipeline.py` (358 lines added/changed)
-- `src/resume_generator/__init__.py` (updated exports)
+- `src/resume_generator/main.py` (new file)
 
-**Commit hash:** `03f3d11`
+**Commit hash:** `a9158a61e7ed672279f5a1ba9436916e44d6301d`
 
-```
+**Blockers:** None
+
 TASK COMPLETE
-```
