@@ -9,6 +9,7 @@ from resume_generator.ui.progress import (
     StageDisplayConfig,
     StageInfo,
     StageProgressDisplay,
+    SummaryPanel,
 )
 
 __all__ = [
@@ -20,4 +21,5 @@ __all__ = [
     "StageProgressDisplay",
     "StageDisplayConfig",
     "STAGE_DISPLAY_CONFIG",
+    "SummaryPanel",
 ]

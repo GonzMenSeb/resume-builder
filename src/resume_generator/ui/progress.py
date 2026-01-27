@@ -253,6 +253,143 @@ PIPELINE_STAGE_TO_DISPLAY_INDEX: dict[PipelineStage, int] = {
 }
 
 
+class SummaryPanel:
+    """Renders a comprehensive summary panel with extraction stats, optimization score, and output path."""
+
+    def __init__(self, stats: PipelineStats, total_time: float = 0.0) -> None:
+        self.stats = stats
+        self.total_time = total_time
+
+    def _build_mini_bar(self, value: float, width: int = 15) -> str:
+        filled = int(value * width)
+        partial = int((value * width - filled) * 2)
+        empty = width - filled - (1 if partial else 0)
+        partial_char = "▓" if partial else ""
+        return "█" * filled + partial_char + "░" * empty
+
+    def _get_score_color(self, value: float) -> str:
+        if value >= 0.85:
+            return "bold bright_green"
+        elif value >= 0.70:
+            return "bright_green"
+        elif value >= 0.50:
+            return "yellow"
+        return "bright_red"
+
+    def _get_score_grade(self, value: float) -> str:
+        if value >= 0.95:
+            return "S+"
+        elif value >= 0.90:
+            return "S"
+        elif value >= 0.85:
+            return "A+"
+        elif value >= 0.80:
+            return "A"
+        elif value >= 0.70:
+            return "B"
+        elif value >= 0.60:
+            return "C"
+        return "D"
+
+    def _build_extraction_section(self) -> Table:
+        table = Table(show_header=False, box=None, padding=(0, 1), expand=True)
+        table.add_column("Icon", width=3, justify="center")
+        table.add_column("Label", width=20)
+        table.add_column("Value", justify="right")
+
+        if self.stats.files_loaded > 0:
+            table.add_row("📁", "Files Processed", Text(str(self.stats.files_loaded), style="bold bright_cyan"))
+        if self.stats.total_characters > 0:
+            chars = f"{self.stats.total_characters:,}"
+            table.add_row("📊", "Characters Parsed", Text(chars, style="cyan"))
+        if self.stats.experiences_extracted > 0:
+            table.add_row("💼", "Work Experiences", Text(str(self.stats.experiences_extracted), style="bold bright_yellow"))
+        if self.stats.skills_extracted > 0:
+            table.add_row("🎯", "Skills Identified", Text(str(self.stats.skills_extracted), style="bold bright_magenta"))
+        if self.stats.bullets_optimized > 0:
+            table.add_row("✨", "Bullets Optimized", Text(str(self.stats.bullets_optimized), style="bold green"))
+
+        return table
+
+    def _build_optimization_section(self) -> Table:
+        table = Table(show_header=False, box=None, padding=(0, 1), expand=True)
+        table.add_column("Metric", width=18)
+        table.add_column("Bar", width=17, justify="center")
+        table.add_column("Score", width=8, justify="right")
+        table.add_column("Grade", width=4, justify="center")
+
+        if self.stats.keyword_match_rate > 0:
+            rate = self.stats.keyword_match_rate
+            bar = self._build_mini_bar(rate)
+            color = self._get_score_color(rate)
+            grade = self._get_score_grade(rate)
+            table.add_row(
+                Text("🔑 Keyword Match", style="bright_white"),
+                Text(bar, style=color),
+                Text(f"{rate:.0%}", style=color),
+                Text(grade, style=color),
+            )
+
+        if self.stats.optimization_score > 0:
+            score = self.stats.optimization_score
+            bar = self._build_mini_bar(score)
+            color = self._get_score_color(score)
+            grade = self._get_score_grade(score)
+            table.add_row(
+                Text("⚡ Quality Score", style="bright_white"),
+                Text(bar, style=color),
+                Text(f"{score:.0%}", style=color),
+                Text(grade, style=color),
+            )
+
+        return table
+
+    def _build_output_section(self) -> Text:
+        text = Text()
+        if self.stats.output_path:
+            text.append("📄 ", style="bright_green")
+            text.append("Output: ", style="bright_white")
+            text.append(str(self.stats.output_path), style="bold bright_cyan underline")
+        return text
+
+    def render(self) -> Panel:
+        sections: list[RenderableType] = []
+
+        header = Text()
+        header.append("✅ ", style="bold bright_green")
+        header.append("Pipeline Complete", style="bold bright_green")
+        header.append(" • ", style="dim")
+        header.append(f"{self.total_time:.1f}s", style="bright_cyan")
+        sections.append(header)
+        sections.append(Text())
+
+        extraction = self._build_extraction_section()
+        if extraction.row_count > 0:
+            sections.append(Text("─── Extraction Stats ───", style="dim bright_cyan"))
+            sections.append(extraction)
+            sections.append(Text())
+
+        optimization = self._build_optimization_section()
+        if optimization.row_count > 0:
+            sections.append(Text("─── Optimization Score ───", style="dim bright_magenta"))
+            sections.append(optimization)
+            sections.append(Text())
+
+        if self.stats.output_path:
+            sections.append(Text("─── Output ───", style="dim bright_green"))
+            sections.append(self._build_output_section())
+
+        content = Group(*sections)
+
+        return Panel(
+            content,
+            title="[bold bright_white]📊 Resume Generation Summary",
+            border_style="bright_blue",
+            style=Style(bgcolor="grey7"),
+            padding=(1, 2),
+        )
+
+
 class PipelineUI:
     """Rich-based UI for pipeline progress visualization."""
 
@@ -589,13 +726,17 @@ class PipelineUI:
             self._live = None
 
         self._stats.output_path = output_path
-        total_time = time() - self._start_time
 
         self.console.print()
         self.console.print(Rule(style="bright_green"))
-        success_panel = self._build_success_panel(total_time, output_path)
-        self.console.print(success_panel)
+        self.show_summary()
         self.console.print()
+
+    def show_summary(self) -> None:
+        """Display the summary panel with extraction stats, optimization score, and output path."""
+        total_time = time() - self._start_time if self._start_time > 0 else 0.0
+        summary = SummaryPanel(self._stats, total_time)
+        self.console.print(summary.render())
 
     def _build_success_panel(self, total_time: float, output_path: Path | None) -> Panel:
         """Build the success summary panel with celebration styling."""

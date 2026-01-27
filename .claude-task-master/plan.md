@@ -138,9 +138,9 @@ From the research documents, key principles to implement:
 
 ### PR 6: Rich Terminal UI & Progress Tracking
 
-- [ ] `[coding]` Create `src/resume_generator/ui/progress.py` with `PipelineUI` class using Rich library for colorful console output
-- [ ] `[coding]` Implement `PipelineUI` methods: `start_pipeline()`, `update_stage()`, `show_progress()`, `show_success()`, `show_error()` with Rich panels, progress bars, and spinners
-- [ ] `[coding]` Add stage-by-stage progress visualization with Rich Live display: "📄 Loading Data", "🔍 Extracting Profile", "✨ Optimizing Content", "📝 Generating LaTeX", "🖨️ Compiling PDF"
+- [x] `[coding]` Create `src/resume_generator/ui/progress.py` with `PipelineUI` class using Rich library for colorful console output
+- [x] `[coding]` Implement `PipelineUI` methods: `start_pipeline()`, `update_stage()`, `show_progress()`, `show_success()`, `show_error()` with Rich panels, progress bars, and spinners
+- [x] `[coding]` Add stage-by-stage progress visualization with Rich Live display: "📄 Loading Data", "🔍 Extracting Profile", "✨ Optimizing Content", "📝 Generating LaTeX", "🖨️ Compiling PDF"
 - [ ] `[coding]` Implement summary panel showing extraction stats, optimization score, and output path
 
 ---
