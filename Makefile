@@ -100,7 +100,7 @@ typecheck-pyright:
 # Combined checks
 check: lint typecheck test-unit
 
-check-all: lint typecheck test
+check-all: lint typecheck test test-e2e
 
 ci: format-check lint typecheck test-cov
 
@@ -113,7 +113,7 @@ clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 	find . -type f -name "*.pyc" -delete 2>/dev/null || true
 	find . -type f -name "*.pyo" -delete 2>/dev/null || true
-	rm E2E_TEST_RESULTS.md
+	rm -f E2E_TEST_RESULTS.md
 
 clean-cache:
 	rm -rf .pytest_cache/

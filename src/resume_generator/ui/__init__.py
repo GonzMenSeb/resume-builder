@@ -2,13 +2,10 @@
 
 from resume_generator.ui.progress import (
     STAGE_CONFIG,
-    STAGE_DISPLAY_CONFIG,
     PipelineStage,
     PipelineStats,
     PipelineUI,
-    StageDisplayConfig,
     StageInfo,
-    StageProgressDisplay,
     SummaryPanel,
 )
 
@@ -18,8 +15,5 @@ __all__ = [
     "PipelineStats",
     "StageInfo",
     "STAGE_CONFIG",
-    "StageProgressDisplay",
-    "StageDisplayConfig",
-    "STAGE_DISPLAY_CONFIG",
     "SummaryPanel",
 ]

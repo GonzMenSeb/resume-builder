@@ -6,11 +6,11 @@ This test validates the entire pipeline with mocked Claude CLI responses.
 
 import json
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
-from resume_generator.claude_client import InvokeResult
+from resume_generator.claude_client import ClaudeCLI, InvokeResult
 from resume_generator.config import ClaudeModel, ResumeTemplate, Settings
 from resume_generator.ingestion.loader import DataLoader
 from resume_generator.pipeline import ResumePipeline
@@ -158,12 +158,15 @@ def test_full_pipeline_with_mocked_cli(tmp_path: Path) -> None:
 
     output_path = output_dir / "test_resume.tex"
 
-    ui = PipelineUI(verbose=False)
-    pipeline = ResumePipeline(settings=settings, ui=ui)
-
     call_count = [0]
 
-    def mock_invoke(_prompt: str, _system: str | None = None) -> InvokeResult:
+    def mock_invoke(
+        self: ClaudeCLI,
+        prompt: str,
+        system: str | None = None,
+        working_dir: Path | None = None,
+    ) -> InvokeResult:
+        del self, prompt, system, working_dir
         call_count[0] += 1
         if call_count[0] == 1:
             output = create_mock_profile_response()
@@ -174,9 +177,6 @@ def test_full_pipeline_with_mocked_cli(tmp_path: Path) -> None:
         else:
             output = create_mock_skills_response()
         return InvokeResult(success=True, output=output, exit_code=0)
-
-    mock_cli = MagicMock()
-    mock_cli.invoke.side_effect = mock_invoke
 
     test_input = tmp_path / "resume_input.txt"
     test_input.write_text(
@@ -194,9 +194,13 @@ def test_full_pipeline_with_mocked_cli(tmp_path: Path) -> None:
     )
 
     with (
-        patch("resume_generator.extraction.profile.ClaudeCLI", return_value=mock_cli),
-        patch("resume_generator.optimization.optimizer.ClaudeCLI", return_value=mock_cli),
+        patch.object(ClaudeCLI, "available", return_value=True),
+        patch.object(ClaudeCLI, "version", return_value="mocked-version"),
+        patch.object(ClaudeCLI, "invoke", mock_invoke),
     ):
+        ui = PipelineUI(verbose=False)
+        pipeline = ResumePipeline(settings=settings, ui=ui)
+
         result = pipeline.run(
             sources=[test_input],
             output_path=output_path,

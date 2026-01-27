@@ -15,6 +15,24 @@ class ResumeTemplate(str, Enum):
     ATS = "ats"
 
 
+class ResumeLanguage(str, Enum):
+    """Supported output languages for resume generation."""
+
+    EN = "en"
+    ES = "es"
+    FR = "fr"
+    DE = "de"
+    PT = "pt"
+    IT = "it"
+    ZH = "zh"
+    JA = "ja"
+    KO = "ko"
+    AR = "ar"
+    NL = "nl"
+    RU = "ru"
+    PL = "pl"
+
+
 class ClaudeModel(str, Enum):
     """Supported Claude models for CLI invocation."""
 
@@ -151,6 +169,10 @@ class Settings(BaseSettings):
     verbose: bool = Field(
         default=False,
         description="Enable verbose output for debugging",
+    )
+    output_language: ResumeLanguage = Field(
+        default=ResumeLanguage.EN,
+        description="Language for the generated resume content",
     )
 
     @field_validator("output_dir", "templates_dir", "cache_dir", mode="before")

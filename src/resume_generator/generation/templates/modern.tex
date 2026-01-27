@@ -85,9 +85,9 @@
     ((* if contact.linkedin_url or contact.github_url or contact.portfolio_url *))
     \\[3pt]
     {\color{accent}
-        ((* if contact.linkedin_url *))\href{((( contact.linkedin_url | string )))}{LinkedIn}((* endif *))%
-        ((* if contact.github_url *)) \enspace $\cdot$ \enspace \href{((( contact.github_url | string )))}{GitHub}((* endif *))%
-        ((* if contact.portfolio_url *)) \enspace $\cdot$ \enspace \href{((( contact.portfolio_url | string )))}{Portfolio}((* endif *))
+        ((* if contact.linkedin_url *))\href{((( contact.linkedin_url | string )))}{((( labels.linkedin | default('LinkedIn') )))}((* endif *))%
+        ((* if contact.github_url *)) \enspace $\cdot$ \enspace \href{((( contact.github_url | string )))}{((( labels.github | default('GitHub') )))}((* endif *))%
+        ((* if contact.portfolio_url *)) \enspace $\cdot$ \enspace \href{((( contact.portfolio_url | string )))}{((( labels.portfolio | default('Portfolio') )))}((* endif *))
     }
     ((* endif *))
 \end{center}
@@ -95,13 +95,13 @@
 
 ((* if professional_summary *))
 %% === PROFESSIONAL SUMMARY ===
-\section{Professional Summary}
+\section{((( labels.professional_summary | default('Professional Summary') )))}
 ((( professional_summary | latex_escape )))
 ((* endif *))
 
 ((* if experiences *))
 %% === EXPERIENCE ===
-\section{Experience}
+\section{((( labels.experience | default('Experience') )))}
 
 ((* for exp in experiences *))
 \noindent
@@ -123,13 +123,13 @@
 
 ((* if education *))
 %% === EDUCATION ===
-\section{Education}
+\section{((( labels.education | default('Education') )))}
 
 ((* for edu in education *))
 \noindent
 \textbf{\color{secondary}((( edu.degree | latex_escape )))}((* if edu.graduation_str *)) \hfill {\color{accent}((( edu.graduation_str )))}((* endif *))\\
 ((( edu.institution | latex_escape )))((* if edu.location *)), ((( edu.location | latex_escape )))((* endif *))%
-((* if edu.gpa *)) \enspace $\cdot$ \enspace GPA: ((( edu.gpa )))((* endif *))
+((* if edu.gpa *)) \enspace $\cdot$ \enspace ((( labels.gpa | default('GPA') ))): ((( edu.gpa )))((* endif *))
 ((* if edu.honors *))
 \begin{itemize}
 ((* for honor in edu.honors *))
@@ -144,7 +144,7 @@
 
 ((* if skills *))
 %% === SKILLS ===
-\section{Skills}
+\section{((( labels.skills | default('Skills') )))}
 ((* for skill_group in skills *))
 \textbf{((( skill_group.category | latex_escape ))):} ((( skill_group.skills | join(', ') | latex_escape )))((* if not loop.last *))\\[2pt]((* endif *))
 ((* endfor *))
@@ -152,7 +152,7 @@
 
 ((* if certifications *))
 %% === CERTIFICATIONS ===
-\section{Certifications}
+\section{((( labels.certifications | default('Certifications') )))}
 ((* for cert in certifications *))
 \noindent
 \textbf{((( cert.name | latex_escape )))}((* if cert.issuer *)) -- ((( cert.issuer | latex_escape )))((* endif *))((* if cert.date_earned *)) \hfill {\color{accent}((( cert.date_earned.strftime('%Y') )))}((* endif *))((* if not loop.last *))\\[2pt]((* endif *))
@@ -161,7 +161,7 @@
 
 ((* if projects *))
 %% === PROJECTS ===
-\section{Projects}
+\section{((( labels.projects | default('Projects') )))}
 
 ((* for project in projects *))
 \noindent
@@ -170,7 +170,7 @@
 \\((( project.description | latex_escape )))
 ((* endif *))
 ((* if project.technologies *))
-\\{\small\color{accent}Technologies: ((( project.technologies | join(', ') | latex_escape )))}
+\\{\small\color{accent}((( labels.technologies | default('Technologies') ))): ((( project.technologies | join(', ') | latex_escape )))}
 ((* endif *))
 ((* if project.highlights *))
 \begin{itemize}

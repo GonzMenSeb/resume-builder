@@ -3,11 +3,11 @@
 
 import json
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
-from resume_generator.claude_client import InvokeResult
+from resume_generator.claude_client import ClaudeCLI, InvokeResult
 from resume_generator.config import ClaudeModel, ResumeTemplate, Settings
 from resume_generator.pipeline import ResumePipeline
 from resume_generator.ui.progress import PipelineUI
@@ -146,12 +146,15 @@ def test_e2e_with_real_pdf(pdf_file: Path, tmp_path: Path) -> None:
     output_name = pdf_file.stem + "_generated"
     output_path = output_dir / f"{output_name}.tex"
 
-    ui = PipelineUI(verbose=False)
-    pipeline = ResumePipeline(settings=settings, ui=ui)
-
     call_count = [0]
 
-    def mock_invoke(_prompt: str, _system: str | None = None) -> InvokeResult:
+    def mock_invoke(
+        self: ClaudeCLI,
+        prompt: str,
+        system: str | None = None,
+        working_dir: Path | None = None,
+    ) -> InvokeResult:
+        del self, prompt, system, working_dir
         call_count[0] += 1
         if call_count[0] == 1:
             output = create_mock_profile_extraction_response()
@@ -163,13 +166,14 @@ def test_e2e_with_real_pdf(pdf_file: Path, tmp_path: Path) -> None:
             output = create_mock_skills_optimization_response()
         return InvokeResult(success=True, output=output, exit_code=0)
 
-    mock_cli = MagicMock()
-    mock_cli.invoke.side_effect = mock_invoke
-
     with (
-        patch("resume_generator.extraction.profile.ClaudeCLI", return_value=mock_cli),
-        patch("resume_generator.optimization.optimizer.ClaudeCLI", return_value=mock_cli),
+        patch.object(ClaudeCLI, "available", return_value=True),
+        patch.object(ClaudeCLI, "version", return_value="mocked-version"),
+        patch.object(ClaudeCLI, "invoke", mock_invoke),
     ):
+        ui = PipelineUI(verbose=False)
+        pipeline = ResumePipeline(settings=settings, ui=ui)
+
         result = pipeline.run(
             sources=[pdf_file],
             output_path=output_path,

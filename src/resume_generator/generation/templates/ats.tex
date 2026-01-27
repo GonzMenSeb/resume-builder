@@ -66,13 +66,13 @@
 
 ((* if professional_summary *))
 %% === PROFESSIONAL SUMMARY ===
-\section{Summary}
+\section{((( labels.professional_summary | default('Summary') )))}
 ((( professional_summary | latex_escape )))
 ((* endif *))
 
 ((* if experiences *))
 %% === EXPERIENCE ===
-\section{Experience}
+\section{((( labels.experience | default('Experience') )))}
 
 ((* for exp in experiences *))
 \noindent\textbf{((( exp.title | latex_escape )))} \hfill ((( exp.date_range_str )))\\
@@ -90,11 +90,11 @@
 
 ((* if education *))
 %% === EDUCATION ===
-\section{Education}
+\section{((( labels.education | default('Education') )))}
 
 ((* for edu in education *))
 \noindent\textbf{((( edu.degree | latex_escape )))}((* if edu.graduation_str *)) \hfill ((( edu.graduation_str )))((* endif *))\\
-((( edu.institution | latex_escape )))((* if edu.location *)), ((( edu.location | latex_escape )))((* endif *))((* if edu.gpa *)) | GPA: ((( edu.gpa )))((* endif *))
+((( edu.institution | latex_escape )))((* if edu.location *)), ((( edu.location | latex_escape )))((* endif *))((* if edu.gpa *)) | ((( labels.gpa | default('GPA') ))): ((( edu.gpa )))((* endif *))
 ((* if edu.honors *))
 \begin{itemize}
 ((* for honor in edu.honors *))
@@ -107,7 +107,7 @@
 
 ((* if skills *))
 %% === SKILLS ===
-\section{Skills}
+\section{((( labels.skills | default('Skills') )))}
 ((* for skill_group in skills *))
 \textbf{((( skill_group.category | latex_escape ))):} ((( skill_group.skills | join(', ') | latex_escape )))((* if not loop.last *))\\((* endif *))
 ((* endfor *))
@@ -115,7 +115,7 @@
 
 ((* if certifications *))
 %% === CERTIFICATIONS ===
-\section{Certifications}
+\section{((( labels.certifications | default('Certifications') )))}
 ((* for cert in certifications *))
 \noindent\textbf{((( cert.name | latex_escape )))}((* if cert.issuer *)), ((( cert.issuer | latex_escape )))((* endif *))((* if cert.date_earned *)) \hfill ((( cert.date_earned.strftime('%Y') )))((* endif *))((* if not loop.last *))\\((* endif *))
 ((* endfor *))
@@ -123,7 +123,7 @@
 
 ((* if projects *))
 %% === PROJECTS ===
-\section{Projects}
+\section{((( labels.projects | default('Projects') )))}
 
 ((* for project in projects *))
 \noindent\textbf{((( project.name | latex_escape )))}((* if project.url *)) -- ((( project.url | string )))((* endif *))
@@ -131,7 +131,7 @@
 \\((( project.description | latex_escape )))
 ((* endif *))
 ((* if project.technologies *))
-\\Technologies: ((( project.technologies | join(', ') | latex_escape )))
+\\((( labels.technologies | default('Technologies') ))): ((( project.technologies | join(', ') | latex_escape )))
 ((* endif *))
 ((* if project.highlights *))
 \begin{itemize}

@@ -232,11 +232,13 @@ class ResumeOptimizer:
         max_bullets: int,
     ) -> list[ResumeBullet]:
         min_bullets = self._settings.min_bullets_per_job if self._settings else 2
+        language = self._settings.output_language.value if self._settings else None
         prompt = build_bullet_batch_prompt(
             achievements=achievements,
             role_title=role_title,
             company=company,
             target_keywords=target_keywords,
+            language=language,
         )
 
         try:
@@ -295,6 +297,7 @@ class ResumeOptimizer:
         top_skills = [s.name for s in profile.skills[:10]]
         years_exp = profile.years_of_experience or profile.compute_years_of_experience()
 
+        language = self._settings.output_language.value if self._settings else None
         prompt = build_professional_summary_prompt(
             name=profile.contact.full_name,
             current_title=current_title,
@@ -303,6 +306,7 @@ class ResumeOptimizer:
             top_achievements=top_achievements[:5],
             target_job_title=target_job_title,
             target_keywords=target_keywords,
+            language=language,
         )
 
         try:
@@ -331,10 +335,12 @@ class ResumeOptimizer:
             {"title": exp.title, "technologies": exp.technologies} for exp in profile.experiences
         ]
 
+        language = self._settings.output_language.value if self._settings else None
         prompt = build_skills_optimization_prompt(
             skills=skills_data,
             experiences=experiences_data,
             target_keywords=target_keywords,
+            language=language,
         )
 
         try:

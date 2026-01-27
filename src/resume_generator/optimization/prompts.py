@@ -16,6 +16,40 @@ Key principles implemented:
 import json
 from typing import Any
 
+LANGUAGE_NAMES: dict[str, str] = {
+    "en": "English",
+    "es": "Spanish",
+    "fr": "French",
+    "de": "German",
+    "pt": "Portuguese",
+    "it": "Italian",
+    "zh": "Chinese",
+    "ja": "Japanese",
+    "ko": "Korean",
+    "ar": "Arabic",
+    "nl": "Dutch",
+    "ru": "Russian",
+    "pl": "Polish",
+}
+
+
+def _get_language_instruction(language: str | None) -> str:
+    """Generate language instruction for prompts."""
+    if not language or language == "en":
+        return ""
+    lang_name = LANGUAGE_NAMES.get(language, language.upper())
+    return f"""
+## OUTPUT LANGUAGE REQUIREMENT
+CRITICAL: All generated text content MUST be in {lang_name}. This includes:
+- Professional summary
+- Achievement bullet points
+- Skill descriptions
+- All descriptive text
+
+Technical terms, company names, job titles, and proper nouns may remain in their original form.
+"""
+
+
 ACTION_VERBS_BY_CATEGORY: dict[str, list[str]] = {
     "leadership": [
         "Spearheaded",
@@ -280,6 +314,7 @@ def build_achievement_optimization_prompt(
     achievement: str,
     role_context: str | None = None,
     target_keywords: list[str] | None = None,
+    language: str | None = None,
 ) -> str:
     """Build prompt for optimizing a single achievement bullet.
 
@@ -296,9 +331,11 @@ def build_achievement_optimization_prompt(
             f"\n## Target Keywords to Incorporate (if relevant)\n{', '.join(target_keywords)}\n"
         )
 
+    language_section = _get_language_instruction(language)
+
     return f"""\
 Optimize the following achievement into an X-Y-Z format resume bullet.
-{context_section}{keywords_section}
+{context_section}{keywords_section}{language_section}
 ## Original Achievement
 
 <achievement>
@@ -319,6 +356,7 @@ def build_bullet_batch_prompt(
     role_title: str,
     company: str,
     target_keywords: list[str] | None = None,
+    language: str | None = None,
 ) -> str:
     """Build prompt for optimizing multiple achievement bullets in one call.
 
@@ -334,9 +372,11 @@ def build_bullet_batch_prompt(
 {", ".join(target_keywords)}
 """
 
+    language_section = _get_language_instruction(language)
+
     return f"""\
 Optimize the following achievement bullets for a {role_title} position at {company}.
-{keywords_section}
+{keywords_section}{language_section}
 ## Original Bullets
 
 {bullets_formatted}
@@ -361,6 +401,7 @@ def build_professional_summary_prompt(
     target_job_title: str | None = None,
     target_company: str | None = None,
     target_keywords: list[str] | None = None,
+    language: str | None = None,
 ) -> str:
     """Build prompt for generating an optimized professional summary.
 
@@ -379,9 +420,11 @@ def build_professional_summary_prompt(
 - Key Keywords: {", ".join(target_keywords or []) or "None provided"}
 """
 
+    language_section = _get_language_instruction(language)
+
     return f"""\
 Generate a professional summary for the following candidate.
-{target_section}
+{target_section}{language_section}
 ## Candidate Profile
 
 - Name: {name}
@@ -406,14 +449,17 @@ Generate a professional summary for the following candidate.
 def build_job_tailoring_prompt(
     resume_content: dict[str, Any],
     job_description: dict[str, Any],
+    language: str | None = None,
 ) -> str:
     """Build prompt for tailoring resume content to a specific job description.
 
     The returned prompt should be combined with build_prompt_with_schema()
     to append JSON schema instructions.
     """
+    language_section = _get_language_instruction(language)
     return f"""\
 Tailor the following resume content to match the target job description.
+{language_section}
 
 ## Expected JSON Output Structure
 
@@ -477,6 +523,7 @@ def build_skills_optimization_prompt(
     skills: list[dict[str, Any]],
     experiences: list[dict[str, Any]],
     target_keywords: list[str] | None = None,
+    language: str | None = None,
 ) -> str:
     """Build prompt for optimizing and grouping skills section.
 
@@ -496,9 +543,11 @@ def build_skills_optimization_prompt(
 {", ".join(target_keywords)}
 """
 
+    language_section = _get_language_instruction(language)
+
     return f"""\
 Optimize and group the following skills for maximum ATS compatibility and visual impact.
-{keywords_section}
+{keywords_section}{language_section}
 ## Current Skills
 
 {skills_json}

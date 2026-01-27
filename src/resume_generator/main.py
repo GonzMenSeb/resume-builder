@@ -13,7 +13,13 @@ from rich.console import Console
 
 from resume_generator import __version__
 from resume_generator.claude_client import ClaudeCLI
-from resume_generator.config import ClaudeModel, ResumeTemplate, Settings, get_settings
+from resume_generator.config import (
+    ClaudeModel,
+    ResumeLanguage,
+    ResumeTemplate,
+    Settings,
+    get_settings,
+)
 from resume_generator.models.job import JobDescription
 from resume_generator.pipeline import PipelineError, ResumePipeline
 from resume_generator.ui.progress import PipelineUI
@@ -127,6 +133,15 @@ def generate(
             help="Enable verbose output",
         ),
     ] = False,
+    language: Annotated[
+        ResumeLanguage,
+        typer.Option(
+            "--language",
+            "-l",
+            help="Output language for the resume (e.g., en, es, fr, de)",
+            case_sensitive=False,
+        ),
+    ] = ResumeLanguage.EN,
 ) -> None:
     """Generate an S+ tier resume from input data.
 
@@ -150,6 +165,9 @@ def generate(
 
         [dim]# Verbose output for debugging[/]
         resume-gen generate ./data/ -V --job "Senior Python Developer..."
+
+        [dim]# Generate resume in Spanish[/]
+        resume-gen generate ./data/ --language es
     """
     if not ClaudeCLI.available():
         console.print(
@@ -159,7 +177,7 @@ def generate(
         raise typer.Exit(1)
 
     try:
-        settings = _build_settings(no_compile, verbose, claude_model)
+        settings = _build_settings(no_compile, verbose, claude_model, language)
     except Exception as e:
         console.print(f"[bold red]Configuration error:[/] {e}")
         raise typer.Exit(1) from e
@@ -197,19 +215,25 @@ def generate(
         raise typer.Exit(1) from e
 
 
-def _build_settings(no_compile: bool, verbose: bool, claude_model: ClaudeModel) -> Settings:
+def _build_settings(
+    no_compile: bool,
+    verbose: bool,
+    claude_model: ClaudeModel,
+    language: ResumeLanguage,
+) -> Settings:
     """Build settings with CLI overrides."""
     settings = get_settings()
-    if no_compile or verbose or claude_model != settings.claude_model:
-        updates: dict[str, bool | ClaudeModel] = {}
-        if no_compile:
-            updates["compile_pdf"] = False
-        if verbose:
-            updates["verbose"] = True
-        if claude_model != settings.claude_model:
-            updates["claude_model"] = claude_model
-        if updates:
-            settings = settings.model_copy(update=updates)
+    updates: dict[str, bool | ClaudeModel | ResumeLanguage] = {}
+    if no_compile:
+        updates["compile_pdf"] = False
+    if verbose:
+        updates["verbose"] = True
+    if claude_model != settings.claude_model:
+        updates["claude_model"] = claude_model
+    if language != settings.output_language:
+        updates["output_language"] = language
+    if updates:
+        settings = settings.model_copy(update=updates)
     return settings
 
 

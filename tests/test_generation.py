@@ -7,7 +7,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from resume_generator.config import ResumeTemplate, Settings
+from resume_generator.config import ResumeLanguage, ResumeTemplate, Settings
 from resume_generator.generation.compiler import (
     CompilationError,
     CompilationResult,
@@ -19,6 +19,7 @@ from resume_generator.generation.generator import (
     hex_to_rgb,
     latex_escape,
 )
+from resume_generator.generation.localization import SECTION_HEADERS, get_section_headers
 from resume_generator.models.resume import ResumeDocument
 
 
@@ -142,6 +143,7 @@ class TestTemplateConfig:
         assert config.primary_color == "45, 85, 145"
         assert config.secondary_color == "60, 60, 60"
         assert config.accent_color == "100, 100, 100"
+        assert config.language == "en"
 
     def test_from_settings(self, test_settings: Settings) -> None:
         config = TemplateConfig.from_settings(test_settings)
@@ -160,6 +162,67 @@ class TestTemplateConfig:
         config = TemplateConfig.from_settings(settings)
         assert config.primary_color == "255, 85, 0"
         assert config.secondary_color == "0, 85, 255"
+
+    def test_from_settings_language(self) -> None:
+        settings = Settings(output_language=ResumeLanguage.ES)
+        config = TemplateConfig.from_settings(settings)
+        assert config.language == "es"
+
+    def test_from_settings_default_language(self) -> None:
+        settings = Settings()
+        config = TemplateConfig.from_settings(settings)
+        assert config.language == "en"
+
+
+class TestLocalization:
+    """Tests for localization module."""
+
+    def test_get_section_headers_english(self) -> None:
+        headers = get_section_headers("en")
+        assert headers["experience"] == "Experience"
+        assert headers["education"] == "Education"
+        assert headers["skills"] == "Skills"
+
+    def test_get_section_headers_spanish(self) -> None:
+        headers = get_section_headers("es")
+        assert headers["experience"] == "Experiencia"
+        assert headers["education"] == "Educación"
+        assert headers["skills"] == "Habilidades"
+
+    def test_get_section_headers_french(self) -> None:
+        headers = get_section_headers("fr")
+        assert headers["experience"] == "Expérience"
+        assert headers["education"] == "Formation"
+        assert headers["skills"] == "Compétences"
+
+    def test_get_section_headers_german(self) -> None:
+        headers = get_section_headers("de")
+        assert headers["experience"] == "Berufserfahrung"
+        assert headers["education"] == "Ausbildung"
+        assert headers["skills"] == "Fähigkeiten"
+
+    def test_get_section_headers_unknown_language_falls_back_to_english(self) -> None:
+        headers = get_section_headers("unknown")
+        assert headers["experience"] == "Experience"
+        assert headers == SECTION_HEADERS["en"]
+
+    def test_all_languages_have_required_keys(self) -> None:
+        required_keys = [
+            "professional_summary",
+            "experience",
+            "education",
+            "skills",
+            "certifications",
+            "projects",
+            "linkedin",
+            "github",
+            "portfolio",
+            "gpa",
+            "technologies",
+        ]
+        for lang_code, headers in SECTION_HEADERS.items():
+            for key in required_keys:
+                assert key in headers, f"Missing key '{key}' in language '{lang_code}'"
 
 
 class TestLaTeXGenerator:
@@ -279,6 +342,7 @@ class TestLaTeXGenerator:
         config = TemplateConfig()
         context = generator._build_context(sample_resume_document, config)
         assert "config" in context
+        assert "labels" in context
         assert "contact" in context
         assert "professional_summary" in context
         assert "headline" in context
@@ -288,6 +352,16 @@ class TestLaTeXGenerator:
         assert "certifications" in context
         assert "projects" in context
         assert "additional_sections" in context
+
+    def test_build_context_labels_for_language(
+        self, generator: LaTeXGenerator, sample_resume_document: ResumeDocument
+    ) -> None:
+        config = TemplateConfig(language="es")
+        context = generator._build_context(sample_resume_document, config)
+        labels = context["labels"]
+        assert isinstance(labels, dict)
+        assert labels["experience"] == "Experiencia"
+        assert labels["education"] == "Educación"
 
     def test_build_context_filters_invisible_sections(self, generator: LaTeXGenerator) -> None:
         from resume_generator.models.resume import ResumeContact, ResumeSection, SectionType

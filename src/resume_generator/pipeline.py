@@ -380,7 +380,9 @@ class ResumePipeline:
         if self._ui:
             self._ui.update_stage(PipelineStage.COMPILING, message="Running pdflatex")
 
-        pdf_output = output_path.with_suffix(".pdf") if output_path else None
+        pdf_output = (
+            output_path.with_suffix(".pdf") if output_path else tex_path.with_suffix(".pdf")
+        )
         result = self._compiler.compile(tex_path, output_path=pdf_output)
 
         if not result.success:
