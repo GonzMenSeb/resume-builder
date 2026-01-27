@@ -1,7 +1,7 @@
 # Progress Tracker
 
-**Session:** 29
-**Current Task:** 29 of 44
+**Session:** 30
+**Current Task:** 30 of 44
 
 ## Task List
 
@@ -33,8 +33,8 @@
 ✓ [x] **Task 26:** `[coding]` Implement `PipelineUI` methods: `start_pipeline()`, `update_stage()`, `show_progress()`, `show_success()`, `show_error()` with Rich panels, progress bars, and spinners
 ✓ [x] **Task 27:** `[coding]` Add stage-by-stage progress visualization with Rich Live display: "📄 Loading Data", "🔍 Extracting Profile", "✨ Optimizing Content", "📝 Generating LaTeX", "🖨️ Compiling PDF"
 ✓ [x] **Task 28:** `[coding]` Implement summary panel showing extraction stats, optimization score, and output path
-→ [ ] **Task 29:** `[coding]` Create `src/resume_generator/pipeline.py` with `ResumePipeline` class orchestrating: ingestion → extraction → optimization → generation → compilation
-  [ ] **Task 30:** `[coding]` Implement async pipeline execution with proper error handling and stage tracking
+✓ [x] **Task 29:** `[coding]` Create `src/resume_generator/pipeline.py` with `ResumePipeline` class orchestrating: ingestion → extraction → optimization → generation → compilation
+→ [ ] **Task 30:** `[coding]` Implement async pipeline execution with proper error handling and stage tracking
   [ ] **Task 31:** `[coding]` Create `src/resume_generator/main.py` with Typer CLI: `generate` command accepting input paths, job description (optional), output path, and template selection
   [ ] **Task 32:** `[coding]` Add CLI options: `--job-url` for job posting URL, `--template` for template selection, `--output` for output path, `--verbose` for debug output
   [ ] **Task 33:** `[quick]` Add CLI entry point in `pyproject.toml` under `[project.scripts]`: `resume-gen = "resume_generator.main:app"`
@@ -51,36 +51,59 @@
   [ ] **Task 44:** `[quick]` Final cleanup: remove unused imports, ensure consistent formatting with `ruff`
 
 ## Latest Completed
-**Task 29:** `[coding]` Create `src/resume_generator/pipeline.py` with `ResumePipeline` class orchestrating: ingestion → extraction → optimization → generation → compilation
+**Task 30:** `[coding]` Implement async pipeline execution with proper error handling and stage tracking
 
 ### Summary
 ## Summary
 
 **What was completed:**
-- Created `src/resume_generator/pipeline.py` with `ResumePipeline` class that orchestrates the full resume generation flow:
-  - **Ingestion stage**: Uses `DataLoader` to load PDFs, text files, markdown, etc.
-  - **Extraction stage**: Uses `ProfileExtractor` to call Claude AI and parse raw text into `PersonProfile`
-  - **Optimization stage**: Uses `ResumeOptimizer` to transform profile into optimized `ResumeDocument` with X-Y-Z formula bullets
-  - **Tailoring stage** (optional): Uses `JobTailorer` to customize resume for specific job descriptions
-  - **Generation stage**: Uses `LaTeXGenerator` to create LaTeX source from the resume document
-  - **Compilation stage**: Uses `PDFCompiler` to compile LaTeX to PDF
-- Added `PipelineResult` dataclass containing paths to generated files, resume/profile objects, and metrics (keyword match rate, optimization score)
-- Added `PipelineError` with stage context for meaningful error reporting
-- Integrated with `PipelineUI` for colorful progress tracking throughout the pipeline
-- Updated `src/resume_generator/__init__.py` to export `ResumePipeline`, `PipelineResult`, and `PipelineError`
+- Implemented async pipeline execution with `run_async()` method that:
+  - Runs CPU-bound stages (extraction, optimization, tailoring) in a thread pool via `loop.run_in_executor()`
+  - Maintains proper error handling with stage context
+  - Tracks timing for each stage
+  - Returns detailed `StageResult` objects for each completed/failed stage
+
+- Added `run_with_callbacks()` method for custom progress tracking:
+  - Supports `on_stage_start`, `on_stage_complete`, and `on_error` callbacks
+  - Useful for integrating with external logging/monitoring systems
+
+- Added `StageStatus` enum with values: PENDING, RUNNING, COMPLETED, FAILED, SKIPPED
+
+- Added `StageResult` dataclass containing:
+  - stage (PipelineStage)
+  - status (StageStatus)
+  - duration_seconds
+  - error (optional Exception)
+  - data (stage output)
+
+- Enhanced `PipelineError`:
+  - Added `cause` parameter for exception chaining
+  - Properly sets `__cause__` for Python exception chaining
+
+- Enhanced `PipelineResult`:
+  - Added `stage_results` list for detailed stage tracking
+  - Added `total_duration_seconds` for overall pipeline timing
+  - Added `completed_stages` property to list successful stages
+  - Added `failed_stage` property to identify which stage failed
+
+- Updated `__init__.py` exports to include `StageStatus` and `StageResult`
 
 **Tests run and results:**
 - ✓ `ruff check src/resume_generator/pipeline.py` - All checks passed
-- ✓ `mypy src/resume_generator/pipeline.py` - No errors in pipeline.py (other errors are pre-existing in model files)
+- ✓ `mypy src/resume_generator/pipeline.py` - No errors in pipeline.py (pre-existing model errors unrelated)
 - ✓ Import verification - All classes import correctly
-- ✓ PipelineError stage attribute test - Works correctly
-- ✓ PipelineResult fields test - Works correctly
+- ✓ StageStatus enum test - Works correctly
+- ✓ StageResult dataclass test - Works correctly
+- ✓ PipelineError with stage and cause test - Works correctly
+- ✓ PipelineResult stage tracking test - Works correctly
+- ✓ Async method signature verification - Correct signatures
+- ✓ Coroutine function verification - Properly defined as async
 
 **Files modified:**
-- `src/resume_generator/pipeline.py` (created - 249 lines)
+- `src/resume_generator/pipeline.py` (358 lines added/changed)
 - `src/resume_generator/__init__.py` (updated exports)
 
-**Commit hash:** `7e4d220`
+**Commit hash:** `03f3d11`
 
 ```
 TASK COMPLETE

@@ -1367,3 +1367,66 @@ Goal: Deeply understand the research results we have in this repo and, with them
 Current Task (#30): Implement async pipeline execution with proper error handling and stage tracking
 
 Please complete this task.
+[RESPONSE]
+## Summary
+
+**What was completed:**
+- Implemented async pipeline execution with `run_async()` method that:
+  - Runs CPU-bound stages (extraction, optimization, tailoring) in a thread pool via `loop.run_in_executor()`
+  - Maintains proper error handling with stage context
+  - Tracks timing for each stage
+  - Returns detailed `StageResult` objects for each completed/failed stage
+
+- Added `run_with_callbacks()` method for custom progress tracking:
+  - Supports `on_stage_start`, `on_stage_complete`, and `on_error` callbacks
+  - Useful for integrating with external logging/monitoring systems
+
+- Added `StageStatus` enum with values: PENDING, RUNNING, COMPLETED, FAILED, SKIPPED
+
+- Added `StageResult` dataclass containing:
+  - stage (PipelineStage)
+  - status (StageStatus)
+  - duration_seconds
+  - error (optional Exception)
+  - data (stage output)
+
+- Enhanced `PipelineError`:
+  - Added `cause` parameter for exception chaining
+  - Properly sets `__cause__` for Python exception chaining
+
+- Enhanced `PipelineResult`:
+  - Added `stage_results` list for detailed stage tracking
+  - Added `total_duration_seconds` for overall pipeline timing
+  - Added `completed_stages` property to list successful stages
+  - Added `failed_stage` property to identify which stage failed
+
+- Updated `__init__.py` exports to include `StageStatus` and `StageResult`
+
+**Tests run and results:**
+- ✓ `ruff check src/resume_generator/pipeline.py` - All checks passed
+- ✓ `mypy src/resume_generator/pipeline.py` - No errors in pipeline.py (pre-existing model errors unrelated)
+- ✓ Import verification - All classes import correctly
+- ✓ StageStatus enum test - Works correctly
+- ✓ StageResult dataclass test - Works correctly
+- ✓ PipelineError with stage and cause test - Works correctly
+- ✓ PipelineResult stage tracking test - Works correctly
+- ✓ Async method signature verification - Correct signatures
+- ✓ Coroutine function verification - Properly defined as async
+
+**Files modified:**
+- `src/resume_generator/pipeline.py` (358 lines added/changed)
+- `src/resume_generator/__init__.py` (updated exports)
+
+**Commit hash:** `03f3d11`
+
+```
+TASK COMPLETE
+```
+=== END | completed | 175.9s ===
+=== SESSION 31 | WORKING | 08:31:33 ===
+[PROMPT]
+Goal: Deeply understand the research results we have in this repo and, with them, together with python's claude sdk, let's create a proffessional python project to generate S+ tier resumes from a s...
+
+Current Task (#31): Create `src/resume_generator/main.py` with Typer CLI: `generate` command accepting input paths, job description (optional), output path, and template selection
+
+Please complete this task.
