@@ -2,7 +2,6 @@
 
 from resume_generator.extraction.profile import (
     ExtractionError,
-    LegacyProfileExtractor,
     ProfileExtractor,
 )
 from resume_generator.extraction.prompts import (
@@ -19,7 +18,6 @@ __all__ = [
     "ACHIEVEMENT_ENHANCEMENT_PROMPT",
     "ExtractionError",
     "JOB_DESCRIPTION_EXTRACTION_SYSTEM",
-    "LegacyProfileExtractor",
     "PROFILE_EXTRACTION_SYSTEM",
     "ProfileExtractor",
     "SECTION_EXTRACTION_PROMPTS",
