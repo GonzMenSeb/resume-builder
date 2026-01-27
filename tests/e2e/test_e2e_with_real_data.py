@@ -5,13 +5,14 @@ import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from resume_generator.claude_client import InvokeResult
 from resume_generator.config import ClaudeModel, ResumeTemplate, Settings
 from resume_generator.pipeline import ResumePipeline
 from resume_generator.ui.progress import PipelineUI
 
 RESUMES_DIR = Path("resumes")
-OUTPUT_DIR = Path("output/e2e_test")
 
 
 def create_mock_profile_extraction_response() -> str:
@@ -110,113 +111,66 @@ def create_mock_skills_optimization_response() -> str:
     })
 
 
-def test_e2e_with_real_pdfs():
-    """Test the entire pipeline with real PDF files from resumes/ directory."""
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+@pytest.mark.skipif(not RESUMES_DIR.exists(), reason="resumes/ directory not found")
+@pytest.mark.parametrize("pdf_file", list(RESUMES_DIR.glob("*.pdf")) if RESUMES_DIR.exists() else [])
+def test_e2e_with_real_pdf(pdf_file: Path, tmp_path: Path) -> None:
+    """Test the entire pipeline with real PDF files from resumes/ directory.
 
-    pdf_files = list(RESUMES_DIR.glob("*.pdf"))
-    if not pdf_files:
-        print(f"❌ No PDF files found in {RESUMES_DIR}")
-        return False
-
-    print(f"📁 Found {len(pdf_files)} PDF files:")
-    for pdf in pdf_files:
-        print(f"  • {pdf.name}")
+    This test uses mocked Claude CLI responses to avoid requiring API access
+    while still validating the full pipeline with real PDF ingestion.
+    """
+    output_dir = tmp_path / "output"
+    output_dir.mkdir(exist_ok=True)
 
     settings = Settings(
         claude_model=ClaudeModel.SONNET,
-        output_dir=OUTPUT_DIR,
+        output_dir=output_dir,
         compile_pdf=False,
-        verbose=True,
+        verbose=False,
     )
 
-    all_success = True
+    output_name = pdf_file.stem + "_generated"
+    output_path = output_dir / f"{output_name}.tex"
 
-    for pdf_file in pdf_files:
-        print(f"\n{'=' * 60}")
-        print(f"Testing with: {pdf_file.name}")
-        print(f"{'=' * 60}\n")
+    ui = PipelineUI(verbose=False)
+    pipeline = ResumePipeline(settings=settings, ui=ui)
 
-        output_name = pdf_file.stem + "_generated"
-        output_path = OUTPUT_DIR / f"{output_name}.tex"
+    call_count = [0]
 
-        ui = PipelineUI(verbose=True)
-        pipeline = ResumePipeline(settings=settings, ui=ui)
+    def mock_invoke(_prompt: str, _system: str | None = None) -> InvokeResult:
+        call_count[0] += 1
+        if call_count[0] == 1:
+            output = create_mock_profile_extraction_response()
+        elif call_count[0] == 2:
+            output = create_mock_bullet_batch_response()
+        elif call_count[0] == 3:
+            output = create_mock_professional_summary_response()
+        else:
+            output = create_mock_skills_optimization_response()
+        return InvokeResult(success=True, output=output, exit_code=0)
 
-        call_count = [0]
+    mock_cli = MagicMock()
+    mock_cli.invoke.side_effect = mock_invoke
 
-        def mock_invoke(prompt: str, system: str | None = None) -> InvokeResult:
-            call_count[0] += 1  # noqa: B023
-            if call_count[0] == 1:  # noqa: B023
-                output = create_mock_profile_extraction_response()
-            elif call_count[0] == 2:  # noqa: B023
-                output = create_mock_bullet_batch_response()
-            elif call_count[0] == 3:  # noqa: B023
-                output = create_mock_professional_summary_response()
-            else:
-                output = create_mock_skills_optimization_response()
-            return InvokeResult(success=True, output=output, exit_code=0)
+    with (
+        patch("resume_generator.extraction.profile.ClaudeCLI", return_value=mock_cli),
+        patch("resume_generator.optimization.optimizer.ClaudeCLI", return_value=mock_cli),
+    ):
+        result = pipeline.run(
+            sources=[pdf_file],
+            output_path=output_path,
+            job=None,
+            template=ResumeTemplate.MODERN,
+        )
 
-        mock_cli = MagicMock()
-        mock_cli.invoke.side_effect = mock_invoke
-
-        with (
-            patch(
-                "resume_generator.extraction.profile.ClaudeCLI",
-                return_value=mock_cli,
-            ),
-            patch(
-                "resume_generator.optimization.optimizer.ClaudeCLI",
-                return_value=mock_cli,
-            ),
-        ):
-            try:
-                result = pipeline.run(
-                    sources=[pdf_file],
-                    output_path=output_path,
-                    job=None,
-                    template=ResumeTemplate.MODERN,
-                )
-
-                if result.success:
-                    print(f"\n✅ Successfully processed {pdf_file.name}")
-                    print(f"   Output: {result.output_path}")
-
-                    if result.output_path and result.output_path.exists():
-                        file_size = result.output_path.stat().st_size
-                        print(f"   Size: {file_size} bytes")
-
-                        if file_size == 0:
-                            print("   ⚠️  Warning: Output file is empty")
-                            all_success = False
-                    else:
-                        print(f"   ⚠️  Warning: Output file not found at {result.output_path}")
-                        all_success = False
-                else:
-                    print(f"\n❌ Failed to process {pdf_file.name}")
-                    for error in result.errors:
-                        print(f"   Error: {error}")
-                    all_success = False
-
-            except Exception as e:
-                print(f"\n❌ Exception while processing {pdf_file.name}: {e}")
-                import traceback
-
-                traceback.print_exc()
-                all_success = False
-
-    print(f"\n{'=' * 60}")
-    if all_success:
-        print("✅ All end-to-end tests PASSED")
-    else:
-        print("❌ Some end-to-end tests FAILED")
-    print(f"{'=' * 60}\n")
-
-    return all_success
+        assert result.success, f"Pipeline failed for {pdf_file.name}: {result.errors}"
+        assert result.output_path is not None
+        assert result.output_path.exists()
+        assert result.output_path.stat().st_size > 0, "Output file is empty"
 
 
 if __name__ == "__main__":
     import sys
 
-    success = test_e2e_with_real_pdfs()
-    sys.exit(0 if success else 1)
+    pytest.main([__file__, "-v"])
+    sys.exit(0)
