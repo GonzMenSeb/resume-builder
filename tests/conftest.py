@@ -4,11 +4,11 @@ import json
 from datetime import date
 from pathlib import Path
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
 import pytest
-from anthropic.types import Message, TextBlock, Usage
 
+from resume_generator.claude_client import InvokeResult
 from resume_generator.config import ClaudeModel, Settings
 from resume_generator.models.job import (
     EmploymentType,
@@ -65,9 +65,8 @@ def cache_dir(tmp_path: Path) -> Path:
 
 @pytest.fixture
 def test_settings(tmp_path: Path) -> Settings:
-    """Test settings with temporary directories and fake API key."""
+    """Test settings with temporary directories."""
     return Settings(
-        anthropic_api_key="sk-ant-test-key-12345",
         claude_model=ClaudeModel.SONNET,
         output_dir=tmp_path / "output",
         cache_dir=tmp_path / "cache",
@@ -76,9 +75,8 @@ def test_settings(tmp_path: Path) -> Settings:
         / "resume_generator"
         / "generation"
         / "templates",
-        max_tokens=2048,
-        api_timeout=30.0,
-        api_max_retries=2,
+        claude_cli_timeout=3600,
+        claude_cli_verbose=False,
         verbose=False,
         compile_pdf=False,
     )
@@ -443,30 +441,43 @@ def sample_markdown_file(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def mock_claude_response() -> Message:
-    """Mock Claude API response."""
-    return Message(
-        id="msg_test123",
-        type="message",
-        role="assistant",
-        content=[
-            TextBlock(
-                type="text",
-                text='{"full_name": "Jane Doe", "email": "jane@example.com"}',
-            )
-        ],
-        model="claude-sonnet-4-20250514",
-        stop_reason="end_turn",
-        usage=Usage(input_tokens=100, output_tokens=50),
+def mock_claude_cli_success() -> InvokeResult:
+    """Mock successful Claude CLI invocation."""
+    return InvokeResult(
+        success=True,
+        output='{"full_name": "Jane Doe", "email": "jane@example.com"}',
+        exit_code=0,
     )
 
 
 @pytest.fixture
-def mock_claude_client(mock_claude_response: Message) -> MagicMock:
-    """Mock Anthropic client."""
-    client = MagicMock()
-    client.messages.create = AsyncMock(return_value=mock_claude_response)
-    return client
+def mock_claude_cli_failure() -> InvokeResult:
+    """Mock failed Claude CLI invocation."""
+    return InvokeResult(
+        success=False,
+        output="Error: Command failed",
+        exit_code=1,
+    )
+
+
+@pytest.fixture
+def stub_claude_cli_success() -> MagicMock:
+    """Stub for successful Claude CLI subprocess calls."""
+    mock_result = MagicMock()
+    mock_result.returncode = 0
+    mock_result.stdout = '{"full_name": "Jane Doe", "email": "jane@example.com"}'
+    mock_result.stderr = ""
+    return mock_result
+
+
+@pytest.fixture
+def stub_claude_cli_failure() -> MagicMock:
+    """Stub for failed Claude CLI subprocess calls."""
+    mock_result = MagicMock()
+    mock_result.returncode = 1
+    mock_result.stdout = ""
+    mock_result.stderr = "Error: Command failed"
+    return mock_result
 
 
 @pytest.fixture
@@ -555,9 +566,9 @@ def sample_latex_template(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def env_with_api_key(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Set environment variable for API key."""
-    monkeypatch.setenv("RESUME_GEN_ANTHROPIC_API_KEY", "sk-ant-test-key-12345")
+def mock_claude_cli_available(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Mock Claude CLI as available."""
+    monkeypatch.setattr("resume_generator.claude_client.ClaudeCLI.available", lambda: True)
 
 
 @pytest.fixture
