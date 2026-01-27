@@ -201,15 +201,15 @@ def _build_settings(no_compile: bool, verbose: bool, claude_model: ClaudeModel) 
     """Build settings with CLI overrides."""
     settings = get_settings()
     if no_compile or verbose or claude_model != settings.claude_model:
-        kwargs = {}
+        updates: dict[str, bool | ClaudeModel] = {}
         if no_compile:
-            kwargs["compile_pdf"] = False
+            updates["compile_pdf"] = False
         if verbose:
-            kwargs["verbose"] = True
+            updates["verbose"] = True
         if claude_model != settings.claude_model:
-            kwargs["claude_model"] = claude_model
-        if kwargs:
-            settings = Settings(**{**settings.model_dump(), **kwargs})
+            updates["claude_model"] = claude_model
+        if updates:
+            settings = settings.model_copy(update=updates)
     return settings
 
 

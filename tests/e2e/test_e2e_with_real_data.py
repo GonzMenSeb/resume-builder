@@ -146,12 +146,12 @@ def test_e2e_with_real_pdfs():
         call_count = [0]
 
         def mock_invoke(prompt: str, system: str | None = None) -> InvokeResult:
-            call_count[0] += 1
-            if call_count[0] == 1:
+            call_count[0] += 1  # noqa: B023
+            if call_count[0] == 1:  # noqa: B023
                 output = create_mock_profile_extraction_response()
-            elif call_count[0] == 2:
+            elif call_count[0] == 2:  # noqa: B023
                 output = create_mock_bullet_batch_response()
-            elif call_count[0] == 3:
+            elif call_count[0] == 3:  # noqa: B023
                 output = create_mock_professional_summary_response()
             else:
                 output = create_mock_skills_optimization_response()

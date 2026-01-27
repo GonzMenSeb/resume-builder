@@ -151,7 +151,7 @@ class ClaudeCLI:
         if sys.platform == "win32":
             return False
         try:
-            import pty as _pty  # noqa: F401
+            import pty as _pty  # noqa: F401 # pyright: ignore[reportUnusedImport]
 
             return True
         except ImportError:
