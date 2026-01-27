@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """End-to-end test with real resume data from resumes/ directory."""
 
+import json
 from pathlib import Path
-from typing import Any
 from unittest.mock import MagicMock, patch
 
-from pydantic import SecretStr
-
+from resume_generator.claude_client import InvokeResult
 from resume_generator.config import ClaudeModel, ResumeTemplate, Settings
 from resume_generator.pipeline import ResumePipeline
 from resume_generator.ui.progress import PipelineUI
@@ -15,122 +14,100 @@ RESUMES_DIR = Path("resumes")
 OUTPUT_DIR = Path("output/e2e_test")
 
 
-def create_mock_profile_extraction_schema():
-    """Create mock ProfileExtractionSchema for mocking."""
-    from resume_generator.extraction.profile import (
-        ContactInfoSchema,
-        EducationSchema,
-        ExperienceSchema,
-        ProfileExtractionSchema,
-        SkillSchema,
-    )
-
-    return ProfileExtractionSchema(
-        contact=ContactInfoSchema(
-            full_name="Test User",
-            email="test@example.com",
-            phone="+1-555-0100",
-            location="San Francisco, CA",
-        ),
-        professional_summary="Experienced professional with strong technical skills",
-        headline="Senior Professional",
-        years_of_experience=5.0,
-        experiences=[
-            ExperienceSchema(
-                company="Tech Company",
-                title="Senior Engineer",
-                start_date="2020-01-01",
-                end_date="2023-12-31",
-                is_current=False,
-                achievements=[
+def create_mock_profile_extraction_response() -> str:
+    """Create mock JSON response for profile extraction."""
+    return json.dumps({
+        "contact": {
+            "full_name": "Test User",
+            "email": "test@example.com",
+            "phone": "+1-555-0100",
+            "location": "San Francisco, CA",
+        },
+        "professional_summary": "Experienced professional with strong technical skills",
+        "headline": "Senior Professional",
+        "years_of_experience": 5.0,
+        "experiences": [
+            {
+                "company": "Tech Company",
+                "title": "Senior Engineer",
+                "start_date": "2020-01-01",
+                "end_date": "2023-12-31",
+                "is_current": False,
+                "achievements": [
                     "Led development of key features",
                     "Improved system performance by 50%",
                 ],
-                technologies=["Python", "AWS", "Docker"],
-            )
+                "technologies": ["Python", "AWS", "Docker"],
+            }
         ],
-        education=[
-            EducationSchema(
-                institution="University",
-                degree="Bachelor of Science",
-                field_of_study="Computer Science",
-                graduation_date="2016-06-01",
-            )
+        "education": [
+            {
+                "institution": "University",
+                "degree": "Bachelor of Science",
+                "field_of_study": "Computer Science",
+                "graduation_date": "2016-06-01",
+            }
         ],
-        skills=[
-            SkillSchema(name="Python", category="programming", years_experience=5.0),
-            SkillSchema(name="AWS", category="technical", years_experience=4.0),
+        "skills": [
+            {"name": "Python", "category": "programming", "years_experience": 5.0},
+            {"name": "AWS", "category": "technical", "years_experience": 4.0},
         ],
-    )
+        "certifications": [],
+        "projects": [],
+    })
 
 
-def create_mock_bullet_batch_result():
-    """Create mock BulletBatchResultSchema for mocking."""
-    from resume_generator.optimization.optimizer import (
-        BulletBatchResultSchema,
-        OptimizedBulletSchema,
-    )
-
-    return BulletBatchResultSchema(
-        bullets=[
-            OptimizedBulletSchema(
-                text="Led development of mission-critical features, improving system reliability by 40%",
-                bullet_type="xyz",
-                action_verb="Led",
-                has_metrics=True,
-                metrics={"improvement": "40%"},
-                keywords=["development", "features", "system", "reliability"],
-                relevance_score=0.9,
-                original_index=0,
-            ),
-            OptimizedBulletSchema(
-                text="Optimized infrastructure reducing costs by $50K annually",
-                bullet_type="xyz",
-                action_verb="Optimized",
-                has_metrics=True,
-                metrics={"savings": "$50K"},
-                keywords=["infrastructure", "optimization", "costs"],
-                relevance_score=0.85,
-                original_index=1,
-            ),
+def create_mock_bullet_batch_response() -> str:
+    """Create mock JSON response for bullet optimization."""
+    return json.dumps({
+        "bullets": [
+            {
+                "text": "Led development of mission-critical features, improving system reliability by 40%",
+                "bullet_type": "xyz",
+                "action_verb": "Led",
+                "has_metrics": True,
+                "metrics": {"improvement": "40%"},
+                "keywords": ["development", "features", "system", "reliability"],
+                "relevance_score": 0.9,
+                "original_index": 0,
+            },
+            {
+                "text": "Optimized infrastructure reducing costs by $50K annually",
+                "bullet_type": "xyz",
+                "action_verb": "Optimized",
+                "has_metrics": True,
+                "metrics": {"savings": "$50K"},
+                "keywords": ["infrastructure", "optimization", "costs"],
+                "relevance_score": 0.85,
+                "original_index": 1,
+            },
         ],
-        removed_bullets=[],
-        overall_quality_score=0.87,
-    )
+        "removed_bullets": [],
+        "overall_quality_score": 0.87,
+    })
 
 
-def create_mock_professional_summary():
-    """Create mock ProfessionalSummarySchema for mocking."""
-    from resume_generator.optimization.optimizer import ProfessionalSummarySchema
-
-    return ProfessionalSummarySchema(
-        summary="Results-driven professional with 5+ years of experience delivering high-impact solutions",
-        word_count=12,
-        keywords_included=["professional", "experience", "solutions"],
-        tailored_for_job=False,
-    )
+def create_mock_professional_summary_response() -> str:
+    """Create mock JSON response for professional summary."""
+    return json.dumps({
+        "summary": "Results-driven professional with 5+ years of experience delivering high-impact solutions",
+        "word_count": 12,
+        "keywords_included": ["professional", "experience", "solutions"],
+        "tailored_for_job": False,
+    })
 
 
-def create_mock_skills_optimization():
-    """Create mock SkillsOptimizationSchema for mocking."""
-    from resume_generator.optimization.optimizer import (
-        SkillGroupSchema,
-        SkillsOptimizationSchema,
-    )
-
-    return SkillsOptimizationSchema(
-        skill_groups=[
-            SkillGroupSchema(
-                category="Languages", skills=["Python", "JavaScript", "Go"], priority=0
-            ),
-            SkillGroupSchema(
-                category="Cloud & DevOps", skills=["AWS", "Docker", "Kubernetes"], priority=1
-            ),
+def create_mock_skills_optimization_response() -> str:
+    """Create mock JSON response for skills optimization."""
+    return json.dumps({
+        "skill_groups": [
+            {"category": "Languages", "skills": ["Python", "JavaScript", "Go"], "priority": 0},
+            {"category": "Cloud & DevOps", "skills": ["AWS", "Docker", "Kubernetes"], "priority": 1},
         ],
-        added_skills=[],
-        removed_skills=[],
-        total_skills_count=6,
-    )
+        "added_skills": [],
+        "removed_skills": [],
+        "total_skills_count": 6,
+    })
 
 
 def test_e2e_with_real_pdfs():
@@ -147,7 +124,6 @@ def test_e2e_with_real_pdfs():
         print(f"  • {pdf.name}")
 
     settings = Settings(
-        anthropic_api_key=SecretStr("sk-ant-test-key-e2e"),
         claude_model=ClaudeModel.SONNET,
         output_dir=OUTPUT_DIR,
         compile_pdf=False,
@@ -167,43 +143,33 @@ def test_e2e_with_real_pdfs():
         ui = PipelineUI(verbose=True)
         pipeline = ResumePipeline(settings=settings, ui=ui)
 
+        call_count = [0]
+
+        def mock_invoke(prompt: str, system: str | None = None) -> InvokeResult:
+            call_count[0] += 1
+            if call_count[0] == 1:
+                output = create_mock_profile_extraction_response()
+            elif call_count[0] == 2:
+                output = create_mock_bullet_batch_response()
+            elif call_count[0] == 3:
+                output = create_mock_professional_summary_response()
+            else:
+                output = create_mock_skills_optimization_response()
+            return InvokeResult(success=True, output=output, exit_code=0)
+
+        mock_cli = MagicMock()
+        mock_cli.invoke.side_effect = mock_invoke
+
         with (
-            patch("resume_generator.extraction.profile.Anthropic") as mock_anthropic_extract,
-            patch("resume_generator.optimization.optimizer.Anthropic") as mock_anthropic_opt,
+            patch(
+                "resume_generator.extraction.profile.ClaudeCLI",
+                return_value=mock_cli,
+            ),
+            patch(
+                "resume_generator.optimization.optimizer.ClaudeCLI",
+                return_value=mock_cli,
+            ),
         ):
-            mock_extract_client = MagicMock()
-            mock_opt_client = MagicMock()
-
-            mock_extract_response = MagicMock()
-            mock_extract_response.stop_reason = "end_turn"
-            mock_extract_response.parsed_output = create_mock_profile_extraction_schema()
-            mock_extract_client.beta.messages.parse.return_value = mock_extract_response
-
-            def opt_side_effect(**kwargs: Any) -> MagicMock:
-                mock_response = MagicMock()
-                mock_response.stop_reason = "end_turn"
-                output_format = kwargs.get("output_format")
-                from resume_generator.optimization.optimizer import (
-                    BulletBatchResultSchema,
-                    ProfessionalSummarySchema,
-                    SkillsOptimizationSchema,
-                )
-
-                if output_format is BulletBatchResultSchema:
-                    mock_response.parsed_output = create_mock_bullet_batch_result()
-                elif output_format is ProfessionalSummarySchema:
-                    mock_response.parsed_output = create_mock_professional_summary()
-                elif output_format is SkillsOptimizationSchema:
-                    mock_response.parsed_output = create_mock_skills_optimization()
-                else:
-                    mock_response.parsed_output = None
-                return mock_response
-
-            mock_opt_client.beta.messages.parse.side_effect = opt_side_effect
-
-            mock_anthropic_extract.return_value = mock_extract_client
-            mock_anthropic_opt.return_value = mock_opt_client
-
             try:
                 result = pipeline.run(
                     sources=[pdf_file],

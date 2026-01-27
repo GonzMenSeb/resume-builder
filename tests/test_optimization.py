@@ -4,7 +4,6 @@ from datetime import date
 from unittest.mock import MagicMock, patch
 
 import pytest
-from anthropic import APIConnectionError, APITimeoutError
 
 from resume_generator.claude_client import ClaudeCLI, ClaudeCLIError, InvokeResult
 from resume_generator.config import Settings
@@ -26,15 +25,7 @@ from resume_generator.optimization.tailoring import (
     JobTailorer,
     KeywordMatchResult,
     MatchAnalysis,
-)
-from resume_generator.optimization.tailoring import (
-    _call_with_retry as tailoring_call_with_retry,
-)
-from resume_generator.optimization.tailoring import (
-    _exponential_backoff as tailoring_exponential_backoff,
-)
-from resume_generator.optimization.tailoring import (
-    _is_retryable_error as tailoring_is_retryable_error,
+    TailoringError,
 )
 
 
@@ -268,57 +259,27 @@ class TestResumeOptimizer:
         assert result.optimization_score > 0
 
 
-class TestTailorerRetryHelpers:
-    """Tests for tailorer retry helper functions."""
-
-    def test_is_retryable_error_timeout(self) -> None:
-        mock_request = MagicMock()
-        error = APITimeoutError(request=mock_request)
-        assert tailoring_is_retryable_error(error)
-
-    def test_is_retryable_error_connection(self) -> None:
-        mock_request = MagicMock()
-        error = APIConnectionError(message="connection", request=mock_request)
-        assert tailoring_is_retryable_error(error)
-
-    def test_exponential_backoff(self) -> None:
-        assert tailoring_exponential_backoff(0) == 1.0
-        assert tailoring_exponential_backoff(1) == 2.0
-        assert tailoring_exponential_backoff(10) == 32.0
-
-    def test_call_with_retry_success(self) -> None:
-        mock_func = MagicMock(return_value="success")
-        result = tailoring_call_with_retry(mock_func)
-        assert result == "success"
-
-
 class TestJobTailorer:
     """Tests for JobTailorer class."""
-
-    @pytest.fixture(autouse=True)
-    def mock_anthropic_for_tailorer(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> MagicMock:  # type: ignore[misc]
-        """Mock Anthropic client for all tailorer tests since tailoring hasn't been refactored yet."""
-        from pydantic import SecretStr
-
-        def patched_init(self: JobTailorer, settings: Settings | None = None) -> None:
-            if settings is None:
-                from resume_generator.config import get_settings
-
-                settings = get_settings()
-
-            object.__setattr__(settings, "anthropic_api_key", SecretStr("sk-test-key"))
-            self._settings = settings
-            self._client = MagicMock()
-
-        monkeypatch.setattr(JobTailorer, "__init__", patched_init)
-        yield MagicMock()
 
     def test_init_with_settings(self, test_settings: Settings) -> None:
         tailorer = JobTailorer(settings=test_settings)
         assert tailorer._settings == test_settings
-        assert tailorer._client is not None
+        assert tailorer._cli is not None
+
+    def test_init_with_claude_cli(self, test_settings: Settings) -> None:
+        mock_cli = MagicMock(spec=ClaudeCLI)
+        tailorer = JobTailorer(settings=test_settings, claude_cli=mock_cli)
+        assert tailorer._cli is mock_cli
+
+    def test_init_without_settings(self) -> None:
+        with patch("resume_generator.config.get_settings") as mock_get_settings:
+            mock_settings = MagicMock()
+            mock_settings.claude_model.value = "sonnet"
+            mock_settings.claude_cli_timeout = 3600
+            mock_get_settings.return_value = mock_settings
+            tailorer = JobTailorer()
+            assert tailorer._settings == mock_settings
 
     def test_extract_job_keywords(self, sample_job_description: JobDescription) -> None:
         tailorer = JobTailorer(settings=Settings())
@@ -536,23 +497,83 @@ class TestJobTailorer:
         assert isinstance(tailored, ResumeDocument)
         assert tailored.target_job_title == sample_job_description.title
 
-    @patch("resume_generator.optimization.tailoring.Anthropic")
     def test_tailor_with_ai_fallback_on_error(
         self,
-        mock_anthropic: MagicMock,
         sample_resume_document: ResumeDocument,
         sample_job_description: JobDescription,
     ) -> None:
-        mock_client = MagicMock()
-        mock_anthropic.return_value = mock_client
-        mock_client.beta.messages.parse.side_effect = Exception("API error")
+        mock_cli = MagicMock(spec=ClaudeCLI)
+        mock_cli.invoke.side_effect = ClaudeCLIError("CLI error")
 
         settings = Settings(enable_job_tailoring=True)
-        tailorer = JobTailorer(settings=settings)
+        tailorer = JobTailorer(settings=settings, claude_cli=mock_cli)
         tailored = tailorer.tailor(sample_resume_document, sample_job_description, use_ai=True)
 
         assert isinstance(tailored, ResumeDocument)
         assert tailored.target_job_title == sample_job_description.title
+
+    def test_call_claude_structured_success(self, test_settings: Settings) -> None:
+        import json
+
+        from resume_generator.optimization.tailoring import TailoringResultSchema
+
+        mock_cli = MagicMock(spec=ClaudeCLI)
+        mock_cli.invoke.return_value = InvokeResult(
+            success=True,
+            output=json.dumps({
+                "tailored_summary": "Test summary",
+                "experiences": [],
+                "skills": {"reordered_groups": [], "added_keywords": [], "keyword_mapping": {}},
+                "keyword_analysis": {
+                    "job_keywords": [],
+                    "matched_keywords": [],
+                    "missing_keywords": [],
+                    "match_rate": 0.5,
+                    "recommendations": [],
+                },
+                "overall_fit_score": 0.7,
+            }),
+            exit_code=0,
+        )
+
+        tailorer = JobTailorer(settings=test_settings, claude_cli=mock_cli)
+        result = tailorer._call_claude_structured("test prompt", TailoringResultSchema)
+        assert result.tailored_summary == "Test summary"
+        assert result.overall_fit_score == 0.7
+
+    def test_call_claude_structured_cli_error(self, test_settings: Settings) -> None:
+        from resume_generator.optimization.tailoring import TailoringResultSchema
+
+        mock_cli = MagicMock(spec=ClaudeCLI)
+        mock_cli.invoke.side_effect = ClaudeCLIError("CLI invocation failed")
+
+        tailorer = JobTailorer(settings=test_settings, claude_cli=mock_cli)
+        with pytest.raises(TailoringError, match="Claude CLI error"):
+            tailorer._call_claude_structured("test prompt", TailoringResultSchema)
+
+    def test_call_claude_structured_failed_exit_code(self, test_settings: Settings) -> None:
+        from resume_generator.optimization.tailoring import TailoringResultSchema
+
+        mock_cli = MagicMock(spec=ClaudeCLI)
+        mock_cli.invoke.return_value = InvokeResult(
+            success=False, output="Error occurred", exit_code=1
+        )
+
+        tailorer = JobTailorer(settings=test_settings, claude_cli=mock_cli)
+        with pytest.raises(TailoringError, match="non-zero exit code"):
+            tailorer._call_claude_structured("test prompt", TailoringResultSchema)
+
+    def test_call_claude_structured_invalid_json(self, test_settings: Settings) -> None:
+        from resume_generator.optimization.tailoring import TailoringResultSchema
+
+        mock_cli = MagicMock(spec=ClaudeCLI)
+        mock_cli.invoke.return_value = InvokeResult(
+            success=True, output="This is not valid JSON", exit_code=0
+        )
+
+        tailorer = JobTailorer(settings=test_settings, claude_cli=mock_cli)
+        with pytest.raises(TailoringError, match="Failed to parse response"):
+            tailorer._call_claude_structured("test prompt", TailoringResultSchema)
 
     def test_resume_to_dict(self, sample_resume_document: ResumeDocument) -> None:
         tailorer = JobTailorer(settings=Settings())
