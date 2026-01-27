@@ -1,7 +1,7 @@
 # Progress Tracker
 
-**Session:** 5
-**Current Task:** 5 of 44
+**Session:** 7
+**Current Task:** 7 of 44
 
 ## Task List
 
@@ -9,9 +9,9 @@
 ✓ [x] **Task 2:** `[coding]` Create `pyproject.toml` with dependencies: `anthropic>=0.40.0`, `pydantic>=2.0`, `rich>=13.0`, `pypdf>=4.0`, `aiofiles>=23.0`, `typer>=0.9.0`
 ✓ [x] **Task 3:** `[coding]` Create `src/resume_generator/__init__.py` with version and package metadata
 ✓ [x] **Task 4:** `[coding]` Create `src/resume_generator/config.py` with `Settings` Pydantic model for API keys, paths, and pipeline options
-→ [ ] **Task 5:** `[coding]` Create `src/resume_generator/models/profile.py` with Pydantic models: `ContactInfo`, `Experience`, `Education`, `Skill`, `Certification`, `PersonProfile`
-  [ ] **Task 6:** `[coding]` Create `src/resume_generator/models/resume.py` with Pydantic models: `ResumeBullet`, `ResumeExperience`, `ResumeSection`, `ResumeDocument`
-  [ ] **Task 7:** `[coding]` Create `src/resume_generator/models/job.py` with Pydantic models: `JobRequirement`, `JobDescription` for job position parsing
+✓ [x] **Task 5:** `[coding]` Create `src/resume_generator/models/profile.py` with Pydantic models: `ContactInfo`, `Experience`, `Education`, `Skill`, `Certification`, `PersonProfile`
+✓ [x] **Task 6:** `[coding]` Create `src/resume_generator/models/resume.py` with Pydantic models: `ResumeBullet`, `ResumeExperience`, `ResumeSection`, `ResumeDocument`
+→ [ ] **Task 7:** `[coding]` Create `src/resume_generator/models/job.py` with Pydantic models: `JobRequirement`, `JobDescription` for job position parsing
   [ ] **Task 8:** `[coding]` Create `src/resume_generator/ingestion/base.py` with abstract `BaseExtractor` class defining `extract(path: Path) -> str` interface
   [ ] **Task 9:** `[coding]` Create `src/resume_generator/ingestion/pdf.py` with `PDFExtractor` class using `pypdf` to extract text from PDF files
   [ ] **Task 10:** `[coding]` Create `src/resume_generator/ingestion/text.py` with `TextExtractor` class handling `.txt`, `.md`, and raw text input
@@ -51,39 +51,36 @@
   [ ] **Task 44:** `[quick]` Final cleanup: remove unused imports, ensure consistent formatting with `ruff`
 
 ## Latest Completed
-**Task 5:** `[coding]` Create `src/resume_generator/models/profile.py` with Pydantic models: `ContactInfo`, `Experience`, `Education`, `Skill`, `Certification`, `PersonProfile`
+**Task 7:** `[coding]` Create `src/resume_generator/models/job.py` with Pydantic models: `JobRequirement`, `JobDescription` for job position parsing
 
 ### Summary
-## Summary
+## Task Complete Summary
 
-**Task #5 Complete**: Created `src/resume_generator/models/profile.py` with Pydantic models.
+**What was completed:**
+- Created `src/resume_generator/models/job.py` with comprehensive Pydantic models for job position parsing:
+  - `JobRequirement` - Individual job requirements with priority, keywords, and category
+  - `JobDescription` - Complete job posting model with title, company, skills, requirements, salary, and more
+  - `SalaryRange` - Model for salary information
+  - Enums: `ExperienceLevel`, `EmploymentType`, `WorkArrangement`, `RequirementPriority`
+  - Utility methods: `calculate_match_score()`, `get_keyword_set()`, `get_experience_range_str()`
+  - Computed fields: `all_keywords`, `required_requirements`, `preferred_requirements`
+- Updated `src/resume_generator/models/__init__.py` to export all new job models
 
-### What was completed:
-- **`SkillCategory`** - Enum for categorizing skills (technical, programming, frameworks, tools, languages, soft, domain, other)
-- **`ContactInfo`** - Contact data with email validation and URL fields for LinkedIn, GitHub, portfolio
-- **`Skill`** - Skill with name, category, proficiency (1-5), years experience, and ATS keywords
-- **`Experience`** - Work experience with company, title, dates, achievements, technologies, metrics, and auto-inference of `is_current` when `end_date` is None
-- **`Education`** - Education entry with institution, degree, field, GPA, honors, coursework
-- **`Certification`** - Professional certification with name, acronym, issuing org, dates, credential ID
-- **`Project`** - Personal/professional projects with URLs, technologies, highlights
-- **`PersonProfile`** - Aggregates all profile data with helper methods:
-  - `get_skills_by_category()`
-  - `get_all_technologies()`
-  - `get_current_position()`
-  - `compute_years_of_experience()`
+**Tests run and results:**
+- Syntax validation: ✅ Passed
+- Import validation: ✅ All imports successful
+- Model instantiation: ✅ JobRequirement and JobDescription work correctly
+- Computed fields: ✅ all_keywords, match score calculation working
+- Linting (ruff): ✅ All checks passed
 
-### Tests run and results:
-- ✅ Python import test passed
-- ✅ Comprehensive model validation test passed
-- ✅ `is_current` inference tested and working
-- ✅ `ruff check` - All checks passed
-- ✅ `mypy` - Success: no issues found
+**Files modified:**
+- `src/resume_generator/models/job.py` (created - 207 lines)
+- `src/resume_generator/models/__init__.py` (updated exports)
 
-### Files modified:
-- `src/resume_generator/models/__init__.py` (new)
-- `src/resume_generator/models/profile.py` (new)
+**Commit hash:** `4a1b0a2edeadc58aad26281da4f74e9ca2849a42`
 
-### Commit hash:
-`e855dfa`
+**No blockers.**
 
+```
 TASK COMPLETE
+```

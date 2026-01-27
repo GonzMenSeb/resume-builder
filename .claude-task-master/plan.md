@@ -94,8 +94,8 @@ From the research documents, key principles to implement:
 - [x] `[coding]` Create `src/resume_generator/__init__.py` with version and package metadata
 - [x] `[coding]` Create `src/resume_generator/config.py` with `Settings` Pydantic model for API keys, paths, and pipeline options
 - [x] `[coding]` Create `src/resume_generator/models/profile.py` with Pydantic models: `ContactInfo`, `Experience`, `Education`, `Skill`, `Certification`, `PersonProfile`
-- [ ] `[coding]` Create `src/resume_generator/models/resume.py` with Pydantic models: `ResumeBullet`, `ResumeExperience`, `ResumeSection`, `ResumeDocument`
-- [ ] `[coding]` Create `src/resume_generator/models/job.py` with Pydantic models: `JobRequirement`, `JobDescription` for job position parsing
+- [x] `[coding]` Create `src/resume_generator/models/resume.py` with Pydantic models: `ResumeBullet`, `ResumeExperience`, `ResumeSection`, `ResumeDocument`
+- [x] `[coding]` Create `src/resume_generator/models/job.py` with Pydantic models: `JobRequirement`, `JobDescription` for job position parsing
 
 ---
 
