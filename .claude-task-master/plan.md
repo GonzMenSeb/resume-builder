@@ -113,7 +113,7 @@ From the research documents, key principles to implement:
 - [x] `[coding]` Create `src/resume_generator/extraction/prompts.py` with prompt templates for extracting structured profile data from raw text
 - [x] `[coding]` Create `src/resume_generator/extraction/profile.py` with `ProfileExtractor` class using Anthropic SDK to call Claude and parse response into `PersonProfile` model
 - [x] `[coding]` Implement `ProfileExtractor.extract()` method with structured output parsing via Claude's JSON mode
-- [ ] `[quick]` Add retry logic with exponential backoff for API calls in `ProfileExtractor`
+- [x] `[quick]` Add retry logic with exponential backoff for API calls in `ProfileExtractor`
 
 ---
 

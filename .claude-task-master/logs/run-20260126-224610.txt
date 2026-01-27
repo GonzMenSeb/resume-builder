@@ -746,3 +746,52 @@ Goal: Deeply understand the research results we have in this repo and, with them
 Current Task (#15): Add retry logic with exponential backoff for API calls in `ProfileExtractor`
 
 Please complete this task.
+[RESPONSE]
+Excellent! Let me provide a final summary of what was accomplished:
+
+## Summary
+
+**Task #15 Completed:** ✅ Add retry logic with exponential backoff for API calls in `ProfileExtractor`
+
+### What was implemented:
+
+1. **Retry Infrastructure** - Added three core functions to handle API retries:
+   - `_call_with_retry(func)`: Wraps any callable with automatic retry logic
+   - `_exponential_backoff(attempt)`: Calculates backoff time with formula `min(1 * 2^attempt, 32)`
+   - `_is_retryable_error(error)`: Classifies errors as retryable (timeout, connection, rate limit) vs fatal
+
+2. **Integration Points**:
+   - `ProfileExtractor._call_claude_structured()` - Wrapped Claude beta API calls with retry
+   - `LegacyProfileExtractor._call_claude()` - Wrapped standard Claude API calls with retry
+   - Both maintain original error handling for non-retryable errors
+
+3. **Configuration**:
+   - MAX_RETRIES = 3
+   - INITIAL_BACKOFF_SECONDS = 1.0
+   - MAX_BACKOFF_SECONDS = 32.0
+   - Backoff progression: 1s → 2s → 4s
+
+4. **Quality Assurance**:
+   - ✅ Ruff linting - All checks passed
+   - ✅ Mypy type checking - No errors
+   - ✅ Python syntax - Validated
+   - ✅ Manual retry tests - All 6 test cases passed
+   - ✅ Proper logging - Detailed retry attempts with backoff times
+
+### Files Modified:
+- `src/resume_generator/extraction/profile.py` - Added retry functions and integrated into API calls
+
+### Commit Hash:
+`cde5402`
+
+---
+
+TASK COMPLETE
+=== END | completed | 147.6s ===
+=== SESSION 16 | WORKING | 07:42:14 ===
+[PROMPT]
+Goal: Deeply understand the research results we have in this repo and, with them, together with python's claude sdk, let's create a proffessional python project to generate S+ tier resumes from a s...
+
+Current Task (#16): Create `src/resume_generator/optimization/prompts.py` with prompts implementing research principles: X-Y-Z formula, action verbs, quantified achievements
+
+Please complete this task.

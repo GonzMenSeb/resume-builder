@@ -1,7 +1,7 @@
 # Progress Tracker
 
-**Session:** 14
-**Current Task:** 14 of 44
+**Session:** 15
+**Current Task:** 15 of 44
 
 ## Task List
 
@@ -18,8 +18,8 @@
 ✓ [x] **Task 11:** `[coding]` Create `src/resume_generator/ingestion/loader.py` with `DataLoader` class that auto-detects file types, aggregates content from multiple sources, and returns unified text
 ✓ [x] **Task 12:** `[coding]` Create `src/resume_generator/extraction/prompts.py` with prompt templates for extracting structured profile data from raw text
 ✓ [x] **Task 13:** `[coding]` Create `src/resume_generator/extraction/profile.py` with `ProfileExtractor` class using Anthropic SDK to call Claude and parse response into `PersonProfile` model
-→ [ ] **Task 14:** `[coding]` Implement `ProfileExtractor.extract()` method with structured output parsing via Claude's JSON mode
-  [ ] **Task 15:** `[quick]` Add retry logic with exponential backoff for API calls in `ProfileExtractor`
+✓ [x] **Task 14:** `[coding]` Implement `ProfileExtractor.extract()` method with structured output parsing via Claude's JSON mode
+→ [ ] **Task 15:** `[quick]` Add retry logic with exponential backoff for API calls in `ProfileExtractor`
   [ ] **Task 16:** `[coding]` Create `src/resume_generator/optimization/prompts.py` with prompts implementing research principles: X-Y-Z formula, action verbs, quantified achievements
   [ ] **Task 17:** `[coding]` Create `src/resume_generator/optimization/optimizer.py` with `ResumeOptimizer` class that transforms `PersonProfile` into `ResumeDocument` using Claude
   [ ] **Task 18:** `[coding]` Create `src/resume_generator/optimization/tailoring.py` with `JobTailorer` class that optimizes resume content for specific job descriptions (keyword matching, bullet reordering, summary customization)
@@ -51,34 +51,46 @@
   [ ] **Task 44:** `[quick]` Final cleanup: remove unused imports, ensure consistent formatting with `ruff`
 
 ## Latest Completed
-**Task 14:** `[coding]` Implement `ProfileExtractor.extract()` method with structured output parsing via Claude's JSON mode
+**Task 15:** `[quick]` Add retry logic with exponential backoff for API calls in `ProfileExtractor`
 
 ### Summary
+Excellent! Let me provide a final summary of what was accomplished:
+
 ## Summary
 
-**Task #14 Completed: Implement `ProfileExtractor.extract()` method with structured output parsing via Claude's JSON mode**
+**Task #15 Completed:** ✅ Add retry logic with exponential backoff for API calls in `ProfileExtractor`
 
-### What was completed:
-1. Implemented the `ProfileExtractor.extract()` method using Claude's beta structured outputs API (`client.beta.messages.parse()`)
-2. Created Pydantic schemas for extraction (`ProfileExtractionSchema`, `ContactInfoSchema`, `ExperienceSchema`, etc.) that are compatible with Claude's JSON mode constraints
-3. Added proper handling for:
-   - `stop_reason == "refusal"` - when Claude refuses to process
-   - `stop_reason == "max_tokens"` - when response is truncated
-   - Type conversion from extraction schema to full `PersonProfile` model
-4. Preserved the original implementation as `LegacyProfileExtractor` for fallback support with older models
-5. Uses the `structured-outputs-2025-11-13` beta feature
+### What was implemented:
 
-### Tests run:
-- `ruff check src/resume_generator/` - All checks passed
-- `python3 -m py_compile` - Syntax check passed
-- Import tests successful
-- `mypy` - Profile.py file passes (other files have unrelated existing issues)
+1. **Retry Infrastructure** - Added three core functions to handle API retries:
+   - `_call_with_retry(func)`: Wraps any callable with automatic retry logic
+   - `_exponential_backoff(attempt)`: Calculates backoff time with formula `min(1 * 2^attempt, 32)`
+   - `_is_retryable_error(error)`: Classifies errors as retryable (timeout, connection, rate limit) vs fatal
 
-### Files modified:
-- `src/resume_generator/extraction/profile.py` - Major rewrite with structured outputs
-- `src/resume_generator/extraction/__init__.py` - Added `LegacyProfileExtractor` export
+2. **Integration Points**:
+   - `ProfileExtractor._call_claude_structured()` - Wrapped Claude beta API calls with retry
+   - `LegacyProfileExtractor._call_claude()` - Wrapped standard Claude API calls with retry
+   - Both maintain original error handling for non-retryable errors
 
-### Commit hash:
-`b236bd9`
+3. **Configuration**:
+   - MAX_RETRIES = 3
+   - INITIAL_BACKOFF_SECONDS = 1.0
+   - MAX_BACKOFF_SECONDS = 32.0
+   - Backoff progression: 1s → 2s → 4s
+
+4. **Quality Assurance**:
+   - ✅ Ruff linting - All checks passed
+   - ✅ Mypy type checking - No errors
+   - ✅ Python syntax - Validated
+   - ✅ Manual retry tests - All 6 test cases passed
+   - ✅ Proper logging - Detailed retry attempts with backoff times
+
+### Files Modified:
+- `src/resume_generator/extraction/profile.py` - Added retry functions and integrated into API calls
+
+### Commit Hash:
+`cde5402`
+
+---
 
 TASK COMPLETE
