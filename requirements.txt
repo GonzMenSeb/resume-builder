@@ -1,0 +1,7 @@
+# Resume Builder Pipeline Dependencies
+# Core dependencies are minimal - the pipeline primarily uses LaTeX
+
+# Optional: For future enhancements
+# watchdog>=3.0.0      # Auto-rebuild on file changes
+# jinja2>=3.0.0        # Template variable substitution
+# pyyaml>=6.0.0        # YAML config support

@@ -1,0 +1,209 @@
+\documentclass[11pt,a4paper]{article}
+
+% Encoding and fonts
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{newpxtext}
+\usepackage{microtype}
+
+% Layout
+\usepackage[
+    top=0.5in,
+    bottom=0.5in,
+    left=0.6in,
+    right=0.6in
+]{geometry}
+
+% Typography and formatting
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{parskip}
+\usepackage{xcolor}
+\usepackage{fontawesome5}
+\usepackage{hyperref}
+\usepackage{needspace}
+
+% Colors
+\definecolor{primary}{RGB}{128, 0, 32}
+\definecolor{darktext}{RGB}{51, 51, 51}
+\definecolor{lighttext}{RGB}{102, 102, 102}
+
+% Hyperlink setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=primary,
+    urlcolor=primary,
+    pdfborder={0 0 0}
+}
+
+% Remove page numbers
+\pagestyle{empty}
+
+% Section formatting
+\titleformat{\section}
+    {\large\bfseries\color{primary}}
+    {}
+    {0pt}
+    {\MakeUppercase}
+    [\vspace{-4pt}\textcolor{primary}{\titlerule[0.8pt]}]
+
+\titlespacing*{\section}{0pt}{14pt}{8pt}[0pt]
+
+% Prevent page breaks after section headers
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd{\@afterheading}{\clubpenalty \@M}{\clubpenalty \@M \@afterindentfalse \interlinepenalty\@M}{}{}
+\makeatother
+
+% Custom commands
+\newcommand{\resumeheader}[6]{%
+    \begin{center}
+        {\Huge\bfseries\color{darktext} #1}\\[8pt]
+        {\color{lighttext}
+            \faEnvelope\ \href{mailto:#2}{#2} \quad
+            \faPhone\ #3 \quad
+            \faMapMarker*\ #4
+        }\\[4pt]
+        {\color{lighttext}
+            \faGithub\ \href{#5}{GitHub} \quad
+            \faLinkedin\ \href{#6}{LinkedIn}
+        }
+    \end{center}
+    \vspace{4pt}
+}
+
+\newcommand{\experienceitem}[4]{%
+    \needspace{5\baselineskip}
+    \noindent
+    \textbf{\color{darktext}#1} \hfill \textit{#2}\\
+    \textit{\color{lighttext}#3} \hfill {\color{lighttext}#4}
+    \vspace{4pt}
+}
+
+\newcommand{\educationitem}[4]{%
+    \needspace{4\baselineskip}
+    \begin{minipage}[t]{\textwidth}
+    \noindent
+    \textbf{\color{darktext}#1} \hfill {\color{lighttext}#2}\\
+    \textit{#3}\\
+    {\small #4}
+    \vspace{6pt}
+    \end{minipage}
+}
+
+\newcommand{\skillcategory}[2]{%
+    \textbf{#1:} #2\\[3pt]
+}
+
+\newcommand{\learningitem}[2]{%
+    #1 \textcolor{lighttext}{(#2/10)} \quad
+}
+
+% Bullet list configuration
+\setlist[itemize]{
+    leftmargin=1.2em,
+    itemsep=2pt,
+    parsep=0pt,
+    topsep=4pt,
+    label=\textcolor{primary}{\textbullet}
+}
+
+\begin{document}
+
+% === HEADER ===
+\resumeheader
+    {SEBASTI\'{A}N MENDOZA GONZ\'{A}LEZ}
+    {eurusaci@gmail.com}
+    {+57 305 226 9855}
+    {Medell\'{i}n, Antioquia, Colombia}
+    {https://github.com/GonzMenSeb}
+    {https://www.linkedin.com/in/sebmendozagonzalez/}
+
+% === SUMMARY ===
+\section{Summary}
+DevOps Engineer with C1+ English proficiency, experienced in Linux server administration and Azure Cloud infrastructure.
+Skilled in CI/CD pipelines, containerization, proxy infrastructure, and cloud automation.
+Computer Science student at Universidad Nacional de Colombia.
+
+% === EXPERIENCE ===
+\section{Work Experience}
+
+\experienceitem
+    {DevOps Engineer}
+    {Tesote}
+    {Full-time}
+    {Jul 2025 -- Present}
+
+\begin{itemize}
+    \item Configured and administered distributed network of Linux-based proxy servers across on-premise mini-PCs and cloud VPS instances on DigitalOcean and Hetzner
+    \item Orchestrated proxy infrastructure using Coolify, integrating a proxy gateway and custom intermediary application exposing proxies through a centralized API
+\end{itemize}
+
+\vspace{6pt}
+
+\experienceitem
+    {Jr. Cloud Orchestrator \& Developer}
+    {Quantum Outsourcing Group}
+    {Remote -- Florida-based team}
+    {May 2024 -- Jul 2025}
+
+\begin{itemize}
+    \item Administered Azure tenant, deploying App Services and Logic Apps using ARM templates and Bicep
+    \item Engineered CI/CD pipelines with Azure DevOps and GitHub Actions for web apps, APIs, and Function Apps
+    \item Automated cross-departmental workflows using Python scripts, Logic Apps, and n8n, improving operational efficiency across multiple departments
+    \item Containerized applications using Docker with Azure Container Registry and Container Apps
+    \item Built data pipelines processing SQL Server, Blob Storage, Salesforce, and Unicourt API data using Data Factory, Python, and SQL stored procedures
+    \item Generated productivity reports, billing reports, and time-off reports for the reporting department
+    \item Collaborated daily in English with Florida-based team members
+\end{itemize}
+
+\vspace{6pt}
+
+\experienceitem
+    {Bilingual Backoffice Agent}
+    {Almacontact Colombia}
+    {Part-time -- Sabaneta, Colombia}
+    {Feb 2023 -- Nov 2024}
+
+\begin{itemize}
+    \item Provided English-language backoffice support
+\end{itemize}
+
+\vspace{6pt}
+
+\experienceitem
+    {Software Development Apprentice}
+    {Choucair Testing S.A.}
+    {Medell\'{i}n, Colombia}
+    {Jun 2019 -- May 2020}
+
+\begin{itemize}
+    \item Developed applications using Java and Python during 1-year apprenticeship program
+\end{itemize}
+
+% === EDUCATION ===
+\section{Education}
+
+\educationitem
+    {Bachelor of Computer Science}
+    {Jan 2021 -- Present}
+    {Universidad Nacional de Colombia}
+    {}
+
+\educationitem
+    {Medium-Technical Degree in Programming}
+    {Jan 2019 -- Nov 2020}
+    {Polit\'{e}cnico Colombiano Jaime Isaza Cadavid}
+    {Acquired alongside Programming Specialization at I.E. INEM Jos\'{e} F\'{e}lix de Restrepo}
+
+% === SKILLS ===
+\section{Key Skills}
+
+\skillcategory{Languages}{Python, JavaScript, SQL, Ruby on Rails}
+\skillcategory{Cloud \& DevOps}{Azure (Logic Apps, Function Apps, Container Apps, Data Factory, DevOps), Docker, GitHub Actions, Coolify}
+\skillcategory{Infrastructure}{Linux Server Administration, Proxy Server, Squid, DigitalOcean, Hetzner Cloud, Terraform}
+\skillcategory{Infrastructure as Code}{ARM Templates, Bicep, Terraform}
+\skillcategory{Data \& Integration}{SQL Server, PostgreSQL, Azure SQL, Blob Storage, Salesforce, Microsoft Graph API}
+\skillcategory{Tools}{Postman, n8n, Git, Azure Data Studio}
+
+\end{document}
