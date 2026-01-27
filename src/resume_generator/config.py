@@ -4,7 +4,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Annotated
 
-from pydantic import Field, SecretStr, field_validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -33,32 +33,19 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # API Configuration
-    anthropic_api_key: SecretStr = Field(
-        default=...,
-        description="Anthropic API key for Claude",
-    )
     claude_model: ClaudeModel = Field(
         default=ClaudeModel.SONNET,
         description="Claude model to use for AI operations",
     )
-    max_tokens: int = Field(
-        default=4096,
-        ge=256,
-        le=8192,
-        description="Maximum tokens for Claude responses",
+    claude_cli_timeout: int = Field(
+        default=3600,
+        ge=60,
+        le=7200,
+        description="Timeout in seconds for Claude CLI invocations",
     )
-    api_timeout: float = Field(
-        default=120.0,
-        ge=10.0,
-        le=600.0,
-        description="API request timeout in seconds",
-    )
-    api_max_retries: int = Field(
-        default=3,
-        ge=1,
-        le=10,
-        description="Maximum retry attempts for API calls",
+    claude_cli_verbose: bool = Field(
+        default=False,
+        description="Enable verbose output during Claude CLI invocations",
     )
 
     # Path Configuration
