@@ -19,7 +19,7 @@ resume-gen --version
 
 ### Required
 - Python 3.11 or higher
-- Anthropic API key
+- Claude CLI (for AI-powered features)
 
 ### Optional
 - `pdflatex` for PDF compilation (install LaTeX)
@@ -42,24 +42,31 @@ Download and install [MiKTeX](https://miktex.org/download)
 
 ## Configuration
 
-### API Key Setup
+### Claude CLI Setup
 
-Set your Anthropic API key using one of these methods:
+Ensure Claude CLI is installed and accessible:
 
-**1. Environment Variable:**
+**1. Install Claude CLI:**
 ```bash
-export RESUME_GEN_ANTHROPIC_API_KEY="sk-ant-..."
+# macOS/Linux via Homebrew
+brew install anthropic-cli
+
+# Or download from https://github.com/anthropics/claude-code
 ```
 
-**2. .env File:**
+**2. Verify Installation:**
 ```bash
-echo 'RESUME_GEN_ANTHROPIC_API_KEY=sk-ant-...' > .env
+claude --version
 ```
 
-**3. Shell Profile (.bashrc, .zshrc):**
+**3. Configure Model (Optional):**
 ```bash
-echo 'export RESUME_GEN_ANTHROPIC_API_KEY="sk-ant-..."' >> ~/.bashrc
-source ~/.bashrc
+export RESUME_GEN_CLAUDE_MODEL=sonnet
+```
+
+Or create `.env` file:
+```bash
+echo 'RESUME_GEN_CLAUDE_MODEL=sonnet' > .env
 ```
 
 ## Basic Usage
@@ -337,8 +344,8 @@ done
 All settings can be configured via environment variables with `RESUME_GEN_` prefix:
 
 ```bash
-export RESUME_GEN_ANTHROPIC_API_KEY="sk-ant-..."
-export RESUME_GEN_CLAUDE_MODEL="claude-sonnet-4-20250514"
+export RESUME_GEN_CLAUDE_MODEL=sonnet
+export RESUME_GEN_CLAUDE_CLI_TIMEOUT=3600
 export RESUME_GEN_OUTPUT_DIR="./output"
 export RESUME_GEN_DEFAULT_TEMPLATE="modern"
 export RESUME_GEN_COMPILE_PDF="true"
@@ -348,8 +355,8 @@ export RESUME_GEN_VERBOSE="false"
 Or create `.env` file:
 
 ```bash
-RESUME_GEN_ANTHROPIC_API_KEY=sk-ant-...
-RESUME_GEN_CLAUDE_MODEL=claude-sonnet-4-20250514
+RESUME_GEN_CLAUDE_MODEL=sonnet
+RESUME_GEN_CLAUDE_CLI_TIMEOUT=3600
 RESUME_GEN_OUTPUT_DIR=./output
 RESUME_GEN_DEFAULT_TEMPLATE=modern
 RESUME_GEN_PRIMARY_COLOR=#2C3E50
@@ -403,16 +410,19 @@ fi
 
 ## Troubleshooting
 
-### Issue: API Key Error
+### Issue: Claude CLI Not Found
 
 **Error:**
 ```
-Error: anthropic_api_key is required
+Error: Claude CLI not available. Please install Claude CLI.
 ```
 
 **Solution:**
+Install Claude CLI and ensure it's in your PATH:
+
 ```bash
-export RESUME_GEN_ANTHROPIC_API_KEY="sk-ant-..."
+brew install anthropic-cli
+claude --version
 resume-gen generate resume.pdf
 ```
 
@@ -569,12 +579,17 @@ fi
 ### CI/CD (GitHub Actions)
 
 ```yaml
+- name: Install Claude CLI
+  run: |
+    # Install Claude CLI via Anthropic's official method
+    # See https://github.com/anthropics/claude-code for latest instructions
+
 - name: Generate Resume
   run: |
     pip install resume-generator
     resume-gen generate resume.pdf -o dist/resume.pdf
   env:
-    RESUME_GEN_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    RESUME_GEN_CLAUDE_MODEL: sonnet
 ```
 
 ### Makefile

@@ -27,7 +27,6 @@ def test_pdf_ingestion():
         print(f"  • {pdf.name}")
 
     settings = Settings(
-        anthropic_api_key="sk-ant-test-key-e2e",
         claude_model=ClaudeModel.SONNET,
         output_dir=OUTPUT_DIR,
         verbose=True,

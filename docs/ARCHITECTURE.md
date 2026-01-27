@@ -430,7 +430,9 @@ The architecture supports:
 ### Local Development
 ```bash
 pip install -e ".[dev]"
-export RESUME_GEN_ANTHROPIC_API_KEY="sk-ant-..."
+# Ensure Claude CLI is installed
+brew install anthropic-cli
+export RESUME_GEN_CLAUDE_MODEL=sonnet
 resume-gen generate resume.pdf
 ```
 

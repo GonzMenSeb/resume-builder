@@ -215,12 +215,13 @@ else:
 Configuration management using Pydantic Settings.
 
 ```python
-from resume_generator.config import Settings, get_settings
+from resume_generator.config import Settings, ClaudeModel, get_settings
+from pathlib import Path
 
 settings = get_settings()
 
-settings.anthropic_api_key = "sk-ant-..."
-settings.claude_model = "claude-sonnet-4-20250514"
+settings.claude_model = ClaudeModel.SONNET
+settings.claude_cli_timeout = 3600
 settings.output_dir = Path("./output")
 settings.compile_pdf = True
 ```
@@ -229,8 +230,9 @@ settings.compile_pdf = True
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `anthropic_api_key` | str | *required* | Anthropic API key |
-| `claude_model` | str | `claude-sonnet-4-20250514` | Claude model ID |
+| `claude_model` | ClaudeModel | `SONNET` | Claude model to use |
+| `claude_cli_timeout` | int | `3600` | Claude CLI timeout (seconds) |
+| `claude_cli_verbose` | bool | `False` | Verbose Claude CLI output |
 | `output_dir` | Path | `./output` | Output directory |
 | `default_template` | ResumeTemplate | `MODERN` | Default template |
 | `compile_pdf` | bool | `True` | Enable PDF compilation |

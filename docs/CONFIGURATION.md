@@ -24,8 +24,8 @@ Default Values → .env File → Environment Variables → Programmatic Config
 Create `.env` in your project root:
 
 ```bash
-RESUME_GEN_ANTHROPIC_API_KEY=sk-ant-...
-RESUME_GEN_CLAUDE_MODEL=claude-sonnet-4-20250514
+RESUME_GEN_CLAUDE_MODEL=sonnet
+RESUME_GEN_CLAUDE_CLI_TIMEOUT=3600
 RESUME_GEN_DEFAULT_TEMPLATE=modern
 RESUME_GEN_OUTPUT_DIR=./output
 RESUME_GEN_COMPILE_PDF=true
@@ -34,72 +34,43 @@ RESUME_GEN_COMPILE_PDF=true
 ### Using Environment Variables
 
 ```bash
-export RESUME_GEN_ANTHROPIC_API_KEY="sk-ant-..."
-export RESUME_GEN_CLAUDE_MODEL="claude-sonnet-4-20250514"
+export RESUME_GEN_CLAUDE_MODEL=sonnet
+export RESUME_GEN_CLAUDE_CLI_TIMEOUT=3600
 ```
 
 ### Programmatic Configuration
 
 ```python
-from resume_generator.config import Settings, get_settings
+from resume_generator.config import Settings, get_settings, ClaudeModel
 
 settings = get_settings()
-settings.anthropic_api_key = "sk-ant-..."
+settings.claude_model = ClaudeModel.SONNET
 settings.output_dir = Path("./custom_output")
 ```
 
 ## Configuration Sections
 
-### API Configuration
+### Claude CLI Configuration
 
-Settings for Claude AI API interaction.
-
-#### `ANTHROPIC_API_KEY`
-
-**Type:** `str` (required)
-**Default:** None
-**Description:** Your Anthropic API key for Claude access
-
-**Environment Variable:**
-```bash
-RESUME_GEN_ANTHROPIC_API_KEY=sk-ant-api01-...
-```
-
-**Security:** Never commit API keys to version control
+Settings for Claude CLI subprocess interaction.
 
 #### `CLAUDE_MODEL`
 
 **Type:** `str`
-**Default:** `claude-sonnet-4-20250514`
-**Description:** Claude model ID to use
+**Default:** `sonnet`
+**Description:** Claude model to use via CLI
 
 **Options:**
-- `claude-sonnet-4-20250514` (recommended, balanced)
-- `claude-opus-4-20250514` (highest quality, slower)
-- `claude-3-5-sonnet-20241022` (older, faster)
+- `sonnet` (recommended, balanced)
+- `opus` (highest quality, slower)
+- `haiku` (fastest, lower quality)
 
 **Environment Variable:**
 ```bash
-RESUME_GEN_CLAUDE_MODEL=claude-sonnet-4-20250514
+RESUME_GEN_CLAUDE_MODEL=sonnet
 ```
 
-**Note:** Opus provides highest quality but costs more and is slower
-
-#### `MAX_TOKENS`
-
-**Type:** `int`
-**Default:** `4096`
-**Range:** `1024-8192`
-**Description:** Maximum tokens for Claude responses
-
-**Environment Variable:**
-```bash
-RESUME_GEN_MAX_TOKENS=4096
-```
-
-**Trade-offs:**
-- Higher = More detailed responses, higher cost
-- Lower = Faster, cheaper, may truncate content
+**Note:** Requires Claude CLI to be installed and accessible in PATH
 
 #### `CLAUDE_CLI_TIMEOUT`
 
@@ -451,7 +422,7 @@ RESUME_GEN_VERBOSE=true
 ### Production .env
 
 ```bash
-# API Configuration
+# Claude CLI Configuration
 RESUME_GEN_CLAUDE_MODEL=sonnet
 RESUME_GEN_CLAUDE_CLI_TIMEOUT=3600
 RESUME_GEN_CLAUDE_CLI_VERBOSE=false
@@ -488,10 +459,10 @@ RESUME_GEN_VERBOSE=false
 
 ```python
 from pathlib import Path
-from resume_generator.config import Settings, ResumeTemplate
+from resume_generator.config import Settings, ResumeTemplate, ClaudeModel
 
 settings = Settings(
-    # API
+    # Claude CLI
     claude_model=ClaudeModel.SONNET,
     claude_cli_timeout=3600,
     claude_cli_verbose=False,
@@ -632,16 +603,22 @@ ValidationError: font_body_size must be between 10 and 12
 **Solution:**
 Check allowed ranges in this documentation
 
-### API Key Not Found
+### Claude CLI Not Found
 
 **Error:**
 ```
-Error: anthropic_api_key is required
+Error: Claude CLI not available. Please install Claude CLI.
 ```
 
 **Solution:**
+Install Claude CLI from https://github.com/anthropics/claude-code
+
 ```bash
-export RESUME_GEN_ANTHROPIC_API_KEY="sk-ant-..."
+# macOS/Linux
+brew install anthropic-cli
+
+# Verify installation
+claude --version
 ```
 
 ## Related Documentation

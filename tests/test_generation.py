@@ -154,7 +154,6 @@ class TestTemplateConfig:
 
     def test_from_settings_custom_colors(self) -> None:
         settings = Settings(
-            anthropic_api_key="test-key",
             primary_color="#FF5500",
             secondary_color="#0055FF",
         )

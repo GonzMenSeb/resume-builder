@@ -414,12 +414,16 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y texlive-latex-base texlive-fonts-recommended
 
+      - name: Install Claude CLI
+        run: |
+          # Follow https://github.com/anthropics/claude-code for installation
+
       - name: Install Resume Generator
         run: pip install resume-generator
 
       - name: Generate Resume
         env:
-          RESUME_GEN_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          RESUME_GEN_CLAUDE_MODEL: sonnet
         run: |
           resume-gen generate resume/source.pdf -o dist/resume.pdf
 

@@ -63,10 +63,10 @@ This installs:
 
 ### 4. Configure Environment
 
-Create `.env` file:
+Ensure Claude CLI is installed, then create `.env` file:
 
 ```bash
-RESUME_GEN_ANTHROPIC_API_KEY=sk-ant-...
+RESUME_GEN_CLAUDE_MODEL=sonnet
 RESUME_GEN_VERBOSE=true
 ```
 

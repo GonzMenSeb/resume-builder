@@ -157,8 +157,9 @@ See [Architecture](./ARCHITECTURE.md) for detailed system design.
 ### Essential Settings
 
 ```bash
-# Required
-RESUME_GEN_ANTHROPIC_API_KEY=sk-ant-...
+# Claude CLI Configuration
+RESUME_GEN_CLAUDE_MODEL=sonnet
+RESUME_GEN_CLAUDE_CLI_TIMEOUT=3600
 
 # Commonly Customized
 RESUME_GEN_DEFAULT_TEMPLATE=modern      # or 'ats'
