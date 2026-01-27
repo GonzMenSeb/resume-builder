@@ -10,8 +10,22 @@ from resume_generator.models.profile import (
     Skill,
     SkillCategory,
 )
+from resume_generator.models.resume import (
+    BulletType,
+    ResumeBullet,
+    ResumeCertification,
+    ResumeContact,
+    ResumeDocument,
+    ResumeEducation,
+    ResumeExperience,
+    ResumeProject,
+    ResumeSection,
+    ResumeSkillGroup,
+    SectionType,
+)
 
 __all__ = [
+    # Profile models (raw input)
     "Certification",
     "ContactInfo",
     "Education",
@@ -20,4 +34,16 @@ __all__ = [
     "Project",
     "Skill",
     "SkillCategory",
+    # Resume models (optimized output)
+    "BulletType",
+    "ResumeBullet",
+    "ResumeCertification",
+    "ResumeContact",
+    "ResumeDocument",
+    "ResumeEducation",
+    "ResumeExperience",
+    "ResumeProject",
+    "ResumeSection",
+    "ResumeSkillGroup",
+    "SectionType",
 ]

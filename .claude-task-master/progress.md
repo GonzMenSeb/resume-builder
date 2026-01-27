@@ -1,15 +1,15 @@
 # Progress Tracker
 
-**Session:** 4
-**Current Task:** 4 of 44
+**Session:** 5
+**Current Task:** 5 of 44
 
 ## Task List
 
 ✓ [x] **Task 1:** `[quick]` Initialize git repository and create feature branch `feat/resume-generator-mvp`
 ✓ [x] **Task 2:** `[coding]` Create `pyproject.toml` with dependencies: `anthropic>=0.40.0`, `pydantic>=2.0`, `rich>=13.0`, `pypdf>=4.0`, `aiofiles>=23.0`, `typer>=0.9.0`
 ✓ [x] **Task 3:** `[coding]` Create `src/resume_generator/__init__.py` with version and package metadata
-→ [ ] **Task 4:** `[coding]` Create `src/resume_generator/config.py` with `Settings` Pydantic model for API keys, paths, and pipeline options
-  [ ] **Task 5:** `[coding]` Create `src/resume_generator/models/profile.py` with Pydantic models: `ContactInfo`, `Experience`, `Education`, `Skill`, `Certification`, `PersonProfile`
+✓ [x] **Task 4:** `[coding]` Create `src/resume_generator/config.py` with `Settings` Pydantic model for API keys, paths, and pipeline options
+→ [ ] **Task 5:** `[coding]` Create `src/resume_generator/models/profile.py` with Pydantic models: `ContactInfo`, `Experience`, `Education`, `Skill`, `Certification`, `PersonProfile`
   [ ] **Task 6:** `[coding]` Create `src/resume_generator/models/resume.py` with Pydantic models: `ResumeBullet`, `ResumeExperience`, `ResumeSection`, `ResumeDocument`
   [ ] **Task 7:** `[coding]` Create `src/resume_generator/models/job.py` with Pydantic models: `JobRequirement`, `JobDescription` for job position parsing
   [ ] **Task 8:** `[coding]` Create `src/resume_generator/ingestion/base.py` with abstract `BaseExtractor` class defining `extract(path: Path) -> str` interface
@@ -51,37 +51,39 @@
   [ ] **Task 44:** `[quick]` Final cleanup: remove unused imports, ensure consistent formatting with `ruff`
 
 ## Latest Completed
-**Task 4:** `[coding]` Create `src/resume_generator/config.py` with `Settings` Pydantic model for API keys, paths, and pipeline options
+**Task 5:** `[coding]` Create `src/resume_generator/models/profile.py` with Pydantic models: `ContactInfo`, `Experience`, `Education`, `Skill`, `Certification`, `PersonProfile`
 
 ### Summary
-## Task Completion Summary
+## Summary
 
-**What was completed:**
-- Created `src/resume_generator/config.py` with a comprehensive `Settings` Pydantic model including:
-  - **API Configuration**: Anthropic API key (SecretStr), Claude model selection (enum), max tokens, timeout, retries
-  - **Path Configuration**: Output directory, templates directory, cache directory with auto-path conversion
-  - **Template & Design Configuration**: Research-backed defaults for colors, font sizes, margins
-  - **Content Optimization Settings**: Bullets per job (3-5), summary word counts (50-100), keyword match rate (70%), tailoring customization rate (50%)
-  - **Pipeline Options**: Job tailoring toggle, PDF compilation, keep LaTeX source, verbose mode
-  - **Enums**: `ResumeTemplate` (MODERN, ATS), `ClaudeModel` (SONNET, OPUS, HAIKU)
-  - **Helper methods**: `ensure_directories()`, `get_template_path()`
-  - Environment variable support with `RESUME_GEN_` prefix and `.env` file support
-- Added `pydantic-settings>=2.0` dependency to `pyproject.toml`
+**Task #5 Complete**: Created `src/resume_generator/models/profile.py` with Pydantic models.
 
-**Tests run and results:**
-- Python syntax check: ✅ Passed
-- Module import test: ✅ Passed
-- Settings instantiation with env vars: ✅ Passed
-- All enums and helper methods validated
+### What was completed:
+- **`SkillCategory`** - Enum for categorizing skills (technical, programming, frameworks, tools, languages, soft, domain, other)
+- **`ContactInfo`** - Contact data with email validation and URL fields for LinkedIn, GitHub, portfolio
+- **`Skill`** - Skill with name, category, proficiency (1-5), years experience, and ATS keywords
+- **`Experience`** - Work experience with company, title, dates, achievements, technologies, metrics, and auto-inference of `is_current` when `end_date` is None
+- **`Education`** - Education entry with institution, degree, field, GPA, honors, coursework
+- **`Certification`** - Professional certification with name, acronym, issuing org, dates, credential ID
+- **`Project`** - Personal/professional projects with URLs, technologies, highlights
+- **`PersonProfile`** - Aggregates all profile data with helper methods:
+  - `get_skills_by_category()`
+  - `get_all_technologies()`
+  - `get_current_position()`
+  - `compute_years_of_experience()`
 
-**Files modified:**
-- `src/resume_generator/config.py` (created - 186 lines)
-- `pyproject.toml` (added pydantic-settings dependency)
+### Tests run and results:
+- ✅ Python import test passed
+- ✅ Comprehensive model validation test passed
+- ✅ `is_current` inference tested and working
+- ✅ `ruff check` - All checks passed
+- ✅ `mypy` - Success: no issues found
 
-**Commit hash:** `d10a27e65a2cc9fe78ae52f6bd9348bc9c27b75e`
+### Files modified:
+- `src/resume_generator/models/__init__.py` (new)
+- `src/resume_generator/models/profile.py` (new)
 
-**Blockers:** None
+### Commit hash:
+`e855dfa`
 
-```
 TASK COMPLETE
-```
