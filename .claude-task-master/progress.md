@@ -1,7 +1,7 @@
 # Progress Tracker
 
-**Session:** 7
-**Current Task:** 7 of 44
+**Session:** 8
+**Current Task:** 8 of 44
 
 ## Task List
 
@@ -11,8 +11,8 @@
 ✓ [x] **Task 4:** `[coding]` Create `src/resume_generator/config.py` with `Settings` Pydantic model for API keys, paths, and pipeline options
 ✓ [x] **Task 5:** `[coding]` Create `src/resume_generator/models/profile.py` with Pydantic models: `ContactInfo`, `Experience`, `Education`, `Skill`, `Certification`, `PersonProfile`
 ✓ [x] **Task 6:** `[coding]` Create `src/resume_generator/models/resume.py` with Pydantic models: `ResumeBullet`, `ResumeExperience`, `ResumeSection`, `ResumeDocument`
-→ [ ] **Task 7:** `[coding]` Create `src/resume_generator/models/job.py` with Pydantic models: `JobRequirement`, `JobDescription` for job position parsing
-  [ ] **Task 8:** `[coding]` Create `src/resume_generator/ingestion/base.py` with abstract `BaseExtractor` class defining `extract(path: Path) -> str` interface
+✓ [x] **Task 7:** `[coding]` Create `src/resume_generator/models/job.py` with Pydantic models: `JobRequirement`, `JobDescription` for job position parsing
+→ [ ] **Task 8:** `[coding]` Create `src/resume_generator/ingestion/base.py` with abstract `BaseExtractor` class defining `extract(path: Path) -> str` interface
   [ ] **Task 9:** `[coding]` Create `src/resume_generator/ingestion/pdf.py` with `PDFExtractor` class using `pypdf` to extract text from PDF files
   [ ] **Task 10:** `[coding]` Create `src/resume_generator/ingestion/text.py` with `TextExtractor` class handling `.txt`, `.md`, and raw text input
   [ ] **Task 11:** `[coding]` Create `src/resume_generator/ingestion/loader.py` with `DataLoader` class that auto-detects file types, aggregates content from multiple sources, and returns unified text
@@ -51,35 +51,35 @@
   [ ] **Task 44:** `[quick]` Final cleanup: remove unused imports, ensure consistent formatting with `ruff`
 
 ## Latest Completed
-**Task 7:** `[coding]` Create `src/resume_generator/models/job.py` with Pydantic models: `JobRequirement`, `JobDescription` for job position parsing
+**Task 8:** `[coding]` Create `src/resume_generator/ingestion/base.py` with abstract `BaseExtractor` class defining `extract(path: Path) -> str` interface
 
 ### Summary
-## Task Complete Summary
+## Task Complete
 
 **What was completed:**
-- Created `src/resume_generator/models/job.py` with comprehensive Pydantic models for job position parsing:
-  - `JobRequirement` - Individual job requirements with priority, keywords, and category
-  - `JobDescription` - Complete job posting model with title, company, skills, requirements, salary, and more
-  - `SalaryRange` - Model for salary information
-  - Enums: `ExperienceLevel`, `EmploymentType`, `WorkArrangement`, `RequirementPriority`
-  - Utility methods: `calculate_match_score()`, `get_keyword_set()`, `get_experience_range_str()`
-  - Computed fields: `all_keywords`, `required_requirements`, `preferred_requirements`
-- Updated `src/resume_generator/models/__init__.py` to export all new job models
+- Created `src/resume_generator/ingestion/` directory
+- Created `src/resume_generator/ingestion/__init__.py` with module exports
+- Created `src/resume_generator/ingestion/base.py` with:
+  - `ExtractionError` exception class for extraction failures
+  - `ExtractionResult` dataclass with text, source_path, char_count, word_count, and metadata
+  - `BaseExtractor` abstract class with:
+    - `supported_extensions` abstract property
+    - `can_handle(path)` method to check file compatibility
+    - `extract(path) -> str` abstract method (the core interface)
+    - `extract_with_metadata(path)` method returning `ExtractionResult`
+    - `_validate_path(path)` helper for path validation
 
 **Tests run and results:**
-- Syntax validation: ✅ Passed
-- Import validation: ✅ All imports successful
-- Model instantiation: ✅ JobRequirement and JobDescription work correctly
-- Computed fields: ✅ all_keywords, match score calculation working
-- Linting (ruff): ✅ All checks passed
+- `ruff check src/resume_generator/ingestion/` - All checks passed!
+- `mypy src/resume_generator/ingestion/` - Success: no issues found in 2 source files
 
 **Files modified:**
-- `src/resume_generator/models/job.py` (created - 207 lines)
-- `src/resume_generator/models/__init__.py` (updated exports)
+- `src/resume_generator/ingestion/__init__.py` (new)
+- `src/resume_generator/ingestion/base.py` (new)
 
-**Commit hash:** `4a1b0a2edeadc58aad26281da4f74e9ca2849a42`
+**Commit hash:** `3241e9214cd94867b7fd592c3dbc55c485e377a6`
 
-**No blockers.**
+**Blockers:** None
 
 ```
 TASK COMPLETE
