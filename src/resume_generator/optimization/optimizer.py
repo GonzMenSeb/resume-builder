@@ -181,12 +181,18 @@ class ResumeOptimizer:
         optimized: list[ResumeExperience] = []
         for exp in profile.experiences:
             if not exp.achievements:
+                main_text = exp.description or f"Worked as {exp.title} at {exp.company}"
                 bullets = [
                     ResumeBullet(
-                        text=exp.description or f"Worked as {exp.title} at {exp.company}",
+                        text=main_text,
                         bullet_type=BulletType.GENERIC,
                         relevance_score=0.3,
-                    )
+                    ),
+                    ResumeBullet(
+                        text=f"Contributed to {exp.company} projects as {exp.title}",
+                        bullet_type=BulletType.GENERIC,
+                        relevance_score=0.3,
+                    ),
                 ]
             else:
                 bullets = self._optimize_bullets(

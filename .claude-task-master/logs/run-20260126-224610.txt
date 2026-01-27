@@ -1501,3 +1501,212 @@ Goal: Deeply understand the research results we have in this repo and, with them
 Current Task (#33): Add CLI entry point in `pyproject.toml` under `[project.scripts]`: `resume-gen = "resume_generator.main:app"`
 
 Please complete this task.
+[RESPONSE]
+## Task Completion Report
+
+### ✅ Task Completed: Add CLI entry point in `pyproject.toml` under `[project.scripts]`
+
+**Summary:**
+The CLI entry point configuration has been verified and is properly set up in the project:
+
+**Configuration Details:**
+- **Entry point:** `resume-gen = "resume_generator.main:app"`
+- **Location:** `pyproject.toml` lines 45-46 under `[project.scripts]`
+- **Implementation:** `src/resume_generator/main.py` contains a properly configured `typer.Typer` app instance
+
+**Files Modified:**
+1. `.claude-task-master/logs/run-20260126-224610.txt` (tracking)
+2. `.claude-task-master/plan.md` (tracking)
+3. `.claude-task-master/progress.md` (tracking)
+4. `.claude-task-master/state.json` (tracking)
+
+**Verification Results:**
+- ✅ Entry point correctly defined in `[project.scripts]` section
+- ✅ Module path `resume_generator.main:app` references correct module
+- ✅ `app` object is a properly configured Typer instance with CLI commands
+- ✅ Package structure is valid with `__init__.py` present
+- ✅ Configuration syntax validated with Python toml parser
+
+**Commit Hash:** `f9d089bf6b9174b87e537a03721ef59f5fc4b1b1`
+
+**Tests:** Configuration validated programmatically using Python's toml parser.
+
+**No blockers.** The CLI entry point is ready for installation and use.
+
+```
+TASK COMPLETE
+```
+=== END | completed | 35.4s ===
+=== SESSION 34 | WORKING | 08:40:15 ===
+[PROMPT]
+Goal: Deeply understand the research results we have in this repo and, with them, together with python's claude sdk, let's create a proffessional python project to generate S+ tier resumes from a s...
+
+Current Task (#34): Create `tests/conftest.py` with pytest fixtures for sample data, mock Claude responses, and temporary directories
+
+Please complete this task.
+[RESPONSE]
+Perfect! Everything is complete. Let me create a final summary:
+
+## TASK COMPLETION REPORT
+
+### ✅ Task #34: Create `tests/conftest.py` - COMPLETE
+
+**What was completed:**
+1. Created `tests/__init__.py` for package initialization
+2. Created `tests/conftest.py` with **27 comprehensive pytest fixtures** covering:
+   - **Directory fixtures** (3): tmp_dir, output_dir, cache_dir for test isolation
+   - **Configuration fixtures** (2): test_settings with fake API keys, env_with_api_key for environment setup
+   - **Profile data fixtures** (7): All profile models including ContactInfo, Skill, Experience, Education, Certification, Project, and complete PersonProfile
+   - **Resume data fixtures** (4): ResumeBullet, ResumeExperience, ResumeContact, and complete ResumeDocument with optimization scores
+   - **Job data fixtures** (2): JobRequirement and JobDescription with keyword matching
+   - **Mock Claude API fixtures** (4): Mock responses, mock client with AsyncMock, extraction and optimization response mocks
+   - **Input file fixtures** (4): Raw text, PDF content, markdown files, and multiple input files
+   - **Template fixtures** (1): Sample LaTeX Jinja2 template
+
+**Tests run and results:**
+- ✅ Python syntax validation: PASSED
+- ✅ Module imports: PASSED  
+- ✅ Fixture pattern validation: PASSED
+- ✅ All 27 fixtures verified working
+- ✅ Type hints properly defined
+- ✅ Follows CLAUDE.md guidelines (minimal comments, no assumptions)
+
+**Files modified:**
+- `tests/__init__.py` (created, 0 lines)
+- `tests/conftest.py` (created, 572 lines)
+
+**Commit hash:**
+```
+453d07d165ae1c33e2a62b8cd889ff6a4313380d
+```
+
+**No blockers:** All fixtures are ready for use in upcoming test files (test_ingestion.py, test_extraction.py, test_optimization.py, test_generation.py).
+
+---
+
+```
+TASK COMPLETE
+```
+=== END | completed | 215.4s ===
+=== SESSION 35 | WORKING | 08:43:51 ===
+[PROMPT]
+Goal: Deeply understand the research results we have in this repo and, with them, together with python's claude sdk, let's create a proffessional python project to generate S+ tier resumes from a s...
+
+Current Task (#35): Create `tests/test_ingestion.py` with unit tests for `PDFExtractor`, `TextExtractor`, and `DataLoader`
+
+Please complete this task.
+[RESPONSE]
+Excellent! Let me create a summary of the work completed.
+
+## TASK COMPLETION REPORT
+
+### ✅ Task #35: Create `tests/test_ingestion.py` - COMPLETE
+
+**What was completed:**
+Created comprehensive unit tests for the ingestion module with **57 passing tests** covering all three main components:
+
+1. **PDFExtractor Tests (9 tests)**
+   - File type detection and supported extensions
+   - PDF text extraction from valid files
+   - Metadata extraction (page count, title, author, creator)
+   - Error handling for missing files, invalid PDFs, directories, and unsupported extensions
+
+2. **TextExtractor Tests (13 tests)**
+   - Support for .txt, .md, .markdown, .text files
+   - Text extraction with UTF-8 and latin-1 encoding fallback
+   - Whitespace normalization
+   - Static method `from_raw_text()` for raw text conversion
+   - Metadata extraction (file type, file size)
+   - Error handling for all edge cases
+
+3. **ExtractionResult Tests (4 tests)**
+   - Automatic char_count and word_count calculation
+   - Empty result detection via is_empty property
+   - Metadata field handling
+
+4. **DataLoader Tests (31 tests)**
+   - Single file loading (PDF, txt, md)
+   - Multiple file loading with configurable separators
+   - Directory loading (recursive and non-recursive)
+   - Raw text string handling
+   - Mixed sources (files + strings)
+   - Error handling with skip_failures mode
+   - Empty file filtering
+   - Extractor auto-detection logic
+   - LoadResult properties (total_chars, total_words, source_count, has_failures)
+
+**Tests run and results:**
+```
+✅ 57/57 tests passed
+✅ Code style verified with ruff
+✅ All edge cases covered (file not found, invalid files, directories, encoding issues)
+```
+
+**Files modified:**
+- `tests/test_ingestion.py` (NEW - 616 lines)
+- `uv.lock` (NEW - dependency lock file)
+
+**Commit hash:** `424c9363cc5e018377f1c475cf26d3d04802605d`
+
+**No blockers.** Task completed successfully with comprehensive test coverage.
+
+TASK COMPLETE
+=== END | completed | 234.0s ===
+=== SESSION 36 | WORKING | 08:47:45 ===
+[PROMPT]
+Goal: Deeply understand the research results we have in this repo and, with them, together with python's claude sdk, let's create a proffessional python project to generate S+ tier resumes from a s...
+
+Current Task (#36): Create `tests/test_extraction.py` with tests for `ProfileExtractor` using mocked API responses
+
+Please complete this task.
+[RESPONSE]
+Perfect! Let me now create a summary of what was completed:
+
+## Task Complete
+
+I have successfully created `tests/test_extraction.py` with comprehensive tests for the `ProfileExtractor` class using mocked API responses.
+
+### What was completed:
+
+1. **Created comprehensive test suite** (`tests/test_extraction.py`) with 33 tests covering:
+   - **Retry helper functions**: Tests for `_is_retryable_error()`, `_exponential_backoff()`, and `_call_with_retry()` with various error scenarios
+   - **ProfileExtractor.extract()**: Tests for successful extraction, empty input validation, API refusal, max tokens exceeded, missing parsed output, timeout retries, connection errors, and rate l...
+   - **Helper methods**: Tests for `_parse_date()` with ISO dates, year-only dates, invalid dates, and None values
+   - **Skill category parsing**: Tests for valid categories, case-insensitive parsing, and invalid inputs defaulting to "other"
+   - **Profile conversion**: Tests for minimal data, skipping invalid experiences, language handling, and validation errors
+   - **Field preservation**: Tests ensuring all profile fields are correctly preserved
+   - **API parameter validation**: Tests verifying correct parameters are passed to Claude API
+
+2. **All tests use mocked API responses** for complete isolation from external dependencies
+
+3. **Code quality**:
+   - All 33 tests passing
+   - Passes ruff linter checks
+   - Passes mypy type checking
+   - Follows project coding standards from CLAUDE.md (minimal comments)
+
+### Tests run and results:
+```
+33 tests passed
+0 tests failed
+Linting: Clean (ruff)
+Type checking: Clean (mypy)
+```
+
+### Files modified:
+- `tests/test_extraction.py` (created, 487 lines)
+
+### Commit hash:
+`177d81f`
+
+The test suite provides excellent coverage of the ProfileExtractor functionality, including edge cases, error handling, retry logic, and data transformation.
+
+TASK COMPLETE
+=== END | completed | 715.5s ===
+=== SESSION 37 | WORKING | 08:59:40 ===
+[PROMPT]
+Goal: Deeply understand the research results we have in this repo and, with them, together with python's claude sdk, let's create a proffessional python project to generate S+ tier resumes from a s...
+
+Current Task (#37): Create `tests/test_optimization.py` with tests for `ResumeOptimizer` and `JobTailorer`
+
+Please complete this task.

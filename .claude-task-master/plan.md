@@ -151,15 +151,15 @@ From the research documents, key principles to implement:
 - [x] `[coding]` Implement async pipeline execution with proper error handling and stage tracking
 - [x] `[coding]` Create `src/resume_generator/main.py` with Typer CLI: `generate` command accepting input paths, job description (optional), output path, and template selection
 - [x] `[coding]` Add CLI options: `--job-url` for job posting URL, `--template` for template selection, `--output` for output path, `--verbose` for debug output
-- [ ] `[quick]` Add CLI entry point in `pyproject.toml` under `[project.scripts]`: `resume-gen = "resume_generator.main:app"`
+- [x] `[quick]` Add CLI entry point in `pyproject.toml` under `[project.scripts]`: `resume-gen = "resume_generator.main:app"`
 
 ---
 
 ### PR 8: Testing & Quality Assurance
 
-- [ ] `[general]` Create `tests/conftest.py` with pytest fixtures for sample data, mock Claude responses, and temporary directories
-- [ ] `[general]` Create `tests/test_ingestion.py` with unit tests for `PDFExtractor`, `TextExtractor`, and `DataLoader`
-- [ ] `[general]` Create `tests/test_extraction.py` with tests for `ProfileExtractor` using mocked API responses
+- [x] `[general]` Create `tests/conftest.py` with pytest fixtures for sample data, mock Claude responses, and temporary directories
+- [x] `[general]` Create `tests/test_ingestion.py` with unit tests for `PDFExtractor`, `TextExtractor`, and `DataLoader`
+- [x] `[general]` Create `tests/test_extraction.py` with tests for `ProfileExtractor` using mocked API responses
 - [ ] `[general]` Create `tests/test_optimization.py` with tests for `ResumeOptimizer` and `JobTailorer`
 - [ ] `[general]` Create `tests/test_generation.py` with tests for `LaTeXGenerator` and `PDFCompiler`
 - [ ] `[coding]` Run full test suite and fix any failures: `pytest tests/ -v`

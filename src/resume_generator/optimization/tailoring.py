@@ -578,7 +578,7 @@ match specific job descriptions while maintaining truthfulness.
                 action_verb=b.action_verb,
                 metrics=b.metrics,
                 keywords=b.keywords,
-                relevance_score=s,
+                relevance_score=min(s, 1.0),
                 original_text=b.original_text,
             )
             for s, b in scored

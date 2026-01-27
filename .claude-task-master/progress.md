@@ -1,7 +1,7 @@
 # Progress Tracker
 
-**Session:** 32
-**Current Task:** 32 of 44
+**Session:** 36
+**Current Task:** 36 of 44
 
 ## Task List
 
@@ -36,11 +36,11 @@
 ✓ [x] **Task 29:** `[coding]` Create `src/resume_generator/pipeline.py` with `ResumePipeline` class orchestrating: ingestion → extraction → optimization → generation → compilation
 ✓ [x] **Task 30:** `[coding]` Implement async pipeline execution with proper error handling and stage tracking
 ✓ [x] **Task 31:** `[coding]` Create `src/resume_generator/main.py` with Typer CLI: `generate` command accepting input paths, job description (optional), output path, and template selection
-→ [ ] **Task 32:** `[coding]` Add CLI options: `--job-url` for job posting URL, `--template` for template selection, `--output` for output path, `--verbose` for debug output
-  [ ] **Task 33:** `[quick]` Add CLI entry point in `pyproject.toml` under `[project.scripts]`: `resume-gen = "resume_generator.main:app"`
-  [ ] **Task 34:** `[general]` Create `tests/conftest.py` with pytest fixtures for sample data, mock Claude responses, and temporary directories
-  [ ] **Task 35:** `[general]` Create `tests/test_ingestion.py` with unit tests for `PDFExtractor`, `TextExtractor`, and `DataLoader`
-  [ ] **Task 36:** `[general]` Create `tests/test_extraction.py` with tests for `ProfileExtractor` using mocked API responses
+✓ [x] **Task 32:** `[coding]` Add CLI options: `--job-url` for job posting URL, `--template` for template selection, `--output` for output path, `--verbose` for debug output
+✓ [x] **Task 33:** `[quick]` Add CLI entry point in `pyproject.toml` under `[project.scripts]`: `resume-gen = "resume_generator.main:app"`
+✓ [x] **Task 34:** `[general]` Create `tests/conftest.py` with pytest fixtures for sample data, mock Claude responses, and temporary directories
+✓ [x] **Task 35:** `[general]` Create `tests/test_ingestion.py` with unit tests for `PDFExtractor`, `TextExtractor`, and `DataLoader`
+→ [ ] **Task 36:** `[general]` Create `tests/test_extraction.py` with tests for `ProfileExtractor` using mocked API responses
   [ ] **Task 37:** `[general]` Create `tests/test_optimization.py` with tests for `ResumeOptimizer` and `JobTailorer`
   [ ] **Task 38:** `[general]` Create `tests/test_generation.py` with tests for `LaTeXGenerator` and `PDFCompiler`
   [ ] **Task 39:** `[coding]` Run full test suite and fix any failures: `pytest tests/ -v`
@@ -51,29 +51,48 @@
   [ ] **Task 44:** `[quick]` Final cleanup: remove unused imports, ensure consistent formatting with `ruff`
 
 ## Latest Completed
-**Task 32:** `[coding]` Add CLI options: `--job-url` for job posting URL, `--template` for template selection, `--output` for output path, `--verbose` for debug output
+**Task 36:** `[general]` Create `tests/test_extraction.py` with tests for `ProfileExtractor` using mocked API responses
 
 ### Summary
-## Summary
+Perfect! Let me now create a summary of what was completed:
 
-**What was completed:**
-- Added `--job-url` / `-u` CLI option that fetches job postings from URLs
-- Implemented HTML text extraction using regex to strip scripts, styles, and HTML tags
-- Updated help examples to showcase all CLI options including the new `--job-url`
-- Verified that all required CLI options are present:
-  - `--job-url` / `-u` for job posting URL ✓
-  - `--template` / `-t` for template selection (already existed) ✓
-  - `--output` / `-o` for output path (already existed) ✓
-  - `--verbose` / `-V` for debug output (already existed) ✓
+## Task Complete
 
-**Tests run:**
-- `ruff check` - passed
-- Python import test - passed
-- CLI help verification - all options displayed correctly
+I have successfully created `tests/test_extraction.py` with comprehensive tests for the `ProfileExtractor` class using mocked API responses.
 
-**Files modified:**
-- `src/resume_generator/main.py`
+### What was completed:
 
-**Commit hash:** `0571aa4`
+1. **Created comprehensive test suite** (`tests/test_extraction.py`) with 33 tests covering:
+   - **Retry helper functions**: Tests for `_is_retryable_error()`, `_exponential_backoff()`, and `_call_with_retry()` with various error scenarios
+   - **ProfileExtractor.extract()**: Tests for successful extraction, empty input validation, API refusal, max tokens exceeded, missing parsed output, timeout retries, connection errors, and rate limit handling
+   - **Helper methods**: Tests for `_parse_date()` with ISO dates, year-only dates, invalid dates, and None values
+   - **Skill category parsing**: Tests for valid categories, case-insensitive parsing, and invalid inputs defaulting to "other"
+   - **Profile conversion**: Tests for minimal data, skipping invalid experiences, language handling, and validation errors
+   - **Field preservation**: Tests ensuring all profile fields are correctly preserved
+   - **API parameter validation**: Tests verifying correct parameters are passed to Claude API
+
+2. **All tests use mocked API responses** for complete isolation from external dependencies
+
+3. **Code quality**:
+   - All 33 tests passing
+   - Passes ruff linter checks
+   - Passes mypy type checking
+   - Follows project coding standards from CLAUDE.md (minimal comments)
+
+### Tests run and results:
+```
+33 tests passed
+0 tests failed
+Linting: Clean (ruff)
+Type checking: Clean (mypy)
+```
+
+### Files modified:
+- `tests/test_extraction.py` (created, 487 lines)
+
+### Commit hash:
+`177d81f`
+
+The test suite provides excellent coverage of the ProfileExtractor functionality, including edge cases, error handling, retry logic, and data transformation.
 
 TASK COMPLETE
