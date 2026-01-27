@@ -62,9 +62,7 @@ class TestPDFExtractor:
         with pytest.raises(FileNotFoundError):
             extractor.extract(nonexistent)
 
-    def test_extract_unsupported_extension(
-        self, extractor: PDFExtractor, tmp_path: Path
-    ) -> None:
+    def test_extract_unsupported_extension(self, extractor: PDFExtractor, tmp_path: Path) -> None:
         txt_file = tmp_path / "test.txt"
         txt_file.write_text("content")
         with pytest.raises(ExtractionError) as exc_info:
@@ -86,9 +84,7 @@ class TestPDFExtractor:
         assert result.word_count > 0
         assert "page_count" in result.metadata
 
-    def test_extract_directory_raises_error(
-        self, extractor: PDFExtractor, tmp_path: Path
-    ) -> None:
+    def test_extract_directory_raises_error(self, extractor: PDFExtractor, tmp_path: Path) -> None:
         with pytest.raises(ExtractionError) as exc_info:
             extractor.extract(tmp_path)
         assert "not a file" in str(exc_info.value)
@@ -139,9 +135,7 @@ class TestTextExtractor:
         text = extractor.extract(md_file)
         assert text.strip() == content.strip()
 
-    def test_extract_strips_whitespace(
-        self, extractor: TextExtractor, tmp_path: Path
-    ) -> None:
+    def test_extract_strips_whitespace(self, extractor: TextExtractor, tmp_path: Path) -> None:
         txt_file = tmp_path / "test.txt"
         txt_file.write_text("\n\n  Hello World  \n\n", encoding="utf-8")
 
@@ -153,18 +147,14 @@ class TestTextExtractor:
         with pytest.raises(FileNotFoundError):
             extractor.extract(nonexistent)
 
-    def test_extract_unsupported_extension(
-        self, extractor: TextExtractor, tmp_path: Path
-    ) -> None:
+    def test_extract_unsupported_extension(self, extractor: TextExtractor, tmp_path: Path) -> None:
         pdf_file = tmp_path / "test.pdf"
         pdf_file.write_text("content")
         with pytest.raises(ExtractionError) as exc_info:
             extractor.extract(pdf_file)
         assert "Unsupported file type" in str(exc_info.value)
 
-    def test_extract_latin1_encoding(
-        self, extractor: TextExtractor, tmp_path: Path
-    ) -> None:
+    def test_extract_latin1_encoding(self, extractor: TextExtractor, tmp_path: Path) -> None:
         txt_file = tmp_path / "test.txt"
         txt_file.write_bytes("Café".encode("latin-1"))
 
@@ -200,9 +190,7 @@ class TestTextExtractor:
 
         assert result.source_path == Path("custom_source")
 
-    def test_extract_directory_raises_error(
-        self, extractor: TextExtractor, tmp_path: Path
-    ) -> None:
+    def test_extract_directory_raises_error(self, extractor: TextExtractor, tmp_path: Path) -> None:
         with pytest.raises(ExtractionError) as exc_info:
             extractor.extract(tmp_path)
         assert "not a file" in str(exc_info.value)
@@ -303,9 +291,7 @@ class TestDataLoader:
         unsupported.touch()
         assert not loader.can_handle(unsupported)
 
-    def test_load_single_text_file(
-        self, loader: DataLoader, sample_text_file: Path
-    ) -> None:
+    def test_load_single_text_file(self, loader: DataLoader, sample_text_file: Path) -> None:
         result = loader.load(sample_text_file)
         assert isinstance(result, LoadResult)
         assert result.source_count == 1
@@ -314,17 +300,13 @@ class TestDataLoader:
         assert result.total_words > 0
         assert not result.has_failures
 
-    def test_load_single_markdown_file(
-        self, loader: DataLoader, sample_md_file: Path
-    ) -> None:
+    def test_load_single_markdown_file(self, loader: DataLoader, sample_md_file: Path) -> None:
         result = loader.load(sample_md_file)
         assert result.source_count == 1
         assert "Markdown" in result.unified_text
         assert "Content here" in result.unified_text
 
-    def test_load_single_pdf_file(
-        self, loader: DataLoader, sample_pdf_file: Path
-    ) -> None:
+    def test_load_single_pdf_file(self, loader: DataLoader, sample_pdf_file: Path) -> None:
         result = loader.load(sample_pdf_file)
         assert result.source_count == 1
         assert "PDF Data" in result.unified_text
@@ -346,9 +328,7 @@ class TestDataLoader:
         sample_text_file: Path,
         sample_md_file: Path,
     ) -> None:
-        result = loader.load(
-            [sample_text_file, sample_md_file], separator="\n\n===\n\n"
-        )
+        result = loader.load([sample_text_file, sample_md_file], separator="\n\n===\n\n")
         assert "\n\n===\n\n" in result.unified_text
 
     def test_load_raw_text_string(self, loader: DataLoader) -> None:
@@ -357,9 +337,7 @@ class TestDataLoader:
         assert result.source_count == 1
         assert raw_text in result.unified_text
 
-    def test_load_mixed_strings_and_paths(
-        self, loader: DataLoader, sample_text_file: Path
-    ) -> None:
+    def test_load_mixed_strings_and_paths(self, loader: DataLoader, sample_text_file: Path) -> None:
         result = loader.load(["Raw text here", sample_text_file])
         assert result.source_count == 2
         assert "Raw text here" in result.unified_text
@@ -374,9 +352,7 @@ class TestDataLoader:
         result = loader.load(sample_text_file.parent, recursive=True)
         assert result.source_count >= 2
 
-    def test_load_from_directory_non_recursive(
-        self, loader: DataLoader, tmp_path: Path
-    ) -> None:
+    def test_load_from_directory_non_recursive(self, loader: DataLoader, tmp_path: Path) -> None:
         subdir = tmp_path / "subdir"
         subdir.mkdir()
         (subdir / "nested.txt").write_text("nested content")
@@ -393,9 +369,7 @@ class TestDataLoader:
         assert result.source_count == 0
         assert result.has_failures
 
-    def test_load_file_not_found_skip_failures(
-        self, loader: DataLoader, tmp_path: Path
-    ) -> None:
+    def test_load_file_not_found_skip_failures(self, loader: DataLoader, tmp_path: Path) -> None:
         nonexistent = tmp_path / "nonexistent.txt"
         result = loader.load(nonexistent, skip_failures=True)
         assert result.source_count == 0
@@ -407,17 +381,13 @@ class TestDataLoader:
         with pytest.raises(FileNotFoundError):
             loader.load(nonexistent, skip_failures=False)
 
-    def test_load_unsupported_file_skip_failures(
-        self, loader: DataLoader, tmp_path: Path
-    ) -> None:
+    def test_load_unsupported_file_skip_failures(self, loader: DataLoader, tmp_path: Path) -> None:
         unsupported = tmp_path / "test.docx"
         unsupported.write_text("content")
         result = loader.load(unsupported, skip_failures=True)
         assert result.source_count == 0
 
-    def test_load_invalid_file_skip_failures(
-        self, loader: DataLoader, tmp_path: Path
-    ) -> None:
+    def test_load_invalid_file_skip_failures(self, loader: DataLoader, tmp_path: Path) -> None:
         invalid_pdf = tmp_path / "invalid.pdf"
         invalid_pdf.write_text("not a pdf")
         result = loader.load(invalid_pdf, skip_failures=True)
@@ -434,15 +404,11 @@ class TestDataLoader:
         assert isinstance(text, str)
         assert "Sample text content" in text
 
-    def test_load_single_with_string_path(
-        self, loader: DataLoader, sample_text_file: Path
-    ) -> None:
+    def test_load_single_with_string_path(self, loader: DataLoader, sample_text_file: Path) -> None:
         text = loader.load_single(str(sample_text_file))
         assert "Sample text content" in text
 
-    def test_load_single_file_not_found(
-        self, loader: DataLoader, tmp_path: Path
-    ) -> None:
+    def test_load_single_file_not_found(self, loader: DataLoader, tmp_path: Path) -> None:
         with pytest.raises(FileNotFoundError):
             loader.load_single(tmp_path / "nonexistent.txt")
 
@@ -465,16 +431,12 @@ class TestDataLoader:
         result = loader.load([empty_file, non_empty_file])
         assert result.source_count == 1
 
-    def test_collect_files_single_file(
-        self, loader: DataLoader, sample_text_file: Path
-    ) -> None:
+    def test_collect_files_single_file(self, loader: DataLoader, sample_text_file: Path) -> None:
         files = loader._collect_files(sample_text_file)
         assert len(files) == 1
         assert files[0] == sample_text_file
 
-    def test_collect_files_unsupported_file(
-        self, loader: DataLoader, tmp_path: Path
-    ) -> None:
+    def test_collect_files_unsupported_file(self, loader: DataLoader, tmp_path: Path) -> None:
         unsupported = tmp_path / "test.docx"
         unsupported.touch()
         files = loader._collect_files(unsupported)
@@ -516,9 +478,7 @@ class TestLoadResult:
     def test_result_with_sources(self, tmp_path: Path) -> None:
         source1 = ExtractionResult(text="Text 1", source_path=tmp_path / "1.txt")
         source2 = ExtractionResult(text="Text 2", source_path=tmp_path / "2.txt")
-        result = LoadResult(
-            unified_text="Text 1\n\nText 2", sources=[source1, source2]
-        )
+        result = LoadResult(unified_text="Text 1\n\nText 2", sources=[source1, source2])
         assert result.source_count == 2
         assert not result.has_failures
 

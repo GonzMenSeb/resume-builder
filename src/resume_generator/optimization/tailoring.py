@@ -344,12 +344,8 @@ match specific job descriptions while maintaining truthfulness.
         required_match_rate = required_matched / required_total if required_total > 0 else 1.0
         preferred_match_rate = preferred_matched / preferred_total if preferred_total > 0 else 1.0
 
-        missing_required = [
-            m.job_keyword for m in matches if not m.matched and m.is_required
-        ]
-        missing_preferred = [
-            m.job_keyword for m in matches if not m.matched and not m.is_required
-        ]
+        missing_required = [m.job_keyword for m in matches if not m.matched and m.is_required]
+        missing_preferred = [m.job_keyword for m in matches if not m.matched and not m.is_required]
 
         recommendations = self._generate_recommendations(
             match_rate,
@@ -465,9 +461,7 @@ match specific job descriptions while maintaining truthfulness.
 
         if missing_required:
             top_missing = missing_required[:5]
-            recommendations.append(
-                f"Add missing required skills: {', '.join(top_missing)}"
-            )
+            recommendations.append(f"Add missing required skills: {', '.join(top_missing)}")
 
         if match_rate < target_rate:
             gap = int((target_rate - match_rate) * 100)
@@ -477,9 +471,7 @@ match specific job descriptions while maintaining truthfulness.
 
         if missing_preferred and match_rate >= target_rate * 0.8:
             top_preferred = missing_preferred[:3]
-            recommendations.append(
-                f"Consider adding preferred skills: {', '.join(top_preferred)}"
-            )
+            recommendations.append(f"Consider adding preferred skills: {', '.join(top_preferred)}")
 
         if weighted_score < 0.5 and match_rate >= 0.5:
             recommendations.append(
@@ -522,9 +514,7 @@ match specific job descriptions while maintaining truthfulness.
         if title_overlap > 0:
             score += 0.3 * min(title_overlap / max(len(job_title_words), 1), 1.0)
 
-        tech_match = sum(
-            1 for t in experience.technologies if t.lower() in job_keywords_lower
-        )
+        tech_match = sum(1 for t in experience.technologies if t.lower() in job_keywords_lower)
         if experience.technologies:
             score += 0.3 * min(tech_match / len(experience.technologies), 1.0)
 
@@ -686,9 +676,7 @@ match specific job descriptions while maintaining truthfulness.
 
         return {kw for kw in keywords if len(kw) > 1}
 
-    def extract_keywords_detailed(
-        self, job: JobDescription
-    ) -> dict[str, tuple[set[str], float]]:
+    def extract_keywords_detailed(self, job: JobDescription) -> dict[str, tuple[set[str], float]]:
         """
         Extract keywords with their category and weight.
         Returns dict mapping keyword to (sources, weight).
@@ -727,7 +715,9 @@ match specific job descriptions while maintaining truthfulness.
             for kw in req.keywords:
                 normalized = kw.strip()
                 if normalized:
-                    weight = WEIGHT_REQUIRED if req.priority.value == "required" else WEIGHT_PREFERRED
+                    weight = (
+                        WEIGHT_REQUIRED if req.priority.value == "required" else WEIGHT_PREFERRED
+                    )
                     if normalized in result:
                         sources, existing_weight = result[normalized]
                         sources.add("requirements")
@@ -795,11 +785,54 @@ match specific job descriptions while maintaining truthfulness.
     def _extract_significant_words(self, text: str) -> set[str]:
         """Extract significant words (likely job-related terms) from text."""
         stop_words = {
-            "a", "an", "the", "and", "or", "but", "in", "on", "at", "to", "for",
-            "of", "with", "by", "from", "as", "is", "was", "are", "were", "been",
-            "be", "have", "has", "had", "do", "does", "did", "will", "would",
-            "could", "should", "may", "might", "must", "shall", "can", "need",
-            "we", "you", "they", "he", "she", "it", "i", "our", "your", "their",
+            "a",
+            "an",
+            "the",
+            "and",
+            "or",
+            "but",
+            "in",
+            "on",
+            "at",
+            "to",
+            "for",
+            "of",
+            "with",
+            "by",
+            "from",
+            "as",
+            "is",
+            "was",
+            "are",
+            "were",
+            "been",
+            "be",
+            "have",
+            "has",
+            "had",
+            "do",
+            "does",
+            "did",
+            "will",
+            "would",
+            "could",
+            "should",
+            "may",
+            "might",
+            "must",
+            "shall",
+            "can",
+            "need",
+            "we",
+            "you",
+            "they",
+            "he",
+            "she",
+            "it",
+            "i",
+            "our",
+            "your",
+            "their",
         }
         words = re.findall(r"\b[A-Za-z][A-Za-z0-9+#.-]*\b", text)
         return {w for w in words if w.lower() not in stop_words and len(w) > 2}
@@ -865,9 +898,7 @@ match specific job descriptions while maintaining truthfulness.
         )
 
         tailored_skills = self.reorder_skills_for_job(resume.skills, job)
-        tailored_summary = self.customize_summary_for_job(
-            resume.professional_summary, job, resume
-        )
+        tailored_summary = self.customize_summary_for_job(resume.professional_summary, job, resume)
 
         matches, _ = self._compute_keyword_overlap(job_keywords, resume_keywords)
         match_rate = len(matches) / len(job_keywords) if job_keywords else 0.0
@@ -903,9 +934,7 @@ match specific job descriptions while maintaining truthfulness.
             result = self._call_claude_structured(prompt, TailoringResultSchema)
         except Exception as e:
             logger.warning("AI tailoring failed, falling back to rule-based: %s", e)
-            return self._rule_based_tailor(
-                resume, job, job_keywords, resume.get_all_keywords()
-            )
+            return self._rule_based_tailor(resume, job, job_keywords, resume.get_all_keywords())
 
         return self._apply_tailoring_result(resume, job, result)
 
@@ -922,10 +951,7 @@ match specific job descriptions while maintaining truthfulness.
                 }
                 for exp in resume.experiences
             ],
-            "skills": [
-                {"category": g.category, "skills": g.skills}
-                for g in resume.skills
-            ],
+            "skills": [{"category": g.category, "skills": g.skills} for g in resume.skills],
         }
 
     def _job_to_dict(self, job: JobDescription) -> dict[str, object]:
@@ -1001,9 +1027,7 @@ match specific job descriptions while maintaining truthfulness.
             category = group_data.get("category", "")
             skills_list = group_data.get("skills", [])
             if category and skills_list and isinstance(skills_list, list):
-                tailored_skills.append(
-                    ResumeSkillGroup(category=str(category), skills=skills_list)
-                )
+                tailored_skills.append(ResumeSkillGroup(category=str(category), skills=skills_list))
 
         if not tailored_skills:
             tailored_skills = resume.skills

@@ -227,7 +227,9 @@ class TestResumeOptimizer:
             assert len(skills) > 0
 
     @patch("resume_generator.optimization.optimizer.Anthropic")
-    def test_call_claude_structured_success(self, mock_anthropic: MagicMock, test_settings: Settings) -> None:
+    def test_call_claude_structured_success(
+        self, mock_anthropic: MagicMock, test_settings: Settings
+    ) -> None:
         mock_client = MagicMock()
         mock_anthropic.return_value = mock_client
 
@@ -248,7 +250,9 @@ class TestResumeOptimizer:
         assert result.word_count == 10
 
     @patch("resume_generator.optimization.optimizer.Anthropic")
-    def test_call_claude_structured_refusal(self, mock_anthropic: MagicMock, test_settings: Settings) -> None:
+    def test_call_claude_structured_refusal(
+        self, mock_anthropic: MagicMock, test_settings: Settings
+    ) -> None:
         mock_client = MagicMock()
         mock_anthropic.return_value = mock_client
 
@@ -261,7 +265,9 @@ class TestResumeOptimizer:
             optimizer._call_claude_structured("test prompt", ProfessionalSummarySchema)
 
     @patch("resume_generator.optimization.optimizer.Anthropic")
-    def test_call_claude_structured_max_tokens(self, mock_anthropic: MagicMock, test_settings: Settings) -> None:
+    def test_call_claude_structured_max_tokens(
+        self, mock_anthropic: MagicMock, test_settings: Settings
+    ) -> None:
         mock_client = MagicMock()
         mock_anthropic.return_value = mock_client
 
@@ -274,7 +280,9 @@ class TestResumeOptimizer:
             optimizer._call_claude_structured("test prompt", ProfessionalSummarySchema)
 
     @patch("resume_generator.optimization.optimizer.Anthropic")
-    def test_call_claude_structured_no_output(self, mock_anthropic: MagicMock, test_settings: Settings) -> None:
+    def test_call_claude_structured_no_output(
+        self, mock_anthropic: MagicMock, test_settings: Settings
+    ) -> None:
         mock_client = MagicMock()
         mock_anthropic.return_value = mock_client
 
@@ -289,7 +297,10 @@ class TestResumeOptimizer:
 
     @patch("resume_generator.optimization.optimizer.Anthropic")
     def test_optimize_full_pipeline(
-        self, mock_anthropic: MagicMock, test_settings: Settings, sample_person_profile: PersonProfile
+        self,
+        mock_anthropic: MagicMock,
+        test_settings: Settings,
+        sample_person_profile: PersonProfile,
     ) -> None:
         mock_client = MagicMock()
         mock_anthropic.return_value = mock_client
@@ -424,7 +435,9 @@ class TestJobTailorer:
         self, sample_resume_document: ResumeDocument, sample_job_description: JobDescription
     ) -> None:
         tailorer = JobTailorer(settings=Settings(anthropic_api_key="sk-test"))
-        analysis = tailorer.analyze_keyword_match_detailed(sample_resume_document, sample_job_description)
+        analysis = tailorer.analyze_keyword_match_detailed(
+            sample_resume_document, sample_job_description
+        )
         assert isinstance(analysis, MatchAnalysis)
         assert len(analysis.job_keywords) > 0
         assert analysis.match_rate >= 0.0
@@ -441,7 +454,9 @@ class TestJobTailorer:
         self, sample_resume_experience: ResumeExperience, sample_job_description: JobDescription
     ) -> None:
         tailorer = JobTailorer(settings=Settings(anthropic_api_key="sk-test"))
-        score = tailorer.score_experience_relevance(sample_resume_experience, sample_job_description)
+        score = tailorer.score_experience_relevance(
+            sample_resume_experience, sample_job_description
+        )
         assert 0.0 <= score <= 1.0
 
     def test_reorder_bullets_for_job(
@@ -459,7 +474,9 @@ class TestJobTailorer:
         self, sample_resume_document: ResumeDocument, sample_job_description: JobDescription
     ) -> None:
         tailorer = JobTailorer(settings=Settings(anthropic_api_key="sk-test"))
-        reordered = tailorer.reorder_skills_for_job(sample_resume_document.skills, sample_job_description)
+        reordered = tailorer.reorder_skills_for_job(
+            sample_resume_document.skills, sample_job_description
+        )
         assert len(reordered) == len(sample_resume_document.skills)
         assert all(isinstance(g, ResumeSkillGroup) for g in reordered)
 
@@ -475,7 +492,9 @@ class TestJobTailorer:
         assert summary is not None
         assert isinstance(summary, str)
 
-    def test_customize_summary_for_job_none_input(self, sample_job_description: JobDescription) -> None:
+    def test_customize_summary_for_job_none_input(
+        self, sample_job_description: JobDescription
+    ) -> None:
         tailorer = JobTailorer(settings=Settings(anthropic_api_key="sk-test"))
         resume = MagicMock()
         resume.skills = []

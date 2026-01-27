@@ -78,7 +78,9 @@ def _call_with_retry(func: Callable[[], T]) -> T:
 class OptimizedBulletSchema(BaseModel):
     text: str = Field(description="Optimized bullet text")
     action_verb: str = Field(description="Leading action verb")
-    bullet_type: str = Field(default="generic", description="Type: xyz, action_result, skill_based, generic")
+    bullet_type: str = Field(
+        default="generic", description="Type: xyz, action_result, skill_based, generic"
+    )
     has_metrics: bool = Field(default=False, description="Contains quantified metrics")
     metrics: dict[str, str] = Field(default_factory=dict, description="Extracted metrics")
     keywords: list[str] = Field(default_factory=list, description="ATS keywords")
@@ -88,7 +90,9 @@ class OptimizedBulletSchema(BaseModel):
 
 class BulletBatchResultSchema(BaseModel):
     bullets: list[OptimizedBulletSchema] = Field(description="Optimized bullets")
-    removed_bullets: list[dict[str, Any]] = Field(default_factory=list, description="Removed bullets with reasons")
+    removed_bullets: list[dict[str, Any]] = Field(
+        default_factory=list, description="Removed bullets with reasons"
+    )
     overall_quality_score: float = Field(default=0.5, description="Quality score 0-1")
 
 
@@ -107,8 +111,12 @@ class SkillGroupSchema(BaseModel):
 
 class SkillsOptimizationSchema(BaseModel):
     skill_groups: list[SkillGroupSchema] = Field(description="Organized skill groups")
-    added_skills: list[str] = Field(default_factory=list, description="Skills added from experience")
-    removed_skills: list[dict[str, str]] = Field(default_factory=list, description="Removed skills with reasons")
+    added_skills: list[str] = Field(
+        default_factory=list, description="Skills added from experience"
+    )
+    removed_skills: list[dict[str, str]] = Field(
+        default_factory=list, description="Removed skills with reasons"
+    )
     total_skills_count: int = Field(default=0, description="Total number of skills")
 
 
@@ -146,7 +154,9 @@ class ResumeOptimizer:
         certifications = self._build_certifications(profile)
         projects = self._build_projects(profile)
 
-        quality_scores = [exp.bullets[0].relevance_score for exp in optimized_experiences if exp.bullets]
+        quality_scores = [
+            exp.bullets[0].relevance_score for exp in optimized_experiences if exp.bullets
+        ]
         avg_score = sum(quality_scores) / len(quality_scores) if quality_scores else 0.5
 
         return ResumeDocument(
@@ -249,7 +259,9 @@ class ResumeOptimizer:
                     metrics=b.metrics,
                     keywords=b.keywords,
                     relevance_score=b.relevance_score,
-                    original_text=achievements[b.original_index] if b.original_index < len(achievements) else None,
+                    original_text=achievements[b.original_index]
+                    if b.original_index < len(achievements)
+                    else None,
                 )
             )
 
@@ -318,8 +330,7 @@ class ResumeOptimizer:
         ]
 
         experiences_data = [
-            {"title": exp.title, "technologies": exp.technologies}
-            for exp in profile.experiences
+            {"title": exp.title, "technologies": exp.technologies} for exp in profile.experiences
         ]
 
         prompt = build_skills_optimization_prompt(
@@ -352,7 +363,9 @@ class ResumeOptimizer:
         return [
             ResumeEducation(
                 institution=edu.institution,
-                degree=f"{edu.degree} in {edu.field_of_study}" if edu.field_of_study else edu.degree,
+                degree=f"{edu.degree} in {edu.field_of_study}"
+                if edu.field_of_study
+                else edu.degree,
                 location=edu.location,
                 graduation_date=edu.graduation_date,
                 gpa=f"{edu.gpa:.2f}" if edu.gpa else None,

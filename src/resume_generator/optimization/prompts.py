@@ -14,36 +14,100 @@ from typing import Any
 
 ACTION_VERBS_BY_CATEGORY: dict[str, list[str]] = {
     "leadership": [
-        "Spearheaded", "Orchestrated", "Directed", "Led", "Championed",
-        "Pioneered", "Mobilized", "Cultivated", "Steered", "Mentored",
+        "Spearheaded",
+        "Orchestrated",
+        "Directed",
+        "Led",
+        "Championed",
+        "Pioneered",
+        "Mobilized",
+        "Cultivated",
+        "Steered",
+        "Mentored",
     ],
     "achievement": [
-        "Achieved", "Delivered", "Exceeded", "Surpassed", "Attained",
-        "Accomplished", "Captured", "Earned", "Secured", "Won",
+        "Achieved",
+        "Delivered",
+        "Exceeded",
+        "Surpassed",
+        "Attained",
+        "Accomplished",
+        "Captured",
+        "Earned",
+        "Secured",
+        "Won",
     ],
     "creation": [
-        "Designed", "Developed", "Engineered", "Architected", "Built",
-        "Created", "Established", "Launched", "Initiated", "Founded",
+        "Designed",
+        "Developed",
+        "Engineered",
+        "Architected",
+        "Built",
+        "Created",
+        "Established",
+        "Launched",
+        "Initiated",
+        "Founded",
     ],
     "improvement": [
-        "Optimized", "Enhanced", "Streamlined", "Accelerated", "Revitalized",
-        "Transformed", "Modernized", "Upgraded", "Refined", "Elevated",
+        "Optimized",
+        "Enhanced",
+        "Streamlined",
+        "Accelerated",
+        "Revitalized",
+        "Transformed",
+        "Modernized",
+        "Upgraded",
+        "Refined",
+        "Elevated",
     ],
     "management": [
-        "Managed", "Oversaw", "Coordinated", "Administered", "Supervised",
-        "Executed", "Facilitated", "Governed", "Regulated", "Controlled",
+        "Managed",
+        "Oversaw",
+        "Coordinated",
+        "Administered",
+        "Supervised",
+        "Executed",
+        "Facilitated",
+        "Governed",
+        "Regulated",
+        "Controlled",
     ],
     "analysis": [
-        "Analyzed", "Evaluated", "Assessed", "Investigated", "Diagnosed",
-        "Identified", "Mapped", "Measured", "Quantified", "Audited",
+        "Analyzed",
+        "Evaluated",
+        "Assessed",
+        "Investigated",
+        "Diagnosed",
+        "Identified",
+        "Mapped",
+        "Measured",
+        "Quantified",
+        "Audited",
     ],
     "communication": [
-        "Negotiated", "Presented", "Persuaded", "Influenced", "Advocated",
-        "Collaborated", "Partnered", "Liaised", "Mediated", "Articulated",
+        "Negotiated",
+        "Presented",
+        "Persuaded",
+        "Influenced",
+        "Advocated",
+        "Collaborated",
+        "Partnered",
+        "Liaised",
+        "Mediated",
+        "Articulated",
     ],
     "technical": [
-        "Implemented", "Integrated", "Automated", "Deployed", "Configured",
-        "Migrated", "Programmed", "Refactored", "Debugged", "Scaled",
+        "Implemented",
+        "Integrated",
+        "Automated",
+        "Deployed",
+        "Configured",
+        "Migrated",
+        "Programmed",
+        "Refactored",
+        "Debugged",
+        "Scaled",
     ],
 }
 
@@ -187,7 +251,9 @@ def build_achievement_optimization_prompt(
 
     keywords_section = ""
     if target_keywords:
-        keywords_section = f"\n## Target Keywords to Incorporate (if relevant)\n{', '.join(target_keywords)}\n"
+        keywords_section = (
+            f"\n## Target Keywords to Incorporate (if relevant)\n{', '.join(target_keywords)}\n"
+        )
 
     return f"""\
 Optimize the following achievement into an X-Y-Z format resume bullet.
@@ -228,13 +294,13 @@ def build_bullet_batch_prompt(
     target_keywords: list[str] | None = None,
 ) -> str:
     """Build prompt for optimizing multiple achievement bullets in one call."""
-    bullets_formatted = "\n".join(f"{i+1}. {a}" for i, a in enumerate(achievements))
+    bullets_formatted = "\n".join(f"{i + 1}. {a}" for i, a in enumerate(achievements))
 
     keywords_section = ""
     if target_keywords:
         keywords_section = f"""
 ## Target Keywords (incorporate naturally where relevant)
-{', '.join(target_keywords)}
+{", ".join(target_keywords)}
 """
 
     return f"""\
@@ -297,9 +363,9 @@ def build_professional_summary_prompt(
     if target_job_title or target_company:
         target_section = f"""
 ## Target Position
-- Job Title: {target_job_title or 'Not specified'}
-- Company: {target_company or 'Not specified'}
-- Key Keywords: {', '.join(target_keywords or []) or 'None provided'}
+- Job Title: {target_job_title or "Not specified"}
+- Company: {target_company or "Not specified"}
+- Key Keywords: {", ".join(target_keywords or []) or "None provided"}
 """
 
     return f"""\
@@ -308,8 +374,8 @@ Generate a professional summary for the following candidate.
 ## Candidate Profile
 
 - Name: {name}
-- Current/Recent Title: {current_title or 'Not specified'}
-- Years of Experience: {years_experience or 'Not specified'}
+- Current/Recent Title: {current_title or "Not specified"}
+- Years of Experience: {years_experience or "Not specified"}
 - Core Skills: {skills_text}
 
 ## Top Achievements
@@ -425,7 +491,7 @@ def build_skills_optimization_prompt(
     if target_keywords:
         keywords_section = f"""
 ## Target Keywords (prioritize matching skills)
-{', '.join(target_keywords)}
+{", ".join(target_keywords)}
 """
 
     return f"""\

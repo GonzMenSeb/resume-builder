@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from anthropic.types import Message, TextBlock, Usage
 
-from resume_generator.config import ClaudeModel, ResumeTemplate, Settings
+from resume_generator.config import ClaudeModel, Settings
 from resume_generator.models.job import (
     EmploymentType,
     ExperienceLevel,
@@ -71,7 +71,11 @@ def test_settings(tmp_path: Path) -> Settings:
         claude_model=ClaudeModel.SONNET,
         output_dir=tmp_path / "output",
         cache_dir=tmp_path / "cache",
-        templates_dir=Path(__file__).parent.parent / "src" / "resume_generator" / "generation" / "templates",
+        templates_dir=Path(__file__).parent.parent
+        / "src"
+        / "resume_generator"
+        / "generation"
+        / "templates",
         max_tokens=2048,
         api_timeout=30.0,
         api_max_retries=2,

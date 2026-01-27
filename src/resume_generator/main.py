@@ -231,7 +231,9 @@ def _fetch_job_url(url: str, verbose: bool) -> str:
             response.raise_for_status()
             content = response.text
     except httpx.HTTPStatusError as e:
-        raise typer.BadParameter(f"Failed to fetch URL (HTTP {e.response.status_code}): {url}") from e
+        raise typer.BadParameter(
+            f"Failed to fetch URL (HTTP {e.response.status_code}): {url}"
+        ) from e
     except httpx.RequestError as e:
         raise typer.BadParameter(f"Failed to fetch URL: {e}") from e
 

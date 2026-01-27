@@ -55,7 +55,7 @@ def _exponential_backoff(attempt: int) -> float:
 
     Backoff = min(initial * (2 ^ attempt) + jitter, max_backoff)
     """
-    backoff: float = INITIAL_BACKOFF_SECONDS * (2 ** attempt)
+    backoff: float = INITIAL_BACKOFF_SECONDS * (2**attempt)
     backoff = min(backoff, MAX_BACKOFF_SECONDS)
     return backoff
 
@@ -192,7 +192,9 @@ class ProfileExtractionSchema(BaseModel):
     projects: list[ProjectSchema] = Field(default_factory=list, description="Projects")
     publications: list[str] = Field(default_factory=list, description="Publications")
     awards: list[str] = Field(default_factory=list, description="Awards")
-    languages: list[list[str]] = Field(default_factory=list, description="Languages as [name, proficiency]")
+    languages: list[list[str]] = Field(
+        default_factory=list, description="Languages as [name, proficiency]"
+    )
     volunteer_experience: list[str] = Field(default_factory=list, description="Volunteer work")
     interests: list[str] = Field(default_factory=list, description="Interests")
 
@@ -248,6 +250,7 @@ class ProfileExtractor:
 
     def _call_claude_structured(self, raw_text: str) -> ProfileExtractionSchema:
         """Call Claude API using structured output mode with retry logic."""
+
         def _api_call() -> ProfileExtractionSchema:
             response = self._client.beta.messages.parse(
                 model=self._settings.claude_model.value,
@@ -431,6 +434,7 @@ class LegacyProfileExtractor:
 
     def _call_claude(self, user_prompt: str) -> str:
         """Call Claude API and return the response text with retry logic."""
+
         def _api_call() -> str:
             response = self._client.messages.create(
                 model=self._settings.claude_model.value,

@@ -153,7 +153,9 @@ class TestProfileExtractor:
                 )
             ],
             skills=[
-                SkillSchema(name="Python", category="programming", proficiency=5, years_experience=6.0),
+                SkillSchema(
+                    name="Python", category="programming", proficiency=5, years_experience=6.0
+                ),
                 SkillSchema(name="AWS", category="technical", proficiency=4, years_experience=5.0),
             ],
             languages=[["English", "Native"], ["Spanish", "Professional"]],

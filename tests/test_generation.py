@@ -1,10 +1,9 @@
 """Unit tests for LaTeX generation and PDF compilation."""
 
-import re
 import shutil
 import subprocess
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -15,8 +14,6 @@ from resume_generator.generation.compiler import (
     PDFCompiler,
 )
 from resume_generator.generation.generator import (
-    LATEX_SPECIAL_CHARS,
-    UNICODE_REPLACEMENTS,
     LaTeXGenerator,
     TemplateConfig,
     hex_to_rgb,
@@ -199,7 +196,10 @@ class TestLaTeXGenerator:
         assert isinstance(latex_source, str)
         assert len(latex_source) > 0
         assert r"\documentclass" in latex_source
-        assert sample_resume_document.contact.name in latex_source or latex_escape(sample_resume_document.contact.name) in latex_source
+        assert (
+            sample_resume_document.contact.name in latex_source
+            or latex_escape(sample_resume_document.contact.name) in latex_source
+        )
 
     def test_generate_uses_default_template(
         self, generator: LaTeXGenerator, sample_resume_document: ResumeDocument
@@ -227,6 +227,7 @@ class TestLaTeXGenerator:
 
     def test_generate_escapes_special_chars(self, generator: LaTeXGenerator) -> None:
         from resume_generator.models.resume import ResumeContact
+
         resume = ResumeDocument(
             contact=ResumeContact(
                 name="John & Jane",
@@ -291,6 +292,7 @@ class TestLaTeXGenerator:
 
     def test_build_context_filters_invisible_sections(self, generator: LaTeXGenerator) -> None:
         from resume_generator.models.resume import ResumeContact, ResumeSection, SectionType
+
         resume = ResumeDocument(
             contact=ResumeContact(name="Test", email="test@example.com"),
             additional_sections=[
@@ -334,7 +336,10 @@ class TestLaTeXGenerator:
     ) -> None:
         latex_source = generator.generate(sample_resume_document)
         summary_escaped = latex_escape(sample_resume_document.professional_summary or "")
-        assert summary_escaped in latex_source or sample_resume_document.professional_summary in latex_source
+        assert (
+            summary_escaped in latex_source
+            or sample_resume_document.professional_summary in latex_source
+        )
 
     def test_generate_includes_experiences(
         self, generator: LaTeXGenerator, sample_resume_document: ResumeDocument
@@ -374,9 +379,11 @@ class TestPDFCompiler:
         assert compiler._pdflatex == "/custom/path/pdflatex"
 
     def test_find_pdflatex_not_found(self) -> None:
-        with patch("shutil.which", return_value=None):
-            with pytest.raises(RuntimeError, match="pdflatex not found"):
-                PDFCompiler._find_pdflatex()
+        with (
+            patch("shutil.which", return_value=None),
+            pytest.raises(RuntimeError, match="pdflatex not found"),
+        ):
+            PDFCompiler._find_pdflatex()
 
     def test_find_pdflatex_found(self) -> None:
         with patch("shutil.which", return_value="/usr/bin/pdflatex"):
@@ -390,7 +397,7 @@ class TestPDFCompiler:
             file="resume.tex",
             is_warning=False,
         )
-        assert "Error: resume.tex:42: Undefined control sequence" == str(error)
+        assert str(error) == "Error: resume.tex:42: Undefined control sequence"
 
     def test_compilation_error_str_warning(self) -> None:
         error = CompilationError(
@@ -399,18 +406,18 @@ class TestPDFCompiler:
             file="resume.tex",
             is_warning=True,
         )
-        assert "Warning: resume.tex:10: Overfull hbox" == str(error)
+        assert str(error) == "Warning: resume.tex:10: Overfull hbox"
 
     def test_compilation_error_str_no_line(self) -> None:
         error = CompilationError(
             message="Missing file",
             file="resume.tex",
         )
-        assert "Error: resume.tex: Missing file" == str(error)
+        assert str(error) == "Error: resume.tex: Missing file"
 
     def test_compilation_error_str_no_file(self) -> None:
         error = CompilationError(message="General error")
-        assert "Error: General error" == str(error)
+        assert str(error) == "Error: General error"
 
     def test_compilation_result_has_errors_property(self) -> None:
         result = CompilationResult(
@@ -504,7 +511,9 @@ Test Document
         assert result.success is True
         assert output_path.exists()
 
-    def test_compile_invalid_latex_returns_error(self, compiler: PDFCompiler, tmp_path: Path) -> None:
+    def test_compile_invalid_latex_returns_error(
+        self, compiler: PDFCompiler, tmp_path: Path
+    ) -> None:
         tex_source = r"""
 \documentclass{article}
 \begin{document}

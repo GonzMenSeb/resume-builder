@@ -108,9 +108,7 @@ class Education(BaseModel):
     relevant_coursework: list[str] = Field(
         default_factory=list, description="Relevant coursework (for recent graduates)"
     )
-    activities: list[str] = Field(
-        default_factory=list, description="Extracurricular activities"
-    )
+    activities: list[str] = Field(default_factory=list, description="Extracurricular activities")
 
 
 class Certification(BaseModel):
@@ -171,9 +169,7 @@ class PersonProfile(BaseModel):
         default_factory=list, description="Certifications and licenses"
     )
     projects: list[Project] = Field(default_factory=list, description="Notable projects")
-    publications: list[str] = Field(
-        default_factory=list, description="Publications and papers"
-    )
+    publications: list[str] = Field(default_factory=list, description="Publications and papers")
     awards: list[str] = Field(default_factory=list, description="Awards and recognitions")
     languages: list[tuple[str, str]] = Field(
         default_factory=list,

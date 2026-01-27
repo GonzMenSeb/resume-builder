@@ -79,15 +79,15 @@ class SalaryRange(BaseModel):
     min_salary: float | None = Field(default=None, ge=0, description="Minimum salary")
     max_salary: float | None = Field(default=None, ge=0, description="Maximum salary")
     currency: str = Field(default="USD", description="Currency code")
-    period: str = Field(
-        default="yearly", description="Pay period (yearly, monthly, hourly)"
-    )
+    period: str = Field(default="yearly", description="Pay period (yearly, monthly, hourly)")
 
     @computed_field
     @property
     def display_text(self) -> str:
         if self.min_salary and self.max_salary:
-            return f"{self.currency} {self.min_salary:,.0f} - {self.max_salary:,.0f} ({self.period})"
+            return (
+                f"{self.currency} {self.min_salary:,.0f} - {self.max_salary:,.0f} ({self.period})"
+            )
         if self.min_salary:
             return f"{self.currency} {self.min_salary:,.0f}+ ({self.period})"
         if self.max_salary:
@@ -115,30 +115,18 @@ class JobDescription(BaseModel):
     department: str | None = Field(default=None, description="Department or team")
 
     description: str | None = Field(default=None, description="Full job description text")
-    responsibilities: list[str] = Field(
-        default_factory=list, description="Key responsibilities"
-    )
-    requirements: list[JobRequirement] = Field(
-        default_factory=list, description="Job requirements"
-    )
+    responsibilities: list[str] = Field(default_factory=list, description="Key responsibilities")
+    requirements: list[JobRequirement] = Field(default_factory=list, description="Job requirements")
     benefits: list[str] = Field(default_factory=list, description="Benefits offered")
 
     salary: SalaryRange | None = Field(default=None, description="Salary information")
     posting_url: HttpUrl | None = Field(default=None, description="Original job posting URL")
     posted_date: date | None = Field(default=None, description="Date job was posted")
-    application_deadline: date | None = Field(
-        default=None, description="Application deadline"
-    )
+    application_deadline: date | None = Field(default=None, description="Application deadline")
 
-    required_skills: list[str] = Field(
-        default_factory=list, description="Hard skills required"
-    )
-    preferred_skills: list[str] = Field(
-        default_factory=list, description="Nice-to-have skills"
-    )
-    required_education: str | None = Field(
-        default=None, description="Education requirement"
-    )
+    required_skills: list[str] = Field(default_factory=list, description="Hard skills required")
+    preferred_skills: list[str] = Field(default_factory=list, description="Nice-to-have skills")
+    required_education: str | None = Field(default=None, description="Education requirement")
     required_certifications: list[str] = Field(
         default_factory=list, description="Required certifications"
     )
@@ -150,9 +138,7 @@ class JobDescription(BaseModel):
         default=None, ge=0, description="Maximum years (for range)"
     )
 
-    raw_text: str | None = Field(
-        default=None, description="Original raw text of the job posting"
-    )
+    raw_text: str | None = Field(default=None, description="Original raw text of the job posting")
 
     @model_validator(mode="after")
     def validate_experience_range(self) -> "JobDescription":

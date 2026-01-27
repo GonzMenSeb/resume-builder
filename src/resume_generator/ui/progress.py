@@ -171,7 +171,12 @@ class StageProgressBar:
         text = Text()
         text.append(f"{status_icon} ", style=status_style)
         text.append(f"{icon} ", style=color if (self.active or self.completed) else "dim")
-        text.append(f"{label:<18} ", style=f"bold {color}" if self.active else (f"dim {color}" if self.completed else "dim grey50"))
+        text.append(
+            f"{label:<18} ",
+            style=f"bold {color}"
+            if self.active
+            else (f"dim {color}" if self.completed else "dim grey50"),
+        )
         text.append(bar, style=bar_style)
         text.append(time_str, style="dim cyan")
 
@@ -298,16 +303,32 @@ class SummaryPanel:
         table.add_column("Value", justify="right")
 
         if self.stats.files_loaded > 0:
-            table.add_row("📁", "Files Processed", Text(str(self.stats.files_loaded), style="bold bright_cyan"))
+            table.add_row(
+                "📁",
+                "Files Processed",
+                Text(str(self.stats.files_loaded), style="bold bright_cyan"),
+            )
         if self.stats.total_characters > 0:
             chars = f"{self.stats.total_characters:,}"
             table.add_row("📊", "Characters Parsed", Text(chars, style="cyan"))
         if self.stats.experiences_extracted > 0:
-            table.add_row("💼", "Work Experiences", Text(str(self.stats.experiences_extracted), style="bold bright_yellow"))
+            table.add_row(
+                "💼",
+                "Work Experiences",
+                Text(str(self.stats.experiences_extracted), style="bold bright_yellow"),
+            )
         if self.stats.skills_extracted > 0:
-            table.add_row("🎯", "Skills Identified", Text(str(self.stats.skills_extracted), style="bold bright_magenta"))
+            table.add_row(
+                "🎯",
+                "Skills Identified",
+                Text(str(self.stats.skills_extracted), style="bold bright_magenta"),
+            )
         if self.stats.bullets_optimized > 0:
-            table.add_row("✨", "Bullets Optimized", Text(str(self.stats.bullets_optimized), style="bold green"))
+            table.add_row(
+                "✨",
+                "Bullets Optimized",
+                Text(str(self.stats.bullets_optimized), style="bold green"),
+            )
 
         return table
 
@@ -540,16 +561,24 @@ class PipelineUI:
         stats_table.add_column("Value", style="bold", justify="right")
 
         if self._stats.files_loaded > 0:
-            stats_table.add_row("📁", "Files Loaded", Text(str(self._stats.files_loaded), style="cyan"))
+            stats_table.add_row(
+                "📁", "Files Loaded", Text(str(self._stats.files_loaded), style="cyan")
+            )
         if self._stats.total_characters > 0:
             chars = f"{self._stats.total_characters:,}"
             stats_table.add_row("📊", "Characters", Text(chars, style="cyan"))
         if self._stats.experiences_extracted > 0:
-            stats_table.add_row("💼", "Experiences", Text(str(self._stats.experiences_extracted), style="yellow"))
+            stats_table.add_row(
+                "💼", "Experiences", Text(str(self._stats.experiences_extracted), style="yellow")
+            )
         if self._stats.skills_extracted > 0:
-            stats_table.add_row("🎯", "Skills", Text(str(self._stats.skills_extracted), style="magenta"))
+            stats_table.add_row(
+                "🎯", "Skills", Text(str(self._stats.skills_extracted), style="magenta")
+            )
         if self._stats.bullets_optimized > 0:
-            stats_table.add_row("✨", "Bullets Optimized", Text(str(self._stats.bullets_optimized), style="green"))
+            stats_table.add_row(
+                "✨", "Bullets Optimized", Text(str(self._stats.bullets_optimized), style="green")
+            )
         if self._stats.keyword_match_rate > 0:
             rate = f"{self._stats.keyword_match_rate:.0%}"
             bar = self._build_mini_bar(self._stats.keyword_match_rate)
@@ -587,13 +616,15 @@ class PipelineUI:
 
         elements.append(self._stage_display.render_panel())
 
-        has_stats = any([
-            self._stats.files_loaded,
-            self._stats.experiences_extracted,
-            self._stats.bullets_optimized,
-            self._stats.keyword_match_rate > 0,
-            self._stats.optimization_score > 0,
-        ])
+        has_stats = any(
+            [
+                self._stats.files_loaded,
+                self._stats.experiences_extracted,
+                self._stats.bullets_optimized,
+                self._stats.keyword_match_rate > 0,
+                self._stats.optimization_score > 0,
+            ]
+        )
         if has_stats:
             elements.append(self._build_stats_panel())
 
@@ -749,13 +780,23 @@ class PipelineUI:
         content.add_row("⏱️ ", "Total Time", Text(f"{total_time:.1f}s", style="bright_cyan"))
 
         if self._stats.files_loaded > 0:
-            content.add_row("📁", "Files Processed", Text(str(self._stats.files_loaded), style="cyan"))
+            content.add_row(
+                "📁", "Files Processed", Text(str(self._stats.files_loaded), style="cyan")
+            )
         if self._stats.experiences_extracted > 0:
-            content.add_row("💼", "Experiences", Text(str(self._stats.experiences_extracted), style="yellow"))
+            content.add_row(
+                "💼", "Experiences", Text(str(self._stats.experiences_extracted), style="yellow")
+            )
         if self._stats.skills_extracted > 0:
-            content.add_row("🎯", "Skills Extracted", Text(str(self._stats.skills_extracted), style="magenta"))
+            content.add_row(
+                "🎯", "Skills Extracted", Text(str(self._stats.skills_extracted), style="magenta")
+            )
         if self._stats.bullets_optimized > 0:
-            content.add_row("✨", "Bullets Optimized", Text(str(self._stats.bullets_optimized), style="bright_green"))
+            content.add_row(
+                "✨",
+                "Bullets Optimized",
+                Text(str(self._stats.bullets_optimized), style="bright_green"),
+            )
         if self._stats.keyword_match_rate > 0:
             rate_pct = f"{self._stats.keyword_match_rate:.0%}"
             bar = self._build_mini_bar(self._stats.keyword_match_rate)
@@ -763,9 +804,13 @@ class PipelineUI:
         if self._stats.optimization_score > 0:
             score_pct = f"{self._stats.optimization_score:.0%}"
             bar = self._build_mini_bar(self._stats.optimization_score)
-            content.add_row("⚡", "Optimization Score", Text(f"{bar} {score_pct}", style="bright_green"))
+            content.add_row(
+                "⚡", "Optimization Score", Text(f"{bar} {score_pct}", style="bright_green")
+            )
         if output_path:
-            content.add_row("📄", "Output File", Text(str(output_path), style="bright_cyan underline"))
+            content.add_row(
+                "📄", "Output File", Text(str(output_path), style="bright_cyan underline")
+            )
 
         return Panel(
             content,

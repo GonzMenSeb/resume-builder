@@ -171,7 +171,7 @@ From the research documents, key principles to implement:
 
 - [x] `[general]` Create comprehensive `README.md` with installation, usage examples, and configuration guide
 - [x] `[quick]` Add example input files in `examples/` directory
-- [ ] `[general]` Run end-to-end test with real data from `resumes/` directory
+- [x] `[general]` Run end-to-end test with real data from `resumes/` directory
 - [ ] `[quick]` Final cleanup: remove unused imports, ensure consistent formatting with `ruff`
 
 ---

@@ -174,9 +174,7 @@ class LaTeXGenerator:
         tpl = self._env.get_template(f"{template.value}.tex")
         if config is None:
             config = (
-                TemplateConfig.from_settings(self._settings)
-                if self._settings
-                else TemplateConfig()
+                TemplateConfig.from_settings(self._settings) if self._settings else TemplateConfig()
             )
         context = self._build_context(resume, config)
         return tpl.render(**context)

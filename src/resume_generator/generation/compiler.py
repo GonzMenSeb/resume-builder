@@ -55,11 +55,25 @@ class CompilationResult:
 class PDFCompiler:
     """Compiles LaTeX source to PDF using pdflatex."""
 
-    AUX_EXTENSIONS = (".aux", ".log", ".out", ".toc", ".lof", ".lot", ".bbl", ".blg", ".fls", ".fdb_latexmk")
+    AUX_EXTENSIONS = (
+        ".aux",
+        ".log",
+        ".out",
+        ".toc",
+        ".lof",
+        ".lot",
+        ".bbl",
+        ".blg",
+        ".fls",
+        ".fdb_latexmk",
+    )
 
     ERROR_PATTERN = re.compile(r"^!\s*(.+)$", re.MULTILINE)
     LINE_PATTERN = re.compile(r"l\.(\d+)")
-    WARNING_PATTERN = re.compile(r"^(LaTeX|Package|Class)\s+\w*\s*Warning:\s*(.+?)(?:\non input line (\d+))?\.?$", re.MULTILINE)
+    WARNING_PATTERN = re.compile(
+        r"^(LaTeX|Package|Class)\s+\w*\s*Warning:\s*(.+?)(?:\non input line (\d+))?\.?$",
+        re.MULTILINE,
+    )
     OVERFULL_PATTERN = re.compile(r"^(Overfull|Underfull)\s+\\[hv]box.+$", re.MULTILINE)
 
     def __init__(
@@ -79,7 +93,9 @@ class PDFCompiler:
         """Locate pdflatex binary on the system."""
         pdflatex = shutil.which("pdflatex")
         if pdflatex is None:
-            raise RuntimeError("pdflatex not found. Install a TeX distribution (e.g., texlive-latex-base)")
+            raise RuntimeError(
+                "pdflatex not found. Install a TeX distribution (e.g., texlive-latex-base)"
+            )
         return pdflatex
 
     def compile(
@@ -181,7 +197,11 @@ class PDFCompiler:
             except subprocess.TimeoutExpired:
                 return CompilationResult(
                     success=False,
-                    errors=[CompilationError(f"Compilation timed out after {self._timeout}s (run {run + 1})")],
+                    errors=[
+                        CompilationError(
+                            f"Compilation timed out after {self._timeout}s (run {run + 1})"
+                        )
+                    ],
                     exit_code=-1,
                 )
             except FileNotFoundError:
@@ -215,7 +235,9 @@ class PDFCompiler:
             exit_code=exit_code,
         )
 
-    def _parse_log(self, log: str, tex_name: str) -> tuple[list[CompilationError], list[CompilationError]]:
+    def _parse_log(
+        self, log: str, tex_name: str
+    ) -> tuple[list[CompilationError], list[CompilationError]]:
         """Extract errors and warnings from pdflatex log output."""
         errors: list[CompilationError] = []
         warnings: list[CompilationError] = []
@@ -233,7 +255,9 @@ class PDFCompiler:
         for match in self.WARNING_PATTERN.finditer(log):
             msg = match.group(2).strip()
             line_num = int(match.group(3)) if match.group(3) else None
-            warnings.append(CompilationError(message=msg, line=line_num, file=tex_name, is_warning=True))
+            warnings.append(
+                CompilationError(message=msg, line=line_num, file=tex_name, is_warning=True)
+            )
 
         return errors, warnings
 

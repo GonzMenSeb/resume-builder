@@ -50,18 +50,14 @@ class ResumeBullet(BaseModel):
         default_factory=dict,
         description="Quantified metrics extracted from bullet (e.g., {'improvement': '40%'})",
     )
-    keywords: list[str] = Field(
-        default_factory=list, description="ATS keywords present in bullet"
-    )
+    keywords: list[str] = Field(default_factory=list, description="ATS keywords present in bullet")
     relevance_score: float = Field(
         default=0.0,
         ge=0.0,
         le=1.0,
         description="Relevance to target job (0-1), used for ordering",
     )
-    original_text: str | None = Field(
-        default=None, description="Original text before optimization"
-    )
+    original_text: str | None = Field(default=None, description="Original text before optimization")
 
     @computed_field
     @property
@@ -99,7 +95,11 @@ class ResumeExperience(BaseModel):
     @property
     def date_range_str(self) -> str:
         start = self.start_date.strftime("%b %Y")
-        end = "Present" if self.is_current or self.end_date is None else self.end_date.strftime("%b %Y")
+        end = (
+            "Present"
+            if self.is_current or self.end_date is None
+            else self.end_date.strftime("%b %Y")
+        )
         return f"{start} - {end}"
 
     @computed_field
@@ -240,24 +240,16 @@ class ResumeDocument(BaseModel):
         default=None,
         description="Professional summary (50-100 words per research guidelines)",
     )
-    headline: str | None = Field(
-        default=None, description="Professional headline/tagline"
-    )
+    headline: str | None = Field(default=None, description="Professional headline/tagline")
     experiences: list[ResumeExperience] = Field(
         default_factory=list, description="Work experience entries"
     )
-    education: list[ResumeEducation] = Field(
-        default_factory=list, description="Education entries"
-    )
-    skills: list[ResumeSkillGroup] = Field(
-        default_factory=list, description="Grouped skills"
-    )
+    education: list[ResumeEducation] = Field(default_factory=list, description="Education entries")
+    skills: list[ResumeSkillGroup] = Field(default_factory=list, description="Grouped skills")
     certifications: list[ResumeCertification] = Field(
         default_factory=list, description="Certifications"
     )
-    projects: list[ResumeProject] = Field(
-        default_factory=list, description="Notable projects"
-    )
+    projects: list[ResumeProject] = Field(default_factory=list, description="Notable projects")
     additional_sections: list[ResumeSection] = Field(
         default_factory=list, description="Custom sections (awards, publications, etc.)"
     )

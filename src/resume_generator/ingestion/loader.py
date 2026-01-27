@@ -64,7 +64,8 @@ class DataLoader:
         extractor = self._get_extractor(path)
         if extractor is None:
             raise ExtractionError(
-                path, f"Unsupported file type '{path.suffix}'. Supported: {', '.join(sorted(self.supported_extensions))}"
+                path,
+                f"Unsupported file type '{path.suffix}'. Supported: {', '.join(sorted(self.supported_extensions))}",
             )
         return extractor.extract_with_metadata(path)
 
