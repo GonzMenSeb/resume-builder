@@ -252,8 +252,10 @@ Always respond with valid JSON only. No explanations or text outside the JSON ob
 
 JOB_TAILORING_SYSTEM = """\
 You are an expert ATS optimization specialist. Your task is to tailor resume content to \
-match specific job descriptions while maintaining truthfulness. You always respond with \
-valid JSON matching the requested schema.
+match specific job descriptions while maintaining truthfulness.
+
+CRITICAL: You MUST respond with ONLY valid JSON. No explanations, no markdown formatting, \
+no text before or after the JSON object.
 
 ## Optimization Goals
 - Target 65-80% keyword match rate
@@ -268,8 +270,10 @@ valid JSON matching the requested schema.
 4. Keep professional summary focused on role requirements
 5. Ensure skills section matches job requirements ordering
 
-## Response Format
-Always respond with valid JSON only. No explanations or text outside the JSON object."""
+## Output Format
+
+Return ONLY a valid JSON object matching the TailoringResultSchema. No explanations, \
+no markdown code blocks, no text before or after the JSON object."""
 
 
 def build_achievement_optimization_prompt(
@@ -411,6 +415,27 @@ def build_job_tailoring_prompt(
     return f"""\
 Tailor the following resume content to match the target job description.
 
+## Expected JSON Output Structure
+
+The response must be a JSON object with these fields:
+- tailored_summary: string - Updated professional summary tailored to the job
+- experiences: array - List of tailored experience objects, each with:
+  - company: string - Company name
+  - title: string - Job title
+  - bullets: array of strings - Reordered and optimized bullet points
+  - relevance_score: number (0.0-1.0) - How relevant this experience is to the job
+- skills: object - Tailored skills section with:
+  - reordered_groups: array - Skill groups ordered by relevance, each with category and skills
+  - added_keywords: array of strings - Keywords added to match job requirements
+  - keyword_mapping: object - Map of resume terms to job posting terminology
+- keyword_analysis: object - Analysis of keyword matching:
+  - job_keywords: array of strings - Keywords extracted from job description
+  - matched_keywords: array of strings - Keywords found in resume
+  - missing_keywords: array of strings - Job keywords not in resume
+  - match_rate: number (0.0-1.0) - Percentage of keywords matched
+  - recommendations: array of strings - Suggestions for improvement
+- overall_fit_score: number (0.0-1.0) - Overall fit score for the job
+
 ## Job Description
 
 <job>
@@ -443,7 +468,9 @@ Tailor the following resume content to match the target job description.
 ### Skills Section
 1. Reorder to match job requirements priority.
 2. Add skill synonyms that match job posting terminology.
-3. Remove irrelevant skills only if space is needed."""
+3. Remove irrelevant skills only if space is needed.
+
+IMPORTANT: Respond with ONLY the JSON object. No explanations, no markdown code blocks, no text before or after."""
 
 
 def build_skills_optimization_prompt(
@@ -516,5 +543,13 @@ Analyze the relevance of each work experience to the target job and assign relev
 - 0.3-0.5: Weak match (minimal overlap)
 - 0.0-0.3: Poor match (different field entirely)
 
-Provide relevance scores, relevant aspects, gaps, recommended display order (as indices), \
-and indices of experiences to expand or condense."""
+## Expected Output
+Return a JSON object with:
+- scores: array of objects with experience_index (int) and relevance_score (0.0-1.0)
+- relevant_aspects: array of strings describing what matches well
+- gaps: array of strings describing missing qualifications
+- recommended_order: array of experience indices sorted by relevance
+- expand_indices: array of indices for experiences to expand detail on
+- condense_indices: array of indices for experiences to condense
+
+IMPORTANT: Respond with ONLY the JSON object. No explanations, no markdown code blocks, no text before or after."""
