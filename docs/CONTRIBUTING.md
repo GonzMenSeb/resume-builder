@@ -24,7 +24,7 @@ This project adheres to a Code of Conduct that all contributors are expected to 
 - Python 3.11 or higher
 - Git
 - pdflatex (for PDF compilation)
-- Anthropic API key (for testing)
+- Claude CLI installed and configured (for testing)
 
 ### First-Time Contributors
 
@@ -397,19 +397,15 @@ Use `unittest.mock` for external dependencies:
 ```python
 from unittest.mock import Mock, patch
 
-@patch('resume_generator.extraction.profile.anthropic.Anthropic')
-def test_extraction_with_mock(mock_anthropic):
-    mock_client = Mock()
-    mock_anthropic.return_value = mock_client
-    mock_client.messages.create.return_value = Mock(
-        content=[Mock(text='{"name": "John Doe"}')]
-    )
+@patch('resume_generator.core.claude_cli.ClaudeCLI.run')
+def test_extraction_with_mock(mock_run):
+    mock_run.return_value = '{"name": "John Doe"}'
 
     extractor = ProfileExtractor(settings)
     profile = extractor.extract("John Doe\nSoftware Engineer")
 
     assert profile.name == "John Doe"
-    mock_client.messages.create.assert_called_once()
+    mock_run.assert_called_once()
 ```
 
 ## Pull Request Process

@@ -154,7 +154,7 @@ def generate(
     if not ClaudeCLI.available():
         console.print(
             "[bold red]Claude CLI not found.[/] "
-            "Please install it first: https://github.com/anthropics/anthropic-sdk-python"
+            "Please install it first: https://github.com/anthropics/claude-code"
         )
         raise typer.Exit(1)
 

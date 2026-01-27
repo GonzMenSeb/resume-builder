@@ -325,7 +325,7 @@ Components receive dependencies through constructor injection.
 
 ### Core Dependencies
 - **Python 3.11+**: Modern Python with type hints
-- **Anthropic SDK**: Claude AI integration
+- **Claude CLI**: Claude AI integration via subprocess
 - **Pydantic v2**: Data validation and settings
 - **Rich**: Terminal UI
 - **PyPDF**: PDF text extraction

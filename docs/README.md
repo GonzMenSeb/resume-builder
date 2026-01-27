@@ -296,7 +296,7 @@ See [Architecture](./ARCHITECTURE.md#project-structure) for details.
 A: PDF, TXT, MD files, and directories containing these files.
 
 **Q: Do I need an Anthropic API key?**
-A: Yes, for profile extraction and optimization.
+A: No, the tool uses Claude CLI which handles authentication. You just need Claude CLI installed and logged in.
 
 **Q: Can I use without internet?**
 A: No, Claude AI requires internet connection.
