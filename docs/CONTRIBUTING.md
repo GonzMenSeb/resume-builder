@@ -318,7 +318,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
 # Constants
-MAX_RETRIES = 3
+DEFAULT_TIMEOUT = 3600
 
 # Classes and functions
 class MyClass:

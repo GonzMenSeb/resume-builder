@@ -101,33 +101,32 @@ RESUME_GEN_MAX_TOKENS=4096
 - Higher = More detailed responses, higher cost
 - Lower = Faster, cheaper, may truncate content
 
-#### `API_TIMEOUT`
+#### `CLAUDE_CLI_TIMEOUT`
 
-**Type:** `float`
-**Default:** `120.0`
-**Range:** `30.0-300.0` (seconds)
-**Description:** API request timeout
+**Type:** `int`
+**Default:** `3600`
+**Range:** `60-7200` (seconds)
+**Description:** Timeout for Claude CLI subprocess invocations
 
 **Environment Variable:**
 ```bash
-RESUME_GEN_API_TIMEOUT=120.0
+RESUME_GEN_CLAUDE_CLI_TIMEOUT=3600
 ```
 
 **Recommendations:**
-- `60.0` for fast networks
-- `120.0` for normal usage (default)
-- `180.0+` for slow connections
+- `1800` for simple operations
+- `3600` for normal usage (default)
+- `7200` for complex multi-step operations
 
-#### `API_MAX_RETRIES`
+#### `CLAUDE_CLI_VERBOSE`
 
-**Type:** `int`
-**Default:** `3`
-**Range:** `0-5`
-**Description:** Maximum retry attempts for failed API calls
+**Type:** `bool`
+**Default:** `false`
+**Description:** Enable verbose output during Claude CLI invocations
 
 **Environment Variable:**
 ```bash
-RESUME_GEN_API_MAX_RETRIES=3
+RESUME_GEN_CLAUDE_CLI_VERBOSE=true
 ```
 
 ### Path Configuration
@@ -453,11 +452,9 @@ RESUME_GEN_VERBOSE=true
 
 ```bash
 # API Configuration
-RESUME_GEN_ANTHROPIC_API_KEY=sk-ant-...
-RESUME_GEN_CLAUDE_MODEL=claude-sonnet-4-20250514
-RESUME_GEN_MAX_TOKENS=4096
-RESUME_GEN_API_TIMEOUT=120.0
-RESUME_GEN_API_MAX_RETRIES=3
+RESUME_GEN_CLAUDE_MODEL=sonnet
+RESUME_GEN_CLAUDE_CLI_TIMEOUT=3600
+RESUME_GEN_CLAUDE_CLI_VERBOSE=false
 
 # Paths
 RESUME_GEN_OUTPUT_DIR=./output
@@ -495,11 +492,9 @@ from resume_generator.config import Settings, ResumeTemplate
 
 settings = Settings(
     # API
-    anthropic_api_key="sk-ant-...",
-    claude_model="claude-sonnet-4-20250514",
-    max_tokens=4096,
-    api_timeout=120.0,
-    api_max_retries=3,
+    claude_model=ClaudeModel.SONNET,
+    claude_cli_timeout=3600,
+    claude_cli_verbose=False,
 
     # Paths
     output_dir=Path("./output"),
@@ -537,9 +532,8 @@ settings = Settings(
 Fast generation with minimal AI processing.
 
 ```bash
-RESUME_GEN_CLAUDE_MODEL=claude-3-5-sonnet-20241022
-RESUME_GEN_MAX_TOKENS=2048
-RESUME_GEN_API_TIMEOUT=60.0
+RESUME_GEN_CLAUDE_MODEL=haiku
+RESUME_GEN_CLAUDE_CLI_TIMEOUT=1800
 RESUME_GEN_ENABLE_JOB_TAILORING=false
 RESUME_GEN_MIN_BULLETS_PER_JOB=2
 RESUME_GEN_MAX_BULLETS_PER_JOB=4
@@ -550,9 +544,8 @@ RESUME_GEN_MAX_BULLETS_PER_JOB=4
 Maximum quality with detailed optimization.
 
 ```bash
-RESUME_GEN_CLAUDE_MODEL=claude-opus-4-20250514
-RESUME_GEN_MAX_TOKENS=8192
-RESUME_GEN_API_TIMEOUT=180.0
+RESUME_GEN_CLAUDE_MODEL=opus
+RESUME_GEN_CLAUDE_CLI_TIMEOUT=7200
 RESUME_GEN_TARGET_KEYWORD_MATCH_RATE=0.80
 RESUME_GEN_TAILORING_CUSTOMIZATION_RATE=0.65
 RESUME_GEN_MAX_BULLETS_PER_JOB=6
@@ -578,8 +571,8 @@ For testing and debugging.
 RESUME_GEN_VERBOSE=true
 RESUME_GEN_COMPILE_PDF=false
 RESUME_GEN_KEEP_LATEX_SOURCE=true
-RESUME_GEN_API_TIMEOUT=300.0
-RESUME_GEN_API_MAX_RETRIES=1
+RESUME_GEN_CLAUDE_CLI_TIMEOUT=7200
+RESUME_GEN_CLAUDE_CLI_VERBOSE=true
 ```
 
 ## Validation

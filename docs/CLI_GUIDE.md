@@ -471,9 +471,9 @@ Error: Rate limit exceeded
 ```
 
 **Solution:**
-- Wait and retry
-- Reduce concurrent requests
-- Check API usage dashboard
+- Wait before making additional requests
+- Check Claude CLI rate limits
+- Monitor usage at console.anthropic.com
 
 ### Issue: LaTeX Compilation Failed
 

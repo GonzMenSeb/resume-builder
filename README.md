@@ -242,15 +242,13 @@ resume-generator/
 
 All settings can be configured via environment variables or `.env` file with the `RESUME_GEN_` prefix.
 
-### API Configuration
+### Claude CLI Configuration
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `ANTHROPIC_API_KEY` | *required* | Anthropic API key for Claude |
-| `CLAUDE_MODEL` | `claude-sonnet-4-20250514` | Claude model to use |
-| `MAX_TOKENS` | `4096` | Maximum tokens for Claude responses |
-| `API_TIMEOUT` | `120.0` | API request timeout (seconds) |
-| `API_MAX_RETRIES` | `3` | Maximum retry attempts |
+| `CLAUDE_MODEL` | `sonnet` | Claude model to use (`sonnet`, `opus`, `haiku`) |
+| `CLAUDE_CLI_TIMEOUT` | `3600` | Claude CLI subprocess timeout (seconds) |
+| `CLAUDE_CLI_VERBOSE` | `false` | Enable verbose Claude CLI output |
 
 ### Path Configuration
 

@@ -378,11 +378,10 @@ The architecture supports:
 - Content validation via Pydantic
 - LaTeX injection prevention in templates
 
-### API Security
-- API key rotation support
-- Timeout enforcement
-- Retry limits
-- Rate limit handling
+### Process Security
+- Subprocess timeout enforcement
+- Output sanitization
+- Error handling and logging
 
 ## Extension Points
 
