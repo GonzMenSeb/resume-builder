@@ -1,0 +1,71 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "resume-generator"
+version = "0.1.0"
+description = "S+ tier resume generator powered by Claude AI"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+authors = [
+    { name = "Sebastian", email = "sebastian@example.com" }
+]
+keywords = ["resume", "cv", "ai", "claude", "latex", "pdf"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Office/Business",
+]
+dependencies = [
+    "anthropic>=0.40.0",
+    "pydantic>=2.0",
+    "rich>=13.0",
+    "pypdf>=4.0",
+    "aiofiles>=23.0",
+    "typer>=0.9.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "pytest-cov>=4.0",
+    "ruff>=0.1.0",
+    "mypy>=1.8",
+]
+
+[project.scripts]
+resume-gen = "resume_generator.main:app"
+
+[project.urls]
+Homepage = "https://github.com/sebastian/resume-generator"
+Repository = "https://github.com/sebastian/resume-generator"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/resume_generator"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B", "C4", "SIM"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
