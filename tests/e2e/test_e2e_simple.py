@@ -5,8 +5,9 @@ This test validates the ingestion layer with real PDFs without needing Claude AP
 """
 
 from pathlib import Path
+
+from resume_generator.config import ClaudeModel, Settings
 from resume_generator.ingestion.loader import DataLoader
-from resume_generator.config import Settings, ClaudeModel
 
 RESUMES_DIR = Path("resumes")
 OUTPUT_DIR = Path("output/e2e_test")
@@ -37,9 +38,9 @@ def test_pdf_ingestion():
     loader = DataLoader()
 
     for pdf_file in pdf_files:
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Testing ingestion: {pdf_file.name}")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         try:
             result = loader.load([pdf_file])
@@ -55,35 +56,37 @@ def test_pdf_ingestion():
             print(f"   Text length: {text_length:,} characters")
 
             if text_length == 0:
-                print(f"   ⚠️  Warning: No text extracted")
+                print("   ⚠️  Warning: No text extracted")
                 all_success = False
                 continue
 
-            preview = result.unified_text[:200].replace('\n', ' ')
+            preview = result.unified_text[:200].replace("\n", " ")
             print(f"   Preview: {preview}...")
 
             output_file = OUTPUT_DIR / f"{pdf_file.stem}_extracted.txt"
-            output_file.write_text(result.unified_text, encoding='utf-8')
+            output_file.write_text(result.unified_text, encoding="utf-8")
             print(f"   Saved to: {output_file}")
 
         except Exception as e:
             print(f"❌ Exception while processing {pdf_file.name}: {e}")
             import traceback
+
             traceback.print_exc()
             all_success = False
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     if all_success:
         print("✅ All ingestion tests PASSED")
         print(f"\nExtracted text files saved to: {OUTPUT_DIR}")
     else:
         print("❌ Some ingestion tests FAILED")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     return all_success
 
 
 if __name__ == "__main__":
     import sys
+
     success = test_pdf_ingestion()
     sys.exit(0 if success else 1)

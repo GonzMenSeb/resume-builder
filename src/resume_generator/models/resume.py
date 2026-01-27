@@ -59,12 +59,12 @@ class ResumeBullet(BaseModel):
     )
     original_text: str | None = Field(default=None, description="Original text before optimization")
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def has_metrics(self) -> bool:
         return bool(self.metrics)
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def word_count(self) -> int:
         return len(self.text.split())
@@ -91,7 +91,7 @@ class ResumeExperience(BaseModel):
         default_factory=list, description="Key technologies (for skills-based filtering)"
     )
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def date_range_str(self) -> str:
         start = self.start_date.strftime("%b %Y")
@@ -102,7 +102,7 @@ class ResumeExperience(BaseModel):
         )
         return f"{start} - {end}"
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def duration_months(self) -> int:
         end = self.end_date or date.today()
@@ -129,7 +129,7 @@ class ResumeEducation(BaseModel):
         default_factory=list, description="Relevant courses (for recent grads)"
     )
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def graduation_str(self) -> str | None:
         if not self.graduation_date:
@@ -147,7 +147,7 @@ class ResumeCertification(BaseModel):
     date_earned: date | None = Field(default=None, description="Date earned")
     credential_id: str | None = Field(default=None, description="Credential ID")
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def display_text(self) -> str:
         parts = [self.name]
@@ -178,7 +178,7 @@ class ResumeSkillGroup(BaseModel):
     category: str = Field(description="Category name (e.g., 'Languages', 'Frameworks')")
     skills: list[str] = Field(min_length=1, description="Skills in this category")
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def display_text(self) -> str:
         return f"{self.category}: {', '.join(self.skills)}"
@@ -217,7 +217,7 @@ class ResumeContact(BaseModel):
     github_url: HttpUrl | None = Field(default=None, description="GitHub URL")
     portfolio_url: HttpUrl | None = Field(default=None, description="Portfolio URL")
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def links(self) -> list[tuple[str, str]]:
         result: list[tuple[str, str]] = []
@@ -263,17 +263,17 @@ class ResumeDocument(BaseModel):
         default=None, ge=0.0, le=1.0, description="Overall optimization score"
     )
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def total_bullet_count(self) -> int:
         return sum(len(exp.bullets) for exp in self.experiences)
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def has_quantified_achievements(self) -> bool:
         return any(b.has_metrics for exp in self.experiences for b in exp.bullets)
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def summary_word_count(self) -> int:
         if not self.professional_summary:

@@ -99,7 +99,7 @@ reportUnusedClass = true
 reportUnusedFunction = true
 reportUnusedVariable = true
 reportUnusedExpression = true
-reportUnnecessaryTypeIgnoreComment = true
+reportUnnecessaryTypeIgnoreComment = false
 reportMatchNotExhaustive = true
 
 [tool.pytest.ini_options]

@@ -81,7 +81,7 @@ class SalaryRange(BaseModel):
     currency: str = Field(default="USD", description="Currency code")
     period: str = Field(default="yearly", description="Pay period (yearly, monthly, hourly)")
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def display_text(self) -> str:
         if self.min_salary and self.max_salary:
@@ -153,7 +153,7 @@ class JobDescription(BaseModel):
             )
         return self
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def all_keywords(self) -> list[str]:
         """Aggregate all keywords for ATS matching."""
@@ -165,12 +165,12 @@ class JobDescription(BaseModel):
             keywords.update(req.keywords)
         return sorted(keywords)
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def required_requirements(self) -> list[JobRequirement]:
         return [r for r in self.requirements if r.priority == RequirementPriority.REQUIRED]
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def preferred_requirements(self) -> list[JobRequirement]:
         return [r for r in self.requirements if r.priority == RequirementPriority.PREFERRED]

@@ -2,9 +2,12 @@
 """End-to-end test with real resume data from resumes/ directory."""
 
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock, patch
-from datetime import date
-from resume_generator.config import Settings, ClaudeModel, ResumeTemplate
+
+from pydantic import SecretStr
+
+from resume_generator.config import ClaudeModel, ResumeTemplate, Settings
 from resume_generator.pipeline import ResumePipeline
 from resume_generator.ui.progress import PipelineUI
 
@@ -15,10 +18,10 @@ OUTPUT_DIR = Path("output/e2e_test")
 def create_mock_profile_extraction_schema():
     """Create mock ProfileExtractionSchema for mocking."""
     from resume_generator.extraction.profile import (
-        ProfileExtractionSchema,
         ContactInfoSchema,
-        ExperienceSchema,
         EducationSchema,
+        ExperienceSchema,
+        ProfileExtractionSchema,
         SkillSchema,
     )
 
@@ -27,7 +30,7 @@ def create_mock_profile_extraction_schema():
             full_name="Test User",
             email="test@example.com",
             phone="+1-555-0100",
-            location="San Francisco, CA"
+            location="San Francisco, CA",
         ),
         professional_summary="Experienced professional with strong technical skills",
         headline="Senior Professional",
@@ -41,9 +44,9 @@ def create_mock_profile_extraction_schema():
                 is_current=False,
                 achievements=[
                     "Led development of key features",
-                    "Improved system performance by 50%"
+                    "Improved system performance by 50%",
                 ],
-                technologies=["Python", "AWS", "Docker"]
+                technologies=["Python", "AWS", "Docker"],
             )
         ],
         education=[
@@ -51,65 +54,82 @@ def create_mock_profile_extraction_schema():
                 institution="University",
                 degree="Bachelor of Science",
                 field_of_study="Computer Science",
-                graduation_date="2016-06-01"
+                graduation_date="2016-06-01",
             )
         ],
         skills=[
             SkillSchema(name="Python", category="programming", years_experience=5.0),
-            SkillSchema(name="AWS", category="technical", years_experience=4.0)
-        ]
+            SkillSchema(name="AWS", category="technical", years_experience=4.0),
+        ],
     )
 
 
-def create_mock_resume_optimization_schema():
-    """Create mock ResumeOptimizationSchema for mocking."""
+def create_mock_bullet_batch_result():
+    """Create mock BulletBatchResultSchema for mocking."""
     from resume_generator.optimization.optimizer import (
-        ResumeOptimizationSchema,
-        OptimizedExperienceSchema,
-        BulletSchema,
-        SkillGroupSchema,
-        EducationOutputSchema,
+        BulletBatchResultSchema,
+        OptimizedBulletSchema,
     )
 
-    return ResumeOptimizationSchema(
-        professional_summary="Results-driven professional with 5+ years of experience delivering high-impact solutions",
-        experiences=[
-            OptimizedExperienceSchema(
-                company="Tech Company",
-                title="Senior Engineer",
-                start_date="2020-01-01",
-                end_date="2023-12-31",
-                is_current=False,
-                bullets=[
-                    BulletSchema(
-                        text="Led development of mission-critical features, improving system reliability by 40%",
-                        bullet_type="xyz",
-                        action_verb="Led",
-                        metrics={"improvement": "40%"},
-                        keywords=["development", "features", "system", "reliability"]
-                    ),
-                    BulletSchema(
-                        text="Optimized infrastructure reducing costs by $50K annually",
-                        bullet_type="xyz",
-                        action_verb="Optimized",
-                        metrics={"savings": "$50K"},
-                        keywords=["infrastructure", "optimization", "costs"]
-                    )
-                ]
-            )
+    return BulletBatchResultSchema(
+        bullets=[
+            OptimizedBulletSchema(
+                text="Led development of mission-critical features, improving system reliability by 40%",
+                bullet_type="xyz",
+                action_verb="Led",
+                has_metrics=True,
+                metrics={"improvement": "40%"},
+                keywords=["development", "features", "system", "reliability"],
+                relevance_score=0.9,
+                original_index=0,
+            ),
+            OptimizedBulletSchema(
+                text="Optimized infrastructure reducing costs by $50K annually",
+                bullet_type="xyz",
+                action_verb="Optimized",
+                has_metrics=True,
+                metrics={"savings": "$50K"},
+                keywords=["infrastructure", "optimization", "costs"],
+                relevance_score=0.85,
+                original_index=1,
+            ),
         ],
-        skills=[
-            SkillGroupSchema(category="Languages", skills=["Python", "JavaScript", "Go"]),
-            SkillGroupSchema(category="Cloud & DevOps", skills=["AWS", "Docker", "Kubernetes"])
+        removed_bullets=[],
+        overall_quality_score=0.87,
+    )
+
+
+def create_mock_professional_summary():
+    """Create mock ProfessionalSummarySchema for mocking."""
+    from resume_generator.optimization.optimizer import ProfessionalSummarySchema
+
+    return ProfessionalSummarySchema(
+        summary="Results-driven professional with 5+ years of experience delivering high-impact solutions",
+        word_count=12,
+        keywords_included=["professional", "experience", "solutions"],
+        tailored_for_job=False,
+    )
+
+
+def create_mock_skills_optimization():
+    """Create mock SkillsOptimizationSchema for mocking."""
+    from resume_generator.optimization.optimizer import (
+        SkillGroupSchema,
+        SkillsOptimizationSchema,
+    )
+
+    return SkillsOptimizationSchema(
+        skill_groups=[
+            SkillGroupSchema(
+                category="Languages", skills=["Python", "JavaScript", "Go"], priority=0
+            ),
+            SkillGroupSchema(
+                category="Cloud & DevOps", skills=["AWS", "Docker", "Kubernetes"], priority=1
+            ),
         ],
-        education=[
-            EducationOutputSchema(
-                institution="University",
-                degree="B.S. in Computer Science",
-                graduation_date="2016-06-01",
-                honors=[]
-            )
-        ]
+        added_skills=[],
+        removed_skills=[],
+        total_skills_count=6,
     )
 
 
@@ -127,7 +147,7 @@ def test_e2e_with_real_pdfs():
         print(f"  • {pdf.name}")
 
     settings = Settings(
-        anthropic_api_key="sk-ant-test-key-e2e",
+        anthropic_api_key=SecretStr("sk-ant-test-key-e2e"),
         claude_model=ClaudeModel.SONNET,
         output_dir=OUTPUT_DIR,
         compile_pdf=False,
@@ -137,9 +157,9 @@ def test_e2e_with_real_pdfs():
     all_success = True
 
     for pdf_file in pdf_files:
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Testing with: {pdf_file.name}")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         output_name = pdf_file.stem + "_generated"
         output_path = OUTPUT_DIR / f"{output_name}.tex"
@@ -147,9 +167,10 @@ def test_e2e_with_real_pdfs():
         ui = PipelineUI(verbose=True)
         pipeline = ResumePipeline(settings=settings, ui=ui)
 
-        with patch("resume_generator.extraction.profile.Anthropic") as mock_anthropic_extract, \
-             patch("resume_generator.optimization.optimizer.Anthropic") as mock_anthropic_opt:
-
+        with (
+            patch("resume_generator.extraction.profile.Anthropic") as mock_anthropic_extract,
+            patch("resume_generator.optimization.optimizer.Anthropic") as mock_anthropic_opt,
+        ):
             mock_extract_client = MagicMock()
             mock_opt_client = MagicMock()
 
@@ -158,10 +179,27 @@ def test_e2e_with_real_pdfs():
             mock_extract_response.parsed_output = create_mock_profile_extraction_schema()
             mock_extract_client.beta.messages.parse.return_value = mock_extract_response
 
-            mock_opt_response = MagicMock()
-            mock_opt_response.stop_reason = "end_turn"
-            mock_opt_response.parsed_output = create_mock_resume_optimization_schema()
-            mock_opt_client.beta.messages.parse.return_value = mock_opt_response
+            def opt_side_effect(**kwargs: Any) -> MagicMock:
+                mock_response = MagicMock()
+                mock_response.stop_reason = "end_turn"
+                output_format = kwargs.get("output_format")
+                from resume_generator.optimization.optimizer import (
+                    BulletBatchResultSchema,
+                    ProfessionalSummarySchema,
+                    SkillsOptimizationSchema,
+                )
+
+                if output_format is BulletBatchResultSchema:
+                    mock_response.parsed_output = create_mock_bullet_batch_result()
+                elif output_format is ProfessionalSummarySchema:
+                    mock_response.parsed_output = create_mock_professional_summary()
+                elif output_format is SkillsOptimizationSchema:
+                    mock_response.parsed_output = create_mock_skills_optimization()
+                else:
+                    mock_response.parsed_output = None
+                return mock_response
+
+            mock_opt_client.beta.messages.parse.side_effect = opt_side_effect
 
             mock_anthropic_extract.return_value = mock_extract_client
             mock_anthropic_opt.return_value = mock_opt_client
@@ -183,7 +221,7 @@ def test_e2e_with_real_pdfs():
                         print(f"   Size: {file_size} bytes")
 
                         if file_size == 0:
-                            print(f"   ⚠️  Warning: Output file is empty")
+                            print("   ⚠️  Warning: Output file is empty")
                             all_success = False
                     else:
                         print(f"   ⚠️  Warning: Output file not found at {result.output_path}")
@@ -197,20 +235,22 @@ def test_e2e_with_real_pdfs():
             except Exception as e:
                 print(f"\n❌ Exception while processing {pdf_file.name}: {e}")
                 import traceback
+
                 traceback.print_exc()
                 all_success = False
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     if all_success:
         print("✅ All end-to-end tests PASSED")
     else:
         print("❌ Some end-to-end tests FAILED")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     return all_success
 
 
 if __name__ == "__main__":
     import sys
+
     success = test_e2e_with_real_pdfs()
     sys.exit(0 if success else 1)
