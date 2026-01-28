@@ -8,6 +8,9 @@ PROFILE_EXTRACTION_SYSTEM = """\
 You are an expert resume data extractor. Your task is to parse raw text containing a person's \
 professional information and extract it into a structured JSON format.
 
+CRITICAL: You MUST respond with ONLY valid JSON. No explanations, no markdown formatting, \
+no text before or after the JSON object.
+
 ## Core Extraction Principles
 
 1. **Accuracy First**: Extract only information explicitly stated. Never infer or fabricate data.
@@ -65,15 +68,15 @@ professional information and extract it into a structured JSON format.
 
 ## Output Format
 
-Return a single JSON object matching the PersonProfile schema. All fields not found should be \
-null or empty arrays as appropriate. Do not include any text outside the JSON object."""
+Return ONLY a valid JSON object matching the PersonProfile schema. All fields not found should be \
+null or empty arrays as appropriate. Do not include any text, explanations, or markdown outside the JSON object."""
 
 
 def build_profile_extraction_prompt(raw_text: str) -> str:
     """Build the user prompt for profile extraction."""
     schema_json = PersonProfile.model_json_schema()
     return f"""\
-Extract structured profile data from the following raw text. Return valid JSON matching the schema.
+Extract structured profile data from the following raw text.
 
 ## JSON Schema Reference
 
@@ -97,7 +100,7 @@ Extract structured profile data from the following raw text. Return valid JSON m
 6. For skills, categorize them appropriately based on context.
 7. Preserve the original wording of achievements and descriptions.
 
-Return only the JSON object, no additional text or markdown formatting."""
+IMPORTANT: Respond with ONLY the JSON object. No explanations, no markdown code blocks, no text before or after."""
 
 
 def _format_schema_for_prompt(schema: dict[str, Any]) -> str:
@@ -114,6 +117,9 @@ def _format_schema_for_prompt(schema: dict[str, Any]) -> str:
 JOB_DESCRIPTION_EXTRACTION_SYSTEM = """\
 You are an expert job posting analyzer. Your task is to parse job descriptions and extract \
 structured information for resume tailoring and ATS keyword matching.
+
+CRITICAL: You MUST respond with ONLY valid JSON. No explanations, no markdown formatting, \
+no text before or after the JSON object.
 
 ## Extraction Principles
 
@@ -145,7 +151,7 @@ structured information for resume tailoring and ATS keyword matching.
 
 ## Output Format
 
-Return a single JSON object matching the JobDescription schema."""
+Return ONLY a valid JSON object matching the JobDescription schema. No explanations or markdown."""
 
 
 def build_job_extraction_prompt(job_text: str) -> str:
@@ -154,7 +160,7 @@ def build_job_extraction_prompt(job_text: str) -> str:
 
     schema_json = JobDescription.model_json_schema()
     return f"""\
-Extract structured job description data from the following posting. Return valid JSON matching the schema.
+Extract structured job description data from the following posting.
 
 ## JSON Schema Reference
 
@@ -174,63 +180,44 @@ Extract structured job description data from the following posting. Return valid
 2. Classify requirements as "required", "preferred", or "nice_to_have".
 3. Extract keywords for ATS matching (include synonyms where obvious).
 4. Parse experience requirements carefully (e.g., "3-5 years" → min=3, max=5).
-5. Return only the JSON object, no additional text.
 
-Return only the JSON object, no additional text or markdown formatting."""
+IMPORTANT: Respond with ONLY the JSON object. No explanations, no markdown code blocks, no text before or after."""
 
 
 SECTION_EXTRACTION_PROMPTS = {
     "contact": """\
-Extract contact information from the following text. Return JSON with:
-- full_name (string)
-- email (string or null)
-- phone (string or null)
-- location (string or null, city/state only)
-- linkedin_url (string or null)
-- github_url (string or null)
-- portfolio_url (string or null)
+Extract contact information from the following text.
+
+Expected JSON structure:
+{{"full_name": "...", "email": "..." or null, "phone": "..." or null, "location": "..." or null, "linkedin_url": "..." or null, "github_url": "..." or null, "portfolio_url": "..." or null}}
 
 Text: {text}
 
-Return only JSON.""",
+IMPORTANT: Respond with ONLY the JSON object. No explanations or markdown.""",
     "experience": """\
-Extract work experience from the following text. For each position, return:
-- company (string)
-- title (string)
-- location (string or null)
-- start_date (YYYY-MM-DD)
-- end_date (YYYY-MM-DD or null if current)
-- is_current (boolean)
-- achievements (list of strings, each bullet point)
-- technologies (list of strings)
-- metrics (dict of quantified results)
+Extract work experience from the following text as a JSON array.
+
+Each object should have: company (string), title (string), location (string or null), start_date (YYYY-MM-DD), end_date (YYYY-MM-DD or null if current), is_current (boolean), achievements (list of strings), technologies (list of strings), metrics (dict of quantified results).
 
 Text: {text}
 
-Return a JSON array of experience objects.""",
+IMPORTANT: Respond with ONLY a JSON array. No explanations or markdown.""",
     "education": """\
-Extract education history from the following text. For each entry, return:
-- institution (string)
-- degree (string, e.g., "Bachelor of Science")
-- field_of_study (string or null)
-- graduation_date (YYYY-MM-DD or null)
-- gpa (float or null, only if notable)
-- honors (list of strings)
-- relevant_coursework (list of strings)
+Extract education history from the following text as a JSON array.
+
+Each object should have: institution (string), degree (string), field_of_study (string or null), graduation_date (YYYY-MM-DD or null), gpa (float or null, only if notable), honors (list of strings), relevant_coursework (list of strings).
 
 Text: {text}
 
-Return a JSON array of education objects.""",
+IMPORTANT: Respond with ONLY a JSON array. No explanations or markdown.""",
     "skills": """\
-Extract skills from the following text. For each skill, return:
-- name (string)
-- category (one of: technical, programming, frameworks, tools, languages, soft, domain, other)
-- proficiency (1-5 or null if not stated)
-- years_experience (float or null if not stated)
+Extract skills from the following text as a JSON array.
+
+Each object should have: name (string), category (one of: technical, programming, frameworks, tools, languages, soft, domain, other), proficiency (1-5 or null if not stated), years_experience (float or null if not stated).
 
 Text: {text}
 
-Return a JSON array of skill objects.""",
+IMPORTANT: Respond with ONLY a JSON array. No explanations or markdown.""",
 }
 
 
@@ -247,19 +234,15 @@ following the Google X-Y-Z formula: "Accomplished [X] as measured by [Y] by doin
 Original Achievement:
 {achievement}
 
-Provide:
-1. An improved version following X-Y-Z formula (or note what's missing).
-2. The action verb used.
-3. Whether metrics are present (boolean).
-4. Suggested improvements if metrics are missing.
+Return a JSON object with these fields:
+- "improved": Enhanced achievement text following X-Y-Z formula
+- "action_verb": The strong action verb used
+- "has_metrics": Boolean indicating if metrics are present
+- "suggestions": Array of improvement suggestions if metrics are missing
 
-Return JSON:
-{{
-    "improved": "Enhanced achievement text",
-    "action_verb": "verb used",
-    "has_metrics": true/false,
-    "suggestions": ["list of improvement suggestions"]
-}}"""
+IMPORTANT: Respond with ONLY the JSON object. No explanations, no markdown code blocks, no text before or after.
+
+Example format: {{"improved": "...", "action_verb": "...", "has_metrics": true, "suggestions": []}}"""
 
 
 def build_batch_extraction_prompt(raw_texts: list[str]) -> str:
@@ -268,8 +251,7 @@ def build_batch_extraction_prompt(raw_texts: list[str]) -> str:
         f"<document index='{i}'>\n{text}\n</document>" for i, text in enumerate(raw_texts)
     )
     return f"""\
-Extract structured profile data from each of the following documents. Return a JSON array where \
-each element corresponds to one document in order.
+Extract structured profile data from each of the following documents.
 
 ## Documents
 
@@ -282,4 +264,4 @@ each element corresponds to one document in order.
 3. Maintain the same order as the input documents.
 4. If a document cannot be parsed, return {{"error": "description"}} for that index.
 
-Return only the JSON array."""
+IMPORTANT: Respond with ONLY the JSON array. No explanations, no markdown code blocks, no text before or after."""

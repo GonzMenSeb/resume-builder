@@ -157,8 +157,9 @@ See [Architecture](./ARCHITECTURE.md) for detailed system design.
 ### Essential Settings
 
 ```bash
-# Required
-RESUME_GEN_ANTHROPIC_API_KEY=sk-ant-...
+# Claude CLI Configuration
+RESUME_GEN_CLAUDE_MODEL=sonnet
+RESUME_GEN_CLAUDE_CLI_TIMEOUT=3600
 
 # Commonly Customized
 RESUME_GEN_DEFAULT_TEMPLATE=modern      # or 'ats'
@@ -295,7 +296,7 @@ See [Architecture](./ARCHITECTURE.md#project-structure) for details.
 A: PDF, TXT, MD files, and directories containing these files.
 
 **Q: Do I need an Anthropic API key?**
-A: Yes, for profile extraction and optimization.
+A: No, the tool uses Claude CLI which handles authentication. You just need Claude CLI installed and logged in.
 
 **Q: Can I use without internet?**
 A: No, Claude AI requires internet connection.

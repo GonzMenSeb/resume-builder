@@ -10,6 +10,7 @@ from pathlib import Path
 from time import time
 from typing import TYPE_CHECKING, Any
 
+from resume_generator.claude_client import ClaudeCLI, ClaudeCLINotFoundError
 from resume_generator.config import ResumeTemplate, Settings, get_settings
 from resume_generator.extraction.profile import ExtractionError, ProfileExtractor
 from resume_generator.generation.compiler import CompilationResult, PDFCompiler
@@ -107,15 +108,43 @@ class ResumePipeline:
         self,
         settings: Settings | None = None,
         ui: PipelineUI | None = None,
+        claude_cli: ClaudeCLI | None = None,
     ) -> None:
         self._settings = settings or get_settings()
         self._ui = ui
+
+        self._claude_cli = claude_cli or ClaudeCLI(
+            model=self._settings.claude_model.value,
+            timeout=self._settings.claude_cli_timeout,
+        )
+        self._verify_claude_cli()
+
         self._loader = DataLoader()
         self._extractor = ProfileExtractor(self._settings)
         self._optimizer = ResumeOptimizer(self._settings)
         self._tailorer = JobTailorer(self._settings)
         self._generator = LaTeXGenerator(self._settings)
         self._compiler = PDFCompiler()
+
+    def _verify_claude_cli(self) -> None:
+        """Verify Claude CLI is available before running pipeline."""
+        if not ClaudeCLI.available():
+            raise ClaudeCLINotFoundError(
+                "Claude CLI is not installed or not in PATH. "
+                "Please install Claude CLI to use this application. "
+                "Visit https://claude.ai/code for installation instructions."
+            )
+        logger.debug("Claude CLI verified: %s", ClaudeCLI.version())
+
+    @property
+    def claude_cli(self) -> ClaudeCLI:
+        """Access the Claude CLI client instance."""
+        return self._claude_cli
+
+    @property
+    def settings(self) -> Settings:
+        """Access the pipeline settings."""
+        return self._settings
 
     def run(
         self,
@@ -163,9 +192,13 @@ class ResumePipeline:
             result.tex_path = tex_path
 
             if self._settings.compile_pdf:
-                pdf_path, compilation = self._run_compilation(tex_path, output_path)
+                pdf_path, compilation, resume = self._run_compilation_with_compaction(
+                    resume, tex_path, output_path, template
+                )
                 result.pdf_path = pdf_path
                 result.compilation_result = compilation
+                result.resume = resume
+                result.tex_path = tex_path
 
             result.keyword_match_rate = resume.keyword_match_rate or 0.0
             result.optimization_score = resume.optimization_score or 0.0
@@ -348,10 +381,9 @@ class ResumePipeline:
         tex_path: Path,
         output_path: Path | None,
     ) -> tuple[Path | None, CompilationResult]:
-        if self._ui:
-            self._ui.update_stage(PipelineStage.COMPILING, message="Running pdflatex")
-
-        pdf_output = output_path.with_suffix(".pdf") if output_path else None
+        pdf_output = (
+            output_path.with_suffix(".pdf") if output_path else tex_path.with_suffix(".pdf")
+        )
         result = self._compiler.compile(tex_path, output_path=pdf_output)
 
         if not result.success:
@@ -361,11 +393,45 @@ class ResumePipeline:
                 PipelineStage.COMPILING,
             )
 
+        logger.info("Compiled PDF: %s", result.pdf_path)
+        return result.pdf_path, result
+
+    def _run_compilation_with_compaction(
+        self,
+        resume: ResumeDocument,
+        tex_path: Path,
+        output_path: Path | None,
+        template: ResumeTemplate | None,
+    ) -> tuple[Path | None, CompilationResult, ResumeDocument]:
+        if self._ui:
+            self._ui.update_stage(PipelineStage.COMPILING, message="Running pdflatex")
+
+        pdf_path, compilation = self._run_compilation(tex_path, output_path)
+        max_pages = self._settings.max_pages
+        min_bullets = self._settings.min_bullets_per_job
+        max_compaction_rounds = 5
+        current_resume = resume
+
+        for round_num in range(max_compaction_rounds):
+            if compilation.page_count <= max_pages:
+                break
+
+            logger.info(
+                "PDF has %d pages, compacting (round %d, max=%d)",
+                compilation.page_count,
+                round_num + 1,
+                max_pages,
+            )
+
+            current_resume = current_resume.compact(min_bullets_per_job=min_bullets)
+            tex_path = self._run_generation(current_resume, output_path, template)
+            pdf_path, compilation = self._run_compilation(tex_path, output_path)
+
         if self._ui:
             self._ui.update_stage(PipelineStage.COMPILING, completed=True)
 
-        logger.info("Compiled PDF: %s", result.pdf_path)
-        return result.pdf_path, result
+        logger.info("Compiled PDF: %s (%d pages)", compilation.pdf_path, compilation.page_count)
+        return pdf_path, compilation, current_resume
 
     def _generate_output_name(self, resume: ResumeDocument) -> str:
         name_parts = resume.contact.name.lower().split()

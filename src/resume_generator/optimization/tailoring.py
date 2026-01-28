@@ -1,22 +1,21 @@
 """Job-specific resume tailoring for ATS optimization and keyword matching."""
 
+from __future__ import annotations
+
 import logging
 import re
-import time
-from collections.abc import Callable
 from dataclasses import dataclass
 from difflib import SequenceMatcher
-from typing import TypeVar
+from typing import TYPE_CHECKING, TypeVar
 
-from anthropic import (
-    Anthropic,
-    APIConnectionError,
-    APITimeoutError,
-    RateLimitError,
-)
 from pydantic import BaseModel, Field, ValidationError
 
-from resume_generator.config import Settings, get_settings
+from resume_generator.claude_client import (
+    ClaudeCLI,
+    ClaudeCLIError,
+    build_prompt_with_schema,
+    parse_json_response,
+)
 from resume_generator.models.job import JobDescription
 from resume_generator.models.resume import (
     BulletType,
@@ -25,15 +24,16 @@ from resume_generator.models.resume import (
     ResumeExperience,
     ResumeSkillGroup,
 )
-from resume_generator.optimization.prompts import build_job_tailoring_prompt
+from resume_generator.optimization.prompts import (
+    JOB_TAILORING_SYSTEM,
+    build_job_tailoring_prompt,
+)
 
-T = TypeVar("T")
+if TYPE_CHECKING:
+    from resume_generator.config import Settings
+
+T = TypeVar("T", bound=BaseModel)
 logger = logging.getLogger(__name__)
-
-STRUCTURED_OUTPUTS_BETA = "structured-outputs-2025-11-13"
-MAX_RETRIES = 3
-INITIAL_BACKOFF_SECONDS = 1.0
-MAX_BACKOFF_SECONDS = 32.0
 
 WEIGHT_REQUIRED = 3.0
 WEIGHT_PREFERRED = 2.0
@@ -100,35 +100,6 @@ class TailoringError(Exception):
     """Raised when resume tailoring fails."""
 
 
-def _is_retryable_error(error: Exception) -> bool:
-    return isinstance(error, (APITimeoutError, APIConnectionError, RateLimitError))
-
-
-def _exponential_backoff(attempt: int) -> float:
-    backoff: float = INITIAL_BACKOFF_SECONDS * (2**attempt)
-    return min(backoff, MAX_BACKOFF_SECONDS)
-
-
-def _call_with_retry(func: Callable[[], T]) -> T:
-    last_exception: Exception | None = None
-    for attempt in range(MAX_RETRIES):
-        try:
-            return func()
-        except Exception as e:
-            if not _is_retryable_error(e):
-                raise
-            last_exception = e
-            if attempt == MAX_RETRIES - 1:
-                logger.error("Max retries exceeded after %d attempts", MAX_RETRIES)
-                raise
-            wait_time = _exponential_backoff(attempt)
-            logger.warning("Retryable error, waiting %.1fs: %s", wait_time, e)
-            time.sleep(wait_time)
-    if last_exception:
-        raise last_exception
-    raise AssertionError("Unexpected control flow in retry logic")
-
-
 @dataclass
 class KeywordMatchResult:
     """Detailed result of a single keyword match."""
@@ -193,28 +164,28 @@ class TailoringResultSchema(BaseModel):
 
 
 class JobTailorer:
-    """Optimizes resume content for specific job descriptions."""
+    """Optimizes resume content for specific job descriptions using Claude CLI."""
 
-    TAILORING_SYSTEM = """\
-You are an expert ATS optimization specialist. Your task is to tailor resume content to
-match specific job descriptions while maintaining truthfulness.
+    def __init__(
+        self,
+        settings: Settings | None = None,
+        claude_cli: ClaudeCLI | None = None,
+    ) -> None:
+        if claude_cli is not None:
+            self._cli = claude_cli
+            self._settings = settings
+        elif settings is not None:
+            self._cli = ClaudeCLI(
+                model=settings.claude_model.value,
+                timeout=settings.claude_cli_timeout,
+            )
+            self._settings = settings
+        else:
+            from resume_generator.config import get_settings
 
-## Optimization Goals
-- Target 65-80% keyword match rate
-- Prioritize required skills and qualifications
-- Use exact terminology from job posting where truthful
-- Reorder content to highlight most relevant experience first
-
-## Rules
-1. NEVER fabricate experience or skills
-2. Use job posting terminology for equivalent skills/technologies
-3. Prioritize bullets that demonstrate required qualifications
-4. Keep professional summary focused on role requirements
-5. Ensure skills section matches job requirements ordering"""
-
-    def __init__(self, settings: Settings | None = None) -> None:
-        self._settings = settings or get_settings()
-        self._client = Anthropic(api_key=self._settings.anthropic_api_key.get_secret_value())
+            s = get_settings()
+            self._cli = ClaudeCLI(model=s.claude_model.value, timeout=s.claude_cli_timeout)
+            self._settings = s
 
     def tailor(
         self,
@@ -222,8 +193,7 @@ match specific job descriptions while maintaining truthfulness.
         job: JobDescription,
         use_ai: bool = True,
     ) -> ResumeDocument:
-        """
-        Tailor a resume for a specific job description.
+        """Tailor a resume for a specific job description.
 
         Args:
             resume: The resume document to tailor.
@@ -239,7 +209,7 @@ match specific job descriptions while maintaining truthfulness.
         job_keywords = self._extract_job_keywords(job)
         resume_keywords = resume.get_all_keywords()
 
-        if use_ai and self._settings.enable_job_tailoring:
+        if use_ai and self._settings and self._settings.enable_job_tailoring:
             return self._ai_tailor(resume, job, job_keywords)
 
         return self._rule_based_tailor(resume, job, job_keywords, resume_keywords)
@@ -249,8 +219,7 @@ match specific job descriptions while maintaining truthfulness.
         resume: ResumeDocument,
         job: JobDescription,
     ) -> dict[str, list[str] | float | bool]:
-        """
-        Analyze keyword match between resume and job description.
+        """Analyze keyword match between resume and job description.
 
         Returns a detailed analysis including match rate and recommendations.
         """
@@ -260,14 +229,16 @@ match specific job descriptions while maintaining truthfulness.
         matches, missing = self._compute_keyword_overlap(job_keywords, resume_keywords)
         match_rate = len(matches) / len(job_keywords) if job_keywords else 0.0
 
+        target_rate = self._settings.target_keyword_match_rate if self._settings else 0.65
+
         return {
             "job_keywords": list(job_keywords),
             "resume_keywords": list(resume_keywords),
             "matched": list(matches),
             "missing": list(missing),
             "match_rate": match_rate,
-            "target_rate": self._settings.target_keyword_match_rate,
-            "meets_target": match_rate >= self._settings.target_keyword_match_rate,
+            "target_rate": target_rate,
+            "meets_target": match_rate >= target_rate,
         }
 
     def analyze_keyword_match_detailed(
@@ -275,8 +246,7 @@ match specific job descriptions while maintaining truthfulness.
         resume: ResumeDocument,
         job: JobDescription,
     ) -> MatchAnalysis:
-        """
-        Perform comprehensive keyword match analysis with weighted scoring.
+        """Perform comprehensive keyword match analysis with weighted scoring.
 
         Uses fuzzy matching, acronym expansion, and weighted scoring based on
         keyword importance (required vs preferred).
@@ -347,12 +317,14 @@ match specific job descriptions while maintaining truthfulness.
         missing_required = [m.job_keyword for m in matches if not m.matched and m.is_required]
         missing_preferred = [m.job_keyword for m in matches if not m.matched and not m.is_required]
 
+        target_rate = self._settings.target_keyword_match_rate if self._settings else 0.65
+
         recommendations = self._generate_recommendations(
             match_rate,
             weighted_score,
             missing_required,
             missing_preferred,
-            self._settings.target_keyword_match_rate,
+            target_rate,
         )
 
         return MatchAnalysis(
@@ -366,7 +338,7 @@ match specific job descriptions while maintaining truthfulness.
             missing_required=missing_required,
             missing_preferred=missing_preferred,
             recommendations=recommendations,
-            meets_target=match_rate >= self._settings.target_keyword_match_rate,
+            meets_target=match_rate >= target_rate,
         )
 
     def _find_best_match(
@@ -376,8 +348,7 @@ match specific job descriptions while maintaining truthfulness.
         resume_keywords_lower: set[str],
         resume_text_lower: str,
     ) -> tuple[str, str, float] | None:
-        """
-        Find the best match for a job keyword in the resume.
+        """Find the best match for a job keyword in the resume.
 
         Returns:
             Tuple of (matched_keyword, match_type, match_weight) or None.
@@ -490,8 +461,7 @@ match specific job descriptions while maintaining truthfulness.
         resume: ResumeDocument,
         job: JobDescription,
     ) -> float:
-        """
-        Calculate a normalized match score (0.0 to 1.0) between resume and job.
+        """Calculate a normalized match score (0.0 to 1.0) between resume and job.
 
         This combines keyword matching with weighted scoring based on requirement priority.
         """
@@ -677,8 +647,8 @@ match specific job descriptions while maintaining truthfulness.
         return {kw for kw in keywords if len(kw) > 1}
 
     def extract_keywords_detailed(self, job: JobDescription) -> dict[str, tuple[set[str], float]]:
-        """
-        Extract keywords with their category and weight.
+        """Extract keywords with their category and weight.
+
         Returns dict mapping keyword to (sources, weight).
         """
         result: dict[str, tuple[set[str], float]] = {}
@@ -924,15 +894,16 @@ match specific job descriptions while maintaining truthfulness.
         job: JobDescription,
         job_keywords: set[str],
     ) -> ResumeDocument:
-        """Apply AI-enhanced tailoring using Claude."""
+        """Apply AI-enhanced tailoring using Claude CLI."""
         resume_content = self._resume_to_dict(resume)
         job_content = self._job_to_dict(job)
 
-        prompt = build_job_tailoring_prompt(resume_content, job_content)
+        language = self._settings.output_language.value if self._settings else None
+        prompt = build_job_tailoring_prompt(resume_content, job_content, language=language)
 
         try:
             result = self._call_claude_structured(prompt, TailoringResultSchema)
-        except Exception as e:
+        except TailoringError as e:
             logger.warning("AI tailoring failed, falling back to rule-based: %s", e)
             return self._rule_based_tailor(resume, job, job_keywords, resume.get_all_keywords())
 
@@ -1048,31 +1019,37 @@ match specific job descriptions while maintaining truthfulness.
         )
 
     def _call_claude_structured(self, prompt: str, schema: type[T]) -> T:
-        """Call Claude API with structured output."""
+        """Call Claude CLI and parse response into the specified schema.
 
-        def _api_call() -> T:
-            response = self._client.beta.messages.parse(
-                model=self._settings.claude_model.value,
-                max_tokens=self._settings.max_tokens,
-                betas=[STRUCTURED_OUTPUTS_BETA],
-                system=self.TAILORING_SYSTEM,
-                messages=[{"role": "user", "content": prompt}],
-                output_format=schema,
-            )
-            if response.stop_reason == "refusal":
-                raise TailoringError("Claude refused to process this request")
-            if response.stop_reason == "max_tokens":
-                raise TailoringError("Response truncated due to max_tokens limit")
-            if response.parsed_output is None:
-                raise TailoringError("No parsed output received from Claude")
-            return response.parsed_output
+        Args:
+            prompt: The prompt to send to Claude.
+            schema: A Pydantic model class defining the expected output structure.
+
+        Returns:
+            Parsed and validated instance of the schema.
+
+        Raises:
+            TailoringError: If the CLI call or parsing fails.
+        """
+        full_prompt = build_prompt_with_schema(prompt, schema)
 
         try:
-            return _call_with_retry(_api_call)
-        except TailoringError:
-            raise
+            result = self._cli.invoke(prompt=full_prompt, system=JOB_TAILORING_SYSTEM)
+        except ClaudeCLIError as e:
+            logger.exception("Claude CLI invocation failed")
+            raise TailoringError(f"Claude CLI error: {e}") from e
+
+        if result.failed:
+            raise TailoringError(f"Claude CLI returned non-zero exit code: {result.exit_code}")
+
+        try:
+            data = parse_json_response(result.output)
+        except ValueError as e:
+            logger.error("Failed to parse JSON from Claude response: %s", e)
+            raise TailoringError(f"Failed to parse response: {e}") from e
+
+        try:
+            return schema.model_validate(data)
         except ValidationError as e:
+            logger.error("Response validation failed: %s", e)
             raise TailoringError(f"Response validation failed: {e}") from e
-        except Exception as e:
-            logger.exception("Claude API call failed")
-            raise TailoringError(f"API call failed: {e}") from e

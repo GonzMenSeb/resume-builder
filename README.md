@@ -25,7 +25,17 @@ Generate professional, ATS-optimized resumes from raw data using Claude AI. Tran
 
 - Python 3.11 or higher
 - `pdflatex` (for PDF compilation)
-- Anthropic API key
+- Claude CLI (for AI-powered features)
+
+**Install Claude CLI:**
+
+```bash
+# macOS/Linux (via Homebrew)
+brew install anthropic-cli
+
+# Or download from https://github.com/anthropics/claude-code
+# Follow the official installation instructions
+```
 
 **Install LaTeX on Ubuntu/Debian:**
 ```bash
@@ -54,18 +64,38 @@ pip install -e .
 
 ### Configuration
 
-Set your Anthropic API key:
+**Option 1: YAML Configuration File (Recommended)**
 
 ```bash
-export RESUME_GEN_ANTHROPIC_API_KEY="sk-ant-..."
+# Create a config file
+resume-gen init
+
+# Edit the generated resume-gen.yaml
+```
+
+Example `resume-gen.yaml`:
+```yaml
+max_pages: 1
+max_bullet_words: 25
+color_palette: burgundy
+claude_model: sonnet
+output_language: en
+```
+
+**Option 2: Environment Variables**
+
+```bash
+export RESUME_GEN_CLAUDE_MODEL=sonnet
 ```
 
 Or create a `.env` file:
 
 ```bash
-RESUME_GEN_ANTHROPIC_API_KEY=sk-ant-...
-RESUME_GEN_CLAUDE_MODEL=claude-sonnet-4-20250514
+RESUME_GEN_CLAUDE_MODEL=sonnet
+RESUME_GEN_CLAUDE_CLI_TIMEOUT=3600
 ```
+
+See [Configuration Documentation](docs/CONFIGURATION.md) for all options.
 
 ## Usage
 
@@ -126,6 +156,28 @@ resume-gen generate ./data/ --no-compile
 resume-gen generate ./data/ -V
 ```
 
+**Specify Claude model:**
+```bash
+resume-gen generate ./data/ --claude-model opus
+```
+
+**Use a color palette:**
+```bash
+resume-gen generate ./data/ --colors burgundy
+```
+
+Available palettes: `classic`, `burgundy`, `navy`, `forest`, `slate`, `charcoal`
+
+**Limit pages and bullet length:**
+```bash
+resume-gen generate ./data/ --max-pages 1 --max-bullet-words 20
+```
+
+**Use a custom config file:**
+```bash
+resume-gen generate ./data/ --config my-config.yaml
+```
+
 ### Complete Example
 
 ```bash
@@ -134,6 +186,7 @@ resume-gen generate \
   --job-url https://example.com/job/senior-python-dev \
   --template modern \
   --output ./output/tailored_resume.pdf \
+  --claude-model sonnet \
   --verbose
 ```
 
@@ -214,7 +267,7 @@ resume-generator/
 │   │   ├── text.py         # Text file extraction
 │   │   └── loader.py       # Multi-source data loader
 │   ├── extraction/          # AI-powered profile extraction
-│   │   ├── profile.py      # Profile extractor using Claude
+│   │   ├── profile.py      # Profile extractor using Claude CLI
 │   │   └── prompts.py      # Extraction prompts
 │   ├── optimization/        # Resume optimization
 │   │   ├── optimizer.py    # X-Y-Z formula optimization
@@ -230,6 +283,10 @@ resume-generator/
 │   │   └── job.py          # Job description model
 │   ├── ui/                  # User interface
 │   │   └── progress.py     # Terminal progress UI
+│   ├── utils/               # Utility modules
+│   │   ├── json_parser.py  # JSON parsing utilities
+│   │   └── cli.py          # CLI utilities
+│   ├── claude_client.py     # Claude CLI subprocess client
 │   ├── config.py            # Configuration and settings
 │   ├── pipeline.py          # Main pipeline orchestration
 │   └── main.py              # CLI entry point
@@ -240,74 +297,63 @@ resume-generator/
 
 ## Configuration
 
-All settings can be configured via environment variables or `.env` file with the `RESUME_GEN_` prefix.
+Configuration can be set via YAML file, environment variables, or CLI options (in order of precedence: CLI > YAML > ENV > defaults).
 
-### API Configuration
+### YAML Configuration File
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `ANTHROPIC_API_KEY` | *required* | Anthropic API key for Claude |
-| `CLAUDE_MODEL` | `claude-sonnet-4-20250514` | Claude model to use |
-| `MAX_TOKENS` | `4096` | Maximum tokens for Claude responses |
-| `API_TIMEOUT` | `120.0` | API request timeout (seconds) |
-| `API_MAX_RETRIES` | `3` | Maximum retry attempts |
-
-### Path Configuration
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `OUTPUT_DIR` | `./output` | Output directory for resumes |
-| `CACHE_DIR` | `./.resume_cache` | Cache directory |
-
-### Template & Design Configuration
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `DEFAULT_TEMPLATE` | `modern` | Default template (`modern`, `ats`) |
-| `PRIMARY_COLOR` | `#2C3E50` | Primary color (hex) |
-| `SECONDARY_COLOR` | `#3498DB` | Secondary color (hex) |
-| `FONT_NAME_SIZE` | `20` | Name font size (18-24) |
-| `FONT_HEADER_SIZE` | `14` | Header font size (12-16) |
-| `FONT_BODY_SIZE` | `11` | Body font size (10-12) |
-| `MARGIN_INCHES` | `0.75` | Page margins (0.5-1.0) |
-
-### Content Optimization
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `MIN_BULLETS_PER_JOB` | `3` | Minimum bullets per job (2-5) |
-| `MAX_BULLETS_PER_JOB` | `5` | Maximum bullets per job (3-7) |
-| `SUMMARY_MIN_WORDS` | `50` | Minimum summary words (30-80) |
-| `SUMMARY_MAX_WORDS` | `100` | Maximum summary words (80-150) |
-| `TARGET_KEYWORD_MATCH_RATE` | `0.70` | Target keyword match (0.5-0.9) |
-| `TAILORING_CUSTOMIZATION_RATE` | `0.50` | Customization level (0.3-0.7) |
-
-### Pipeline Options
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `ENABLE_JOB_TAILORING` | `true` | Enable job-specific optimization |
-| `COMPILE_PDF` | `true` | Compile LaTeX to PDF |
-| `KEEP_LATEX_SOURCE` | `true` | Keep generated LaTeX file |
-| `VERBOSE` | `false` | Enable verbose output |
-
-### Example `.env` File
+Create a `resume-gen.yaml` file in your project directory:
 
 ```bash
-RESUME_GEN_ANTHROPIC_API_KEY=sk-ant-...
-RESUME_GEN_CLAUDE_MODEL=claude-sonnet-4-20250514
-RESUME_GEN_DEFAULT_TEMPLATE=modern
-RESUME_GEN_PRIMARY_COLOR=#1E3A8A
-RESUME_GEN_COMPILE_PDF=true
-RESUME_GEN_VERBOSE=false
+resume-gen init  # Creates a template config file
 ```
+
+Example configuration:
+```yaml
+# Output constraints
+max_pages: 1              # Maximum pages (1-3)
+max_bullet_words: 25      # Max words per bullet (10-50)
+
+# Design
+color_palette: classic    # classic, burgundy, navy, forest, slate, charcoal
+
+# AI
+claude_model: sonnet      # sonnet, opus, haiku
+
+# Content
+min_bullets_per_job: 3
+max_bullets_per_job: 5
+output_language: en
+```
+
+### Color Palettes
+
+| Palette | Primary | Secondary | Best For |
+|---------|---------|-----------|----------|
+| `classic` | Dark blue | Bright blue | Traditional corporate |
+| `burgundy` | Burgundy | Gray | Elegant/executive |
+| `navy` | Navy | Slate blue | Finance/legal |
+| `forest` | Forest green | Olive | Environmental/creative |
+| `slate` | Slate gray | Gray | Modern minimalist |
+| `charcoal` | Charcoal | Slate | Tech/startup |
+
+### Environment Variables
+
+All settings can also be configured via environment variables with the `RESUME_GEN_` prefix:
+
+```bash
+export RESUME_GEN_CLAUDE_MODEL=sonnet
+export RESUME_GEN_MAX_PAGES=1
+export RESUME_GEN_COLOR_PALETTE=burgundy
+```
+
+See [docs/CONFIGURATION.md](docs/CONFIGURATION.md) for complete reference.
 
 ## Pipeline Stages
 
 The resume generation pipeline consists of the following stages:
 
 1. **Loading**: Read and extract text from input sources
-2. **Extracting**: Use Claude AI to extract structured profile data
+2. **Extracting**: Use Claude CLI to extract structured profile data
 3. **Optimizing**: Apply X-Y-Z formula to optimize bullet points
 4. **Tailoring** *(optional)*: Customize resume for specific job
 5. **Generating**: Build LaTeX document from optimized data
@@ -387,17 +433,22 @@ ATS-friendly design optimized for:
 
 ## Troubleshooting
 
+### Claude CLI Not Found
+
+**Problem**: `Claude CLI not available. Please install Claude CLI.`
+
+**Solution**: Install the Claude CLI following the prerequisites section. Ensure the `claude` binary is in your PATH.
+
+```bash
+# Verify installation
+claude --version
+```
+
 ### LaTeX Compilation Fails
 
 **Problem**: `pdflatex` command not found
 
 **Solution**: Install LaTeX distribution (see Prerequisites section)
-
-### API Key Errors
-
-**Problem**: `anthropic_api_key is required`
-
-**Solution**: Set `RESUME_GEN_ANTHROPIC_API_KEY` environment variable or create `.env` file
 
 ### PDF Extraction Issues
 
@@ -410,6 +461,22 @@ ATS-friendly design optimized for:
 **Problem**: Large files cause memory issues
 
 **Solution**: Process files individually or increase system memory. Consider splitting large PDFs.
+
+### Claude CLI Timeout
+
+**Problem**: AI operations taking too long
+
+**Solution**: Increase the timeout value:
+
+```bash
+export RESUME_GEN_CLAUDE_CLI_TIMEOUT=7200  # 2 hours
+```
+
+Or specify in `.env`:
+
+```bash
+RESUME_GEN_CLAUDE_CLI_TIMEOUT=7200
+```
 
 ## Research Foundations
 
@@ -439,7 +506,7 @@ MIT License - see [LICENSE](LICENSE) for details
 
 ## Acknowledgments
 
-- Powered by [Anthropic Claude](https://www.anthropic.com/claude)
+- Powered by [Claude CLI](https://github.com/anthropics/claude-code) from Anthropic
 - LaTeX templates inspired by resume research and best practices
 - Built with Python 3.11+, Pydantic, Rich, and modern async patterns
 

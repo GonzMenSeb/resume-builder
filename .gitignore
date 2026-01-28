@@ -65,8 +65,10 @@ output/
 *_TEST_RESULTS.md
 
 # Data directories (keep folders, ignore contents)
-resume_data/*
-resumes/*
+tmp/resume_data/*
+tmp/resumes/*
+tmp/jobs/*
+
 
 # Claude Code
 .claude-task-master/

@@ -357,3 +357,16 @@ class ResumeDocument(BaseModel):
 
         sections.extend(self.additional_sections)
         return sorted(sections, key=lambda s: s.order)
+
+    def compact(self, min_bullets_per_job: int = 2) -> ResumeDocument:
+        """Create a compacted copy with reduced bullets to fit page constraints."""
+        compacted_experiences = []
+        for exp in self.experiences:
+            if len(exp.bullets) > min_bullets_per_job:
+                reduced_bullets = exp.bullets[:max(min_bullets_per_job, len(exp.bullets) - 1)]
+                compacted_exp = exp.model_copy(update={"bullets": reduced_bullets})
+                compacted_experiences.append(compacted_exp)
+            else:
+                compacted_experiences.append(exp)
+
+        return self.model_copy(update={"experiences": compacted_experiences})

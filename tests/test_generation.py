@@ -7,7 +7,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from resume_generator.config import ResumeTemplate, Settings
+from resume_generator.config import ResumeLanguage, ResumeTemplate, Settings
 from resume_generator.generation.compiler import (
     CompilationError,
     CompilationResult,
@@ -19,7 +19,13 @@ from resume_generator.generation.generator import (
     hex_to_rgb,
     latex_escape,
 )
-from resume_generator.models.resume import ResumeDocument
+from resume_generator.generation.localization import SECTION_HEADERS, get_section_headers
+from resume_generator.models.resume import (
+    ResumeBullet,
+    ResumeDocument,
+    ResumeExperience,
+)
+from resume_generator.ui.progress import PipelineConfig
 
 
 class TestLatexEscape:
@@ -142,6 +148,7 @@ class TestTemplateConfig:
         assert config.primary_color == "45, 85, 145"
         assert config.secondary_color == "60, 60, 60"
         assert config.accent_color == "100, 100, 100"
+        assert config.language == "en"
 
     def test_from_settings(self, test_settings: Settings) -> None:
         config = TemplateConfig.from_settings(test_settings)
@@ -154,13 +161,73 @@ class TestTemplateConfig:
 
     def test_from_settings_custom_colors(self) -> None:
         settings = Settings(
-            anthropic_api_key="test-key",
             primary_color="#FF5500",
             secondary_color="#0055FF",
         )
         config = TemplateConfig.from_settings(settings)
         assert config.primary_color == "255, 85, 0"
         assert config.secondary_color == "0, 85, 255"
+
+    def test_from_settings_language(self) -> None:
+        settings = Settings(output_language=ResumeLanguage.ES)
+        config = TemplateConfig.from_settings(settings)
+        assert config.language == "es"
+
+    def test_from_settings_default_language(self) -> None:
+        settings = Settings()
+        config = TemplateConfig.from_settings(settings)
+        assert config.language == "en"
+
+
+class TestLocalization:
+    """Tests for localization module."""
+
+    def test_get_section_headers_english(self) -> None:
+        headers = get_section_headers("en")
+        assert headers["experience"] == "Experience"
+        assert headers["education"] == "Education"
+        assert headers["skills"] == "Skills"
+
+    def test_get_section_headers_spanish(self) -> None:
+        headers = get_section_headers("es")
+        assert headers["experience"] == "Experiencia"
+        assert headers["education"] == "Educación"
+        assert headers["skills"] == "Habilidades"
+
+    def test_get_section_headers_french(self) -> None:
+        headers = get_section_headers("fr")
+        assert headers["experience"] == "Expérience"
+        assert headers["education"] == "Formation"
+        assert headers["skills"] == "Compétences"
+
+    def test_get_section_headers_german(self) -> None:
+        headers = get_section_headers("de")
+        assert headers["experience"] == "Berufserfahrung"
+        assert headers["education"] == "Ausbildung"
+        assert headers["skills"] == "Fähigkeiten"
+
+    def test_get_section_headers_unknown_language_falls_back_to_english(self) -> None:
+        headers = get_section_headers("unknown")
+        assert headers["experience"] == "Experience"
+        assert headers == SECTION_HEADERS["en"]
+
+    def test_all_languages_have_required_keys(self) -> None:
+        required_keys = [
+            "professional_summary",
+            "experience",
+            "education",
+            "skills",
+            "certifications",
+            "projects",
+            "linkedin",
+            "github",
+            "portfolio",
+            "gpa",
+            "technologies",
+        ]
+        for lang_code, headers in SECTION_HEADERS.items():
+            for key in required_keys:
+                assert key in headers, f"Missing key '{key}' in language '{lang_code}'"
 
 
 class TestLaTeXGenerator:
@@ -280,6 +347,7 @@ class TestLaTeXGenerator:
         config = TemplateConfig()
         context = generator._build_context(sample_resume_document, config)
         assert "config" in context
+        assert "labels" in context
         assert "contact" in context
         assert "professional_summary" in context
         assert "headline" in context
@@ -289,6 +357,16 @@ class TestLaTeXGenerator:
         assert "certifications" in context
         assert "projects" in context
         assert "additional_sections" in context
+
+    def test_build_context_labels_for_language(
+        self, generator: LaTeXGenerator, sample_resume_document: ResumeDocument
+    ) -> None:
+        config = TemplateConfig(language="es")
+        context = generator._build_context(sample_resume_document, config)
+        labels = context["labels"]
+        assert isinstance(labels, dict)
+        assert labels["experience"] == "Experiencia"
+        assert labels["education"] == "Educación"
 
     def test_build_context_filters_invisible_sections(self, generator: LaTeXGenerator) -> None:
         from resume_generator.models.resume import ResumeContact, ResumeSection, SectionType
@@ -621,7 +699,10 @@ Async Test
         pdf_file = work_dir / "resume.pdf"
         pdf_file.touch()
 
-        with patch("subprocess.run") as mock_run:
+        with (
+            patch("subprocess.run") as mock_run,
+            patch.object(PDFCompiler, "count_pdf_pages", return_value=1),
+        ):
             mock_run.return_value = Mock(returncode=0, stdout="Output written", stderr="")
             result = compiler.compile(tex_source, work_dir=work_dir)
             assert mock_run.call_count == 3
@@ -704,3 +785,96 @@ class TestIntegrationGeneratorAndCompiler:
 
             assert result.success is True, f"Failed to compile {template.value} template"
             assert output_pdf.exists()
+
+
+class TestResumeDocumentCompact:
+    """Tests for ResumeDocument.compact() method."""
+
+    def test_compact_reduces_bullets(self, sample_resume_document: ResumeDocument) -> None:
+        original_bullet_count = sum(len(exp.bullets) for exp in sample_resume_document.experiences)
+        compacted = sample_resume_document.compact(min_bullets_per_job=2)
+        compacted_bullet_count = sum(len(exp.bullets) for exp in compacted.experiences)
+
+        assert compacted_bullet_count <= original_bullet_count
+
+    def test_compact_respects_min_bullets(self, sample_resume_document: ResumeDocument) -> None:
+        min_bullets = 2
+        compacted = sample_resume_document.compact(min_bullets_per_job=min_bullets)
+
+        for exp in compacted.experiences:
+            assert len(exp.bullets) >= min(min_bullets, len(exp.bullets))
+
+    def test_compact_preserves_other_fields(self, sample_resume_document: ResumeDocument) -> None:
+        compacted = sample_resume_document.compact()
+
+        assert compacted.contact == sample_resume_document.contact
+        assert compacted.professional_summary == sample_resume_document.professional_summary
+        assert compacted.education == sample_resume_document.education
+        assert compacted.skills == sample_resume_document.skills
+
+    def test_compact_returns_new_instance(self, sample_resume_document: ResumeDocument) -> None:
+        compacted = sample_resume_document.compact()
+        assert compacted is not sample_resume_document
+
+    def test_compact_with_experience_at_min_bullets(self) -> None:
+        from datetime import date
+
+        from resume_generator.models.resume import ResumeContact
+
+        resume = ResumeDocument(
+            contact=ResumeContact(name="Test User", email="test@example.com"),
+            experiences=[
+                ResumeExperience(
+                    company="Test Corp",
+                    title="Engineer",
+                    start_date=date(2020, 1, 1),
+                    bullets=[
+                        ResumeBullet(text="Achievement one that is substantial", relevance_score=0.9),
+                        ResumeBullet(text="Achievement two that is substantial", relevance_score=0.8),
+                    ],
+                )
+            ],
+        )
+
+        compacted = resume.compact(min_bullets_per_job=2)
+        assert len(compacted.experiences[0].bullets) == 2
+
+
+class TestPipelineConfig:
+    """Tests for PipelineConfig class."""
+
+    def test_default_values(self) -> None:
+        config = PipelineConfig()
+        assert config.max_pages == 1
+        assert config.max_bullet_words == 25
+        assert config.max_bullets_per_job == 5
+        assert config.claude_model == "sonnet"
+        assert config.output_language == "en"
+        assert config.color_palette == "classic"
+
+    def test_from_settings(self, test_settings: Settings) -> None:
+        config = PipelineConfig.from_settings(test_settings)
+        assert config.max_pages == test_settings.max_pages
+        assert config.max_bullet_words == test_settings.max_bullet_words
+        assert config.claude_model == test_settings.claude_model.value
+        assert config.output_language == test_settings.output_language.value
+
+    def test_from_settings_custom_values(self, tmp_path: Path) -> None:
+        from resume_generator.config import ClaudeModel, ColorPalette, ResumeLanguage
+
+        settings = Settings(
+            max_pages=2,
+            max_bullet_words=30,
+            claude_model=ClaudeModel.OPUS,
+            output_language=ResumeLanguage.ES,
+            color_palette=ColorPalette.NAVY,
+            output_dir=tmp_path / "output",
+            cache_dir=tmp_path / "cache",
+        )
+
+        config = PipelineConfig.from_settings(settings)
+        assert config.max_pages == 2
+        assert config.max_bullet_words == 30
+        assert config.claude_model == "opus"
+        assert config.output_language == "es"
+        assert config.color_palette == "navy"

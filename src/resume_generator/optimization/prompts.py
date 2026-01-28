@@ -1,5 +1,9 @@
 """Prompt templates for resume content optimization using research-backed principles.
 
+These prompts are designed to work with Claude CLI subprocess invocation.
+The caller is responsible for appending JSON schema instructions via
+build_prompt_with_schema() from claude_client.
+
 Key principles implemented:
 - Google X-Y-Z formula: "Accomplished [X] as measured by [Y], by doing [Z]"
 - Strong action verbs (avoid weak phrases like "Responsible for", "Helped with")
@@ -11,6 +15,40 @@ Key principles implemented:
 
 import json
 from typing import Any
+
+LANGUAGE_NAMES: dict[str, str] = {
+    "en": "English",
+    "es": "Spanish",
+    "fr": "French",
+    "de": "German",
+    "pt": "Portuguese",
+    "it": "Italian",
+    "zh": "Chinese",
+    "ja": "Japanese",
+    "ko": "Korean",
+    "ar": "Arabic",
+    "nl": "Dutch",
+    "ru": "Russian",
+    "pl": "Polish",
+}
+
+
+def _get_language_instruction(language: str | None) -> str:
+    """Generate language instruction for prompts."""
+    if not language or language == "en":
+        return ""
+    lang_name = LANGUAGE_NAMES.get(language, language.upper())
+    return f"""
+## OUTPUT LANGUAGE REQUIREMENT
+CRITICAL: All generated text content MUST be in {lang_name}. This includes:
+- Professional summary
+- Achievement bullet points
+- Skill descriptions
+- All descriptive text
+
+Technical terms, company names, job titles, and proper nouns may remain in their original form.
+"""
+
 
 ACTION_VERBS_BY_CATEGORY: dict[str, list[str]] = {
     "leadership": [
@@ -126,7 +164,7 @@ WEAK_PHRASES = [
 RESUME_OPTIMIZER_SYSTEM = """\
 You are an expert resume optimizer specializing in creating S+ tier resumes that maximize \
 interview callbacks. You apply research-backed principles to transform raw career data into \
-compelling, ATS-optimized content.
+compelling, ATS-optimized content. You always respond with valid JSON matching the requested schema.
 
 ## Core Optimization Principles
 
@@ -168,11 +206,15 @@ analytics model that identified at-risk accounts 30 days earlier."
 - Every bullet must provide value; no filler content
 - Eliminate redundancy across bullets
 - Balance breadth (varied responsibilities) with depth (detailed achievements)
-- Maintain authenticity—enhance presentation, never fabricate"""
+- Maintain authenticity—enhance presentation, never fabricate
+
+## Response Format
+Always respond with valid JSON only. No explanations or text outside the JSON object."""
 
 ACHIEVEMENT_OPTIMIZER_SYSTEM = """\
 You are a precision resume bullet optimizer. Your task is to transform raw achievement \
-descriptions into high-impact bullets following the X-Y-Z formula.
+descriptions into high-impact bullets following the X-Y-Z formula. You always respond with \
+valid JSON matching the requested schema.
 
 ## Transformation Rules
 
@@ -209,12 +251,13 @@ Choose verbs that match the achievement type:
 - Is it concise (<25 words if possible)?
 - Does it avoid weak phrases ("responsible for", "helped with")?
 
-## Output Format
-Return JSON with the optimized bullet and metadata for quality tracking."""
+## Response Format
+Always respond with valid JSON only. No explanations or text outside the JSON object."""
 
 PROFESSIONAL_SUMMARY_SYSTEM = """\
 You are an expert at crafting compelling professional summaries that immediately capture \
-recruiter attention and establish candidate positioning.
+recruiter attention and establish candidate positioning. You always respond with valid JSON \
+matching the requested schema.
 
 ## Summary Formula
 [Professional Title] with [X years] of experience [key domain]. [Top 2-3 achievements/skills]. \
@@ -236,15 +279,48 @@ Passionate about building fault-tolerant systems that handle millions of daily t
 When a target job is provided:
 - Mirror key terminology from the job description
 - Lead with most relevant experience
-- Emphasize skills that match required qualifications"""
+- Emphasize skills that match required qualifications
+
+## Response Format
+Always respond with valid JSON only. No explanations or text outside the JSON object."""
+
+JOB_TAILORING_SYSTEM = """\
+You are an expert ATS optimization specialist. Your task is to tailor resume content to \
+match specific job descriptions while maintaining truthfulness.
+
+CRITICAL: You MUST respond with ONLY valid JSON. No explanations, no markdown formatting, \
+no text before or after the JSON object.
+
+## Optimization Goals
+- Target 65-80% keyword match rate
+- Prioritize required skills and qualifications
+- Use exact terminology from job posting where truthful
+- Reorder content to highlight most relevant experience first
+
+## Rules
+1. NEVER fabricate experience or skills
+2. Use job posting terminology for equivalent skills/technologies
+3. Prioritize bullets that demonstrate required qualifications
+4. Keep professional summary focused on role requirements
+5. Ensure skills section matches job requirements ordering
+
+## Output Format
+
+Return ONLY a valid JSON object matching the TailoringResultSchema. No explanations, \
+no markdown code blocks, no text before or after the JSON object."""
 
 
 def build_achievement_optimization_prompt(
     achievement: str,
     role_context: str | None = None,
     target_keywords: list[str] | None = None,
+    language: str | None = None,
 ) -> str:
-    """Build prompt for optimizing a single achievement bullet."""
+    """Build prompt for optimizing a single achievement bullet.
+
+    The returned prompt should be combined with build_prompt_with_schema()
+    to append JSON schema instructions.
+    """
     context_section = ""
     if role_context:
         context_section = f"\n## Role Context\n{role_context}\n"
@@ -255,9 +331,11 @@ def build_achievement_optimization_prompt(
             f"\n## Target Keywords to Incorporate (if relevant)\n{', '.join(target_keywords)}\n"
         )
 
+    language_section = _get_language_instruction(language)
+
     return f"""\
 Optimize the following achievement into an X-Y-Z format resume bullet.
-{context_section}{keywords_section}
+{context_section}{keywords_section}{language_section}
 ## Original Achievement
 
 <achievement>
@@ -270,21 +348,7 @@ Optimize the following achievement into an X-Y-Z format resume bullet.
 2. Rewrite following X-Y-Z formula with a strong action verb.
 3. Preserve all factual content—do not fabricate metrics.
 4. If metrics are missing, note where they could be added.
-5. Keep under 25 words if possible while maintaining impact.
-
-## Output JSON
-
-Return a JSON object with:
-{{
-    "optimized": "The optimized bullet text",
-    "action_verb": "The leading action verb",
-    "bullet_type": "xyz | action_result | skill_based | generic",
-    "has_metrics": true | false,
-    "metrics": {{"metric_name": "value"}} or {{}},
-    "keywords": ["keyword1", "keyword2"],
-    "improvements_made": ["list of changes"],
-    "suggestions": ["suggestions if metrics missing"]
-}}"""
+5. Keep under 25 words if possible while maintaining impact."""
 
 
 def build_bullet_batch_prompt(
@@ -292,8 +356,14 @@ def build_bullet_batch_prompt(
     role_title: str,
     company: str,
     target_keywords: list[str] | None = None,
+    language: str | None = None,
+    max_words: int | None = None,
 ) -> str:
-    """Build prompt for optimizing multiple achievement bullets in one call."""
+    """Build prompt for optimizing multiple achievement bullets in one call.
+
+    The returned prompt should be combined with build_prompt_with_schema()
+    to append JSON schema instructions.
+    """
     bullets_formatted = "\n".join(f"{i + 1}. {a}" for i, a in enumerate(achievements))
 
     keywords_section = ""
@@ -303,9 +373,14 @@ def build_bullet_batch_prompt(
 {", ".join(target_keywords)}
 """
 
+    language_section = _get_language_instruction(language)
+
+    word_limit = max_words or 25
+    word_limit_instruction = f"8. CRITICAL: Keep each bullet under {word_limit} words maximum."
+
     return f"""\
 Optimize the following achievement bullets for a {role_title} position at {company}.
-{keywords_section}
+{keywords_section}{language_section}
 ## Original Bullets
 
 {bullets_formatted}
@@ -318,31 +393,8 @@ Optimize the following achievement bullets for a {role_title} position at {compa
 4. Order by impact (most impressive first).
 5. Limit to 5 bullets maximum (remove weakest if more).
 6. Ensure each bullet is unique and adds value.
-
-## Output JSON
-
-Return a JSON object:
-{{
-    "bullets": [
-        {{
-            "text": "Optimized bullet text",
-            "action_verb": "Leading verb",
-            "bullet_type": "xyz | action_result | skill_based | generic",
-            "has_metrics": true | false,
-            "metrics": {{}},
-            "keywords": [],
-            "relevance_score": 0.0-1.0,
-            "original_index": 0
-        }}
-    ],
-    "removed_bullets": [
-        {{
-            "original_index": 3,
-            "reason": "Redundant with bullet 1"
-        }}
-    ],
-    "overall_quality_score": 0.0-1.0
-}}"""
+7. Include the original_index (0-based) for each bullet to track provenance.
+{word_limit_instruction}"""
 
 
 def build_professional_summary_prompt(
@@ -354,8 +406,13 @@ def build_professional_summary_prompt(
     target_job_title: str | None = None,
     target_company: str | None = None,
     target_keywords: list[str] | None = None,
+    language: str | None = None,
 ) -> str:
-    """Build prompt for generating an optimized professional summary."""
+    """Build prompt for generating an optimized professional summary.
+
+    The returned prompt should be combined with build_prompt_with_schema()
+    to append JSON schema instructions.
+    """
     achievements_text = "\n".join(f"- {a}" for a in top_achievements[:5])
     skills_text = ", ".join(top_skills[:10])
 
@@ -368,9 +425,11 @@ def build_professional_summary_prompt(
 - Key Keywords: {", ".join(target_keywords or []) or "None provided"}
 """
 
+    language_section = _get_language_instruction(language)
+
     return f"""\
 Generate a professional summary for the following candidate.
-{target_section}
+{target_section}{language_section}
 ## Candidate Profile
 
 - Name: {name}
@@ -389,26 +448,44 @@ Generate a professional summary for the following candidate.
 3. If targeting a specific job, mirror relevant terminology.
 4. Use confident, professional tone without personal pronouns.
 5. Lead with most impressive or relevant qualifications.
-6. Include quantified achievements where available.
-
-## Output JSON
-
-Return a JSON object:
-{{
-    "summary": "The professional summary text",
-    "word_count": 75,
-    "keywords_included": ["keyword1", "keyword2"],
-    "tailored_for_job": true | false
-}}"""
+6. Include quantified achievements where available."""
 
 
 def build_job_tailoring_prompt(
     resume_content: dict[str, Any],
     job_description: dict[str, Any],
+    language: str | None = None,
 ) -> str:
-    """Build prompt for tailoring resume content to a specific job description."""
+    """Build prompt for tailoring resume content to a specific job description.
+
+    The returned prompt should be combined with build_prompt_with_schema()
+    to append JSON schema instructions.
+    """
+    language_section = _get_language_instruction(language)
     return f"""\
 Tailor the following resume content to match the target job description.
+{language_section}
+
+## Expected JSON Output Structure
+
+The response must be a JSON object with these fields:
+- tailored_summary: string - Updated professional summary tailored to the job
+- experiences: array - List of tailored experience objects, each with:
+  - company: string - Company name
+  - title: string - Job title
+  - bullets: array of strings - Reordered and optimized bullet points
+  - relevance_score: number (0.0-1.0) - How relevant this experience is to the job
+- skills: object - Tailored skills section with:
+  - reordered_groups: array - Skill groups ordered by relevance, each with category and skills
+  - added_keywords: array of strings - Keywords added to match job requirements
+  - keyword_mapping: object - Map of resume terms to job posting terminology
+- keyword_analysis: object - Analysis of keyword matching:
+  - job_keywords: array of strings - Keywords extracted from job description
+  - matched_keywords: array of strings - Keywords found in resume
+  - missing_keywords: array of strings - Job keywords not in resume
+  - match_rate: number (0.0-1.0) - Percentage of keywords matched
+  - recommendations: array of strings - Suggestions for improvement
+- overall_fit_score: number (0.0-1.0) - Overall fit score for the job
 
 ## Job Description
 
@@ -444,43 +521,20 @@ Tailor the following resume content to match the target job description.
 2. Add skill synonyms that match job posting terminology.
 3. Remove irrelevant skills only if space is needed.
 
-## Output JSON
-
-Return a JSON object with:
-{{
-    "tailored_summary": "Updated professional summary",
-    "experiences": [
-        {{
-            "company": "...",
-            "title": "...",
-            "bullets": ["reordered and optimized bullets"],
-            "relevance_score": 0.0-1.0
-        }}
-    ],
-    "skills": {{
-        "reordered_groups": [
-            {{"category": "...", "skills": ["..."]}}
-        ],
-        "added_keywords": ["skill synonyms added"],
-        "keyword_mapping": {{"job_keyword": "candidate_skill"}}
-    }},
-    "keyword_analysis": {{
-        "job_keywords": ["all extracted keywords"],
-        "matched_keywords": ["keywords found in resume"],
-        "missing_keywords": ["keywords not covered"],
-        "match_rate": 0.75,
-        "recommendations": ["suggestions to improve match"]
-    }},
-    "overall_fit_score": 0.0-1.0
-}}"""
+IMPORTANT: Respond with ONLY the JSON object. No explanations, no markdown code blocks, no text before or after."""
 
 
 def build_skills_optimization_prompt(
     skills: list[dict[str, Any]],
     experiences: list[dict[str, Any]],
     target_keywords: list[str] | None = None,
+    language: str | None = None,
 ) -> str:
-    """Build prompt for optimizing and grouping skills section."""
+    """Build prompt for optimizing and grouping skills section.
+
+    The returned prompt should be combined with build_prompt_with_schema()
+    to append JSON schema instructions.
+    """
     skills_json = json.dumps(skills, indent=2, default=str)
     exp_summary = json.dumps(
         [{"title": e.get("title"), "technologies": e.get("technologies", [])} for e in experiences],
@@ -494,9 +548,11 @@ def build_skills_optimization_prompt(
 {", ".join(target_keywords)}
 """
 
+    language_section = _get_language_instruction(language)
+
     return f"""\
 Optimize and group the following skills for maximum ATS compatibility and visual impact.
-{keywords_section}
+{keywords_section}{language_section}
 ## Current Skills
 
 {skills_json}
@@ -522,25 +578,7 @@ Optimize and group the following skills for maximum ATS compatibility and visual
 1. Remove duplicate or overly similar skills.
 2. Remove outdated technologies unless specifically relevant.
 3. Consolidate related skills (e.g., "Git, GitHub" → "Git/GitHub").
-4. Add technologies from experience that are missing from skills list.
-
-## Output JSON
-
-Return a JSON object:
-{{
-    "skill_groups": [
-        {{
-            "category": "Programming Languages",
-            "skills": ["Python", "TypeScript", "Go"],
-            "priority": 1
-        }}
-    ],
-    "added_skills": ["skills extracted from experience"],
-    "removed_skills": [
-        {{"skill": "...", "reason": "outdated/duplicate"}}
-    ],
-    "total_skills_count": 25
-}}"""
+4. Add technologies from experience that are missing from skills list."""
 
 
 EXPERIENCE_RELEVANCE_PROMPT = """\
@@ -559,18 +597,13 @@ Analyze the relevance of each work experience to the target job and assign relev
 - 0.3-0.5: Weak match (minimal overlap)
 - 0.0-0.3: Poor match (different field entirely)
 
-## Output JSON
-{{
-    "scored_experiences": [
-        {{
-            "company": "...",
-            "title": "...",
-            "relevance_score": 0.85,
-            "relevant_aspects": ["specific things that match"],
-            "gaps": ["areas that don't align"]
-        }}
-    ],
-    "recommended_order": [0, 2, 1],
-    "experiences_to_expand": [0],
-    "experiences_to_condense": [2]
-}}"""
+## Expected Output
+Return a JSON object with:
+- scores: array of objects with experience_index (int) and relevance_score (0.0-1.0)
+- relevant_aspects: array of strings describing what matches well
+- gaps: array of strings describing missing qualifications
+- recommended_order: array of experience indices sorted by relevance
+- expand_indices: array of indices for experiences to expand detail on
+- condense_indices: array of indices for experiences to condense
+
+IMPORTANT: Respond with ONLY the JSON object. No explanations, no markdown code blocks, no text before or after."""

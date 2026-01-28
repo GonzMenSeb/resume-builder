@@ -19,7 +19,7 @@ resume-gen --version
 
 ### Required
 - Python 3.11 or higher
-- Anthropic API key
+- Claude CLI (for AI-powered features)
 
 ### Optional
 - `pdflatex` for PDF compilation (install LaTeX)
@@ -42,24 +42,51 @@ Download and install [MiKTeX](https://miktex.org/download)
 
 ## Configuration
 
-### API Key Setup
+### Quick Setup
 
-Set your Anthropic API key using one of these methods:
-
-**1. Environment Variable:**
+**1. Create a configuration file:**
 ```bash
-export RESUME_GEN_ANTHROPIC_API_KEY="sk-ant-..."
+resume-gen init
 ```
 
-**2. .env File:**
-```bash
-echo 'RESUME_GEN_ANTHROPIC_API_KEY=sk-ant-...' > .env
+**2. Edit `resume-gen.yaml`:**
+```yaml
+max_pages: 1
+max_bullet_words: 25
+color_palette: burgundy
+claude_model: sonnet
 ```
 
-**3. Shell Profile (.bashrc, .zshrc):**
+**3. View current configuration:**
 ```bash
-echo 'export RESUME_GEN_ANTHROPIC_API_KEY="sk-ant-..."' >> ~/.bashrc
-source ~/.bashrc
+resume-gen config
+```
+
+### Claude CLI Setup
+
+Ensure Claude CLI is installed and accessible:
+
+**1. Install Claude CLI:**
+```bash
+# macOS/Linux via Homebrew
+brew install anthropic-cli
+
+# Or download from https://github.com/anthropics/claude-code
+```
+
+**2. Verify Installation:**
+```bash
+claude --version
+```
+
+**3. Configure Model (Optional):**
+```bash
+export RESUME_GEN_CLAUDE_MODEL=sonnet
+```
+
+Or add to `resume-gen.yaml`:
+```yaml
+claude_model: sonnet
 ```
 
 ## Basic Usage
@@ -193,6 +220,56 @@ resume-gen generate resume.pdf -t modern
 resume-gen generate resume.pdf --template ats
 ```
 
+### Design Options
+
+#### `-c, --colors PALETTE`
+Choose a color palette.
+
+**Options:** `classic`, `burgundy`, `navy`, `forest`, `slate`, `charcoal`
+
+**Examples:**
+```bash
+resume-gen generate resume.pdf --colors burgundy
+resume-gen generate resume.pdf -c navy
+```
+
+### Content Options
+
+#### `-p, --max-pages NUMBER`
+Set maximum pages for the resume (1-3).
+
+**Default:** `1`
+
+**Examples:**
+```bash
+resume-gen generate resume.pdf --max-pages 1
+resume-gen generate resume.pdf -p 2
+```
+
+**Note:** If the resume exceeds this limit, bullets are automatically compacted.
+
+#### `-w, --max-bullet-words NUMBER`
+Set maximum words per bullet point (10-50).
+
+**Default:** `25`
+
+**Examples:**
+```bash
+resume-gen generate resume.pdf --max-bullet-words 20
+resume-gen generate resume.pdf -w 30
+```
+
+### Configuration Options
+
+#### `--config PATH`
+Use a specific YAML configuration file.
+
+**Examples:**
+```bash
+resume-gen generate resume.pdf --config my-config.yaml
+resume-gen generate resume.pdf --config ~/.resume-gen.yaml
+```
+
 ### Display Options
 
 #### `-v, --verbose`
@@ -235,6 +312,58 @@ Show help message and exit.
 ```bash
 resume-gen --help
 resume-gen generate --help
+```
+
+## Configuration Commands
+
+### `resume-gen init`
+
+Create a configuration file with default settings.
+
+```bash
+resume-gen init [OPTIONS]
+```
+
+**Options:**
+- `-o, --output PATH`: Output path for config file (default: `./resume-gen.yaml`)
+- `-f, --force`: Overwrite existing config file
+
+**Examples:**
+```bash
+# Create config in current directory
+resume-gen init
+
+# Create config at specific location
+resume-gen init -o ~/.resume-gen.yaml
+
+# Overwrite existing config
+resume-gen init --force
+```
+
+### `resume-gen config`
+
+Show current configuration and config file location.
+
+```bash
+resume-gen config [OPTIONS]
+```
+
+**Options:**
+- `-s, --show`: Show current effective configuration (default: true)
+
+**Example Output:**
+```
+Config file: /home/user/project/resume-gen.yaml
+
+Effective settings:
+  max_pages: 1
+  max_bullet_words: 25
+  color_palette: burgundy
+  claude_model: sonnet
+  output_language: en
+  compile_pdf: True
+  min_bullets_per_job: 3
+  max_bullets_per_job: 5
 ```
 
 ## Complete Examples
@@ -332,27 +461,52 @@ for resume in resumes/*.pdf; do
 done
 ```
 
-## Configuration via Environment Variables
+## Configuration
 
-All settings can be configured via environment variables with `RESUME_GEN_` prefix:
+### Configuration Priority
+
+Settings are loaded in this order (later overrides earlier):
+```
+Defaults → .env → Environment Variables → YAML Config → CLI Options
+```
+
+### YAML Configuration File (Recommended)
+
+Create a config file:
+```bash
+resume-gen init
+```
+
+Edit `resume-gen.yaml`:
+```yaml
+max_pages: 1
+max_bullet_words: 25
+color_palette: burgundy
+claude_model: sonnet
+output_language: en
+```
+
+Use a specific config:
+```bash
+resume-gen generate resume.pdf --config my-config.yaml
+```
+
+### Environment Variables
+
+All settings can also be configured via environment variables with `RESUME_GEN_` prefix:
 
 ```bash
-export RESUME_GEN_ANTHROPIC_API_KEY="sk-ant-..."
-export RESUME_GEN_CLAUDE_MODEL="claude-sonnet-4-20250514"
-export RESUME_GEN_OUTPUT_DIR="./output"
-export RESUME_GEN_DEFAULT_TEMPLATE="modern"
-export RESUME_GEN_COMPILE_PDF="true"
-export RESUME_GEN_VERBOSE="false"
+export RESUME_GEN_CLAUDE_MODEL=sonnet
+export RESUME_GEN_MAX_PAGES=1
+export RESUME_GEN_COLOR_PALETTE=burgundy
 ```
 
 Or create `.env` file:
 
 ```bash
-RESUME_GEN_ANTHROPIC_API_KEY=sk-ant-...
-RESUME_GEN_CLAUDE_MODEL=claude-sonnet-4-20250514
-RESUME_GEN_OUTPUT_DIR=./output
-RESUME_GEN_DEFAULT_TEMPLATE=modern
-RESUME_GEN_PRIMARY_COLOR=#2C3E50
+RESUME_GEN_CLAUDE_MODEL=sonnet
+RESUME_GEN_MAX_PAGES=1
+RESUME_GEN_COLOR_PALETTE=burgundy
 RESUME_GEN_COMPILE_PDF=true
 ```
 
@@ -403,16 +557,19 @@ fi
 
 ## Troubleshooting
 
-### Issue: API Key Error
+### Issue: Claude CLI Not Found
 
 **Error:**
 ```
-Error: anthropic_api_key is required
+Error: Claude CLI not available. Please install Claude CLI.
 ```
 
 **Solution:**
+Install Claude CLI and ensure it's in your PATH:
+
 ```bash
-export RESUME_GEN_ANTHROPIC_API_KEY="sk-ant-..."
+brew install anthropic-cli
+claude --version
 resume-gen generate resume.pdf
 ```
 
@@ -471,9 +628,9 @@ Error: Rate limit exceeded
 ```
 
 **Solution:**
-- Wait and retry
-- Reduce concurrent requests
-- Check API usage dashboard
+- Wait before making additional requests
+- Check Claude CLI rate limits
+- Monitor usage at console.anthropic.com
 
 ### Issue: LaTeX Compilation Failed
 
@@ -524,12 +681,6 @@ eval (env _RESUME_GEN_COMPLETE=fish_source resume-gen)
 
 ## Advanced Usage
 
-### Custom Configuration File
-
-```bash
-resume-gen generate resume.pdf --config custom_config.env
-```
-
 ### Debug Mode
 
 ```bash
@@ -569,12 +720,17 @@ fi
 ### CI/CD (GitHub Actions)
 
 ```yaml
+- name: Install Claude CLI
+  run: |
+    # Install Claude CLI via Anthropic's official method
+    # See https://github.com/anthropics/claude-code for latest instructions
+
 - name: Generate Resume
   run: |
     pip install resume-generator
     resume-gen generate resume.pdf -o dist/resume.pdf
   env:
-    RESUME_GEN_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    RESUME_GEN_CLAUDE_MODEL: sonnet
 ```
 
 ### Makefile

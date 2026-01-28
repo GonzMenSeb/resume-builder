@@ -1,21 +1,19 @@
-"""Profile extraction using Claude to parse raw text into structured PersonProfile."""
+"""Profile extraction using Claude CLI to parse raw text into structured PersonProfile."""
 
-import json
+from __future__ import annotations
+
 import logging
-import time
-from collections.abc import Callable
 from datetime import date
-from typing import Any, TypeVar
+from typing import TYPE_CHECKING, Any
 
-from anthropic import (
-    Anthropic,
-    APIConnectionError,
-    APITimeoutError,
-    RateLimitError,
-)
 from pydantic import BaseModel, Field, ValidationError
 
-from resume_generator.config import Settings, get_settings
+from resume_generator.claude_client import (
+    ClaudeCLI,
+    ClaudeCLIError,
+    build_prompt_with_schema,
+    parse_json_response,
+)
 from resume_generator.extraction.prompts import PROFILE_EXTRACTION_SYSTEM
 from resume_generator.models.profile import (
     Certification,
@@ -28,79 +26,18 @@ from resume_generator.models.profile import (
     SkillCategory,
 )
 
-T = TypeVar("T")
+if TYPE_CHECKING:
+    from resume_generator.config import Settings
 
 logger = logging.getLogger(__name__)
-
-STRUCTURED_OUTPUTS_BETA = "structured-outputs-2025-11-13"
-MAX_RETRIES = 3
-INITIAL_BACKOFF_SECONDS = 1.0
-MAX_BACKOFF_SECONDS = 32.0
 
 
 class ExtractionError(Exception):
     """Raised when profile extraction fails."""
 
 
-def _is_retryable_error(error: Exception) -> bool:
-    """Check if an error is retryable."""
-    return isinstance(
-        error,
-        (APITimeoutError, APIConnectionError, RateLimitError),
-    )
-
-
-def _exponential_backoff(attempt: int) -> float:
-    """Calculate exponential backoff with jitter.
-
-    Backoff = min(initial * (2 ^ attempt) + jitter, max_backoff)
-    """
-    backoff: float = INITIAL_BACKOFF_SECONDS * (2**attempt)
-    backoff = min(backoff, MAX_BACKOFF_SECONDS)
-    return backoff
-
-
-def _call_with_retry(func: Callable[[], T]) -> T:
-    """Execute function with exponential backoff retry logic.
-
-    Retries on transient errors (timeout, connection, rate limit).
-    Non-retryable errors and max retries raise immediately.
-    """
-    last_exception: Exception | None = None
-
-    for attempt in range(MAX_RETRIES):
-        try:
-            return func()
-        except Exception as e:
-            if not _is_retryable_error(e):
-                raise
-
-            last_exception = e
-            if attempt == MAX_RETRIES - 1:
-                logger.error(
-                    "Max retries exceeded after %d attempts. Last error: %s",
-                    MAX_RETRIES,
-                    e,
-                )
-                raise
-
-            wait_time = _exponential_backoff(attempt)
-            logger.warning(
-                "Retryable error on attempt %d/%d: %s. Waiting %.1fs before retry.",
-                attempt + 1,
-                MAX_RETRIES,
-                e,
-                wait_time,
-            )
-            time.sleep(wait_time)
-
-    if last_exception:
-        raise last_exception
-    raise AssertionError("Unexpected control flow in retry logic")
-
-
 class ContactInfoSchema(BaseModel):
-    """Simplified schema for structured output extraction."""
+    """Schema for contact information extraction."""
 
     full_name: str = Field(description="Full legal name")
     email: str = Field(description="Email address")
@@ -112,7 +49,7 @@ class ContactInfoSchema(BaseModel):
 
 
 class SkillSchema(BaseModel):
-    """Skill extraction schema."""
+    """Schema for skill extraction."""
 
     name: str = Field(description="Skill name")
     category: str = Field(
@@ -125,7 +62,7 @@ class SkillSchema(BaseModel):
 
 
 class ExperienceSchema(BaseModel):
-    """Work experience extraction schema."""
+    """Schema for work experience extraction."""
 
     company: str = Field(description="Company name")
     title: str = Field(description="Job title")
@@ -140,7 +77,7 @@ class ExperienceSchema(BaseModel):
 
 
 class EducationSchema(BaseModel):
-    """Education extraction schema."""
+    """Schema for education extraction."""
 
     institution: str = Field(description="Institution name")
     degree: str = Field(description="Degree type")
@@ -154,7 +91,7 @@ class EducationSchema(BaseModel):
 
 
 class CertificationSchema(BaseModel):
-    """Certification extraction schema."""
+    """Schema for certification extraction."""
 
     name: str = Field(description="Certification name")
     acronym: str | None = Field(default=None, description="Acronym")
@@ -165,7 +102,7 @@ class CertificationSchema(BaseModel):
 
 
 class ProjectSchema(BaseModel):
-    """Project extraction schema."""
+    """Schema for project extraction."""
 
     name: str = Field(description="Project name")
     description: str | None = Field(default=None, description="Description")
@@ -179,7 +116,7 @@ class ProjectSchema(BaseModel):
 
 
 class ProfileExtractionSchema(BaseModel):
-    """Top-level schema for Claude structured output extraction."""
+    """Top-level schema for Claude profile extraction."""
 
     contact: ContactInfoSchema = Field(description="Contact information")
     professional_summary: str | None = Field(default=None, description="Professional summary")
@@ -200,8 +137,8 @@ class ProfileExtractionSchema(BaseModel):
 
 
 def _build_extraction_prompt(raw_text: str) -> str:
-    """Build prompt for profile extraction."""
-    return f"""Extract all professional information from the following text into structured JSON.
+    """Build prompt for profile extraction with JSON schema."""
+    base_prompt = f"""Extract all professional information from the following text into structured JSON.
 
 ## Guidelines
 - Extract only explicitly stated information; never fabricate data
@@ -218,19 +155,32 @@ def _build_extraction_prompt(raw_text: str) -> str:
 
 Extract all available information into the structured format."""
 
+    return build_prompt_with_schema(base_prompt, ProfileExtractionSchema)
+
 
 class ProfileExtractor:
-    """Extracts structured PersonProfile from raw text using Claude's structured outputs."""
+    """Extracts structured PersonProfile from raw text using Claude CLI."""
 
-    def __init__(self, settings: Settings | None = None) -> None:
-        self._settings = settings or get_settings()
-        self._client = Anthropic(api_key=self._settings.anthropic_api_key.get_secret_value())
+    def __init__(
+        self,
+        settings: Settings | None = None,
+        claude_cli: ClaudeCLI | None = None,
+    ) -> None:
+        if claude_cli is not None:
+            self._cli = claude_cli
+        elif settings is not None:
+            self._cli = ClaudeCLI(
+                model=settings.claude_model.value,
+                timeout=settings.claude_cli_timeout,
+            )
+        else:
+            from resume_generator.config import get_settings
+
+            s = get_settings()
+            self._cli = ClaudeCLI(model=s.claude_model.value, timeout=s.claude_cli_timeout)
 
     def extract(self, raw_text: str) -> PersonProfile:
-        """Extract a PersonProfile from raw text using Claude's structured output mode.
-
-        Uses Claude's JSON mode with constrained decoding to guarantee valid JSON
-        output that matches the PersonProfile schema.
+        """Extract a PersonProfile from raw text using Claude CLI.
 
         Args:
             raw_text: Unstructured text containing person's professional info.
@@ -244,48 +194,44 @@ class ProfileExtractor:
         if not raw_text.strip():
             raise ExtractionError("Cannot extract profile from empty text")
 
-        extracted = self._call_claude_structured(raw_text)
-        profile = self._convert_to_profile(extracted, raw_text)
-        return profile
+        extracted = self._call_claude(raw_text)
+        return self._convert_to_profile(extracted, raw_text)
 
-    def _call_claude_structured(self, raw_text: str) -> ProfileExtractionSchema:
-        """Call Claude API using structured output mode with retry logic."""
-
-        def _api_call() -> ProfileExtractionSchema:
-            response = self._client.beta.messages.parse(
-                model=self._settings.claude_model.value,
-                max_tokens=self._settings.max_tokens,
-                betas=[STRUCTURED_OUTPUTS_BETA],
-                system=PROFILE_EXTRACTION_SYSTEM,
-                messages=[{"role": "user", "content": _build_extraction_prompt(raw_text)}],
-                output_format=ProfileExtractionSchema,
-            )
-
-            if response.stop_reason == "refusal":
-                raise ExtractionError("Claude refused to process this request")
-
-            if response.stop_reason == "max_tokens":
-                raise ExtractionError("Response truncated due to max_tokens limit")
-
-            if response.parsed_output is None:
-                raise ExtractionError("No parsed output received from Claude")
-
-            return response.parsed_output
+    def _call_claude(self, raw_text: str) -> ProfileExtractionSchema:
+        """Call Claude CLI and parse response into extraction schema."""
+        prompt = _build_extraction_prompt(raw_text)
 
         try:
-            return _call_with_retry(_api_call)
-        except ExtractionError:
-            raise
-        except Exception as e:
-            logger.exception("Claude API call failed")
-            raise ExtractionError(f"API call failed: {e}") from e
+            result = self._cli.invoke(prompt=prompt, system=PROFILE_EXTRACTION_SYSTEM)
+        except ClaudeCLIError as e:
+            logger.exception("Claude CLI invocation failed")
+            raise ExtractionError(f"Claude CLI error: {e}") from e
+
+        if result.failed:
+            raise ExtractionError(f"Claude CLI returned non-zero exit code: {result.exit_code}")
+
+        try:
+            data = parse_json_response(result.output)
+        except ValueError as e:
+            logger.error("Failed to parse JSON from Claude response: %s", e)
+            raise ExtractionError(f"Failed to parse response: {e}") from e
+
+        try:
+            return ProfileExtractionSchema.model_validate(data)
+        except ValidationError as e:
+            logger.error("Response validation failed: %s", e)
+            raise ExtractionError(f"Response validation failed: {e}") from e
 
     def _convert_to_profile(
-        self, extracted: ProfileExtractionSchema, raw_text: str
+        self,
+        extracted: ProfileExtractionSchema,
+        raw_text: str,
     ) -> PersonProfile:
         """Convert extraction schema to full PersonProfile with validated types."""
         try:
-            contact = ContactInfo.model_validate(extracted.contact.model_dump())
+            contact_data = extracted.contact.model_dump()
+            contact_data = self._sanitize_contact_urls(contact_data)
+            contact = ContactInfo.model_validate(contact_data)
 
             experiences = []
             for exp in extracted.experiences:
@@ -315,9 +261,9 @@ class ProfileExtractor:
                     field_of_study=edu.field_of_study,
                     location=edu.location,
                     start_date=self._parse_date(edu.start_date) if edu.start_date else None,
-                    graduation_date=self._parse_date(edu.graduation_date)
-                    if edu.graduation_date
-                    else None,
+                    graduation_date=(
+                        self._parse_date(edu.graduation_date) if edu.graduation_date else None
+                    ),
                     gpa=edu.gpa,
                     honors=edu.honors,
                     relevant_coursework=edu.relevant_coursework,
@@ -342,9 +288,9 @@ class ProfileExtractor:
                     acronym=cert.acronym,
                     issuing_organization=cert.issuing_organization,
                     date_earned=self._parse_date(cert.date_earned) if cert.date_earned else None,
-                    expiration_date=self._parse_date(cert.expiration_date)
-                    if cert.expiration_date
-                    else None,
+                    expiration_date=(
+                        self._parse_date(cert.expiration_date) if cert.expiration_date else None
+                    ),
                     credential_id=cert.credential_id,
                 )
                 for cert in extracted.certifications
@@ -391,6 +337,18 @@ class ProfileExtractor:
             raise ExtractionError(f"Conversion failed: {e}") from e
 
     @staticmethod
+    def _sanitize_contact_urls(contact_data: dict[str, Any]) -> dict[str, Any]:
+        """Sanitize contact URLs by removing invalid values."""
+        url_fields = ["linkedin_url", "github_url", "portfolio_url"]
+        for field in url_fields:
+            if field in contact_data and contact_data[field]:
+                url_value = contact_data[field]
+                if isinstance(url_value, str) and not url_value.startswith(("http://", "https://")):
+                    logger.warning("Invalid URL for %s: %s - setting to None", field, url_value)
+                    contact_data[field] = None
+        return contact_data
+
+    @staticmethod
     def _parse_date(date_str: str | None) -> date | None:
         """Parse ISO date string to date object."""
         if not date_str:
@@ -411,79 +369,3 @@ class ProfileExtractor:
             return SkillCategory(category_lower)
         except ValueError:
             return SkillCategory.OTHER
-
-
-class LegacyProfileExtractor:
-    """Legacy extractor using manual JSON parsing (fallback for older models)."""
-
-    def __init__(self, settings: Settings | None = None) -> None:
-        self._settings = settings or get_settings()
-        self._client = Anthropic(api_key=self._settings.anthropic_api_key.get_secret_value())
-
-    def extract(self, raw_text: str) -> PersonProfile:
-        """Extract using traditional JSON parsing."""
-        if not raw_text.strip():
-            raise ExtractionError("Cannot extract profile from empty text")
-
-        from resume_generator.extraction.prompts import build_profile_extraction_prompt
-
-        user_prompt = build_profile_extraction_prompt(raw_text)
-        response_text = self._call_claude(user_prompt)
-        profile = self._parse_response(response_text, raw_text)
-        return profile
-
-    def _call_claude(self, user_prompt: str) -> str:
-        """Call Claude API and return the response text with retry logic."""
-
-        def _api_call() -> str:
-            response = self._client.messages.create(
-                model=self._settings.claude_model.value,
-                max_tokens=self._settings.max_tokens,
-                system=PROFILE_EXTRACTION_SYSTEM,
-                messages=[{"role": "user", "content": user_prompt}],
-            )
-            content = response.content[0]
-            if content.type != "text":
-                raise ExtractionError(f"Unexpected response type: {content.type}")
-            return content.text
-
-        try:
-            return _call_with_retry(_api_call)
-        except Exception as e:
-            if isinstance(e, ExtractionError):
-                raise
-            logger.exception("Claude API call failed")
-            raise ExtractionError(f"API call failed: {e}") from e
-
-    def _parse_response(self, response_text: str, original_text: str) -> PersonProfile:
-        """Parse Claude's JSON response into PersonProfile."""
-        json_str = self._extract_json(response_text)
-        try:
-            data = json.loads(json_str)
-        except json.JSONDecodeError as e:
-            raise ExtractionError(f"Invalid JSON in response: {e}") from e
-
-        data["raw_text"] = original_text
-        return self._validate_profile(data)
-
-    def _extract_json(self, text: str) -> str:
-        """Extract JSON from response, handling markdown code blocks."""
-        text = text.strip()
-        if text.startswith("```"):
-            lines = text.split("\n")
-            start = 1
-            end = len(lines)
-            for i, line in enumerate(lines[1:], 1):
-                if line.startswith("```"):
-                    end = i
-                    break
-            text = "\n".join(lines[start:end])
-        return text.strip()
-
-    def _validate_profile(self, data: dict[str, Any]) -> PersonProfile:
-        """Validate and construct PersonProfile from dict."""
-        try:
-            return PersonProfile.model_validate(data)
-        except ValidationError as e:
-            logger.error("Profile validation failed: %s", e)
-            raise ExtractionError(f"Profile validation failed: {e}") from e

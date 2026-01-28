@@ -4,12 +4,11 @@ from datetime import date
 from unittest.mock import MagicMock, patch
 
 import pytest
-from anthropic import APIConnectionError, APITimeoutError, RateLimitError
-from pydantic import SecretStr
 
+from resume_generator.claude_client import ClaudeCLI, ClaudeCLIError, InvokeResult
 from resume_generator.config import Settings
 from resume_generator.models.job import JobDescription
-from resume_generator.models.profile import PersonProfile
+from resume_generator.models.profile import ContactInfo, PersonProfile
 from resume_generator.models.resume import (
     BulletType,
     ResumeBullet,
@@ -18,91 +17,16 @@ from resume_generator.models.resume import (
     ResumeSkillGroup,
 )
 from resume_generator.optimization.optimizer import (
-    BulletBatchResultSchema,
     OptimizationError,
-    OptimizedBulletSchema,
     ProfessionalSummarySchema,
     ResumeOptimizer,
-    SkillGroupSchema,
-    SkillsOptimizationSchema,
-    _call_with_retry,
-    _exponential_backoff,
-    _is_retryable_error,
 )
 from resume_generator.optimization.tailoring import (
     JobTailorer,
     KeywordMatchResult,
     MatchAnalysis,
+    TailoringError,
 )
-from resume_generator.optimization.tailoring import (
-    _call_with_retry as tailoring_call_with_retry,
-)
-from resume_generator.optimization.tailoring import (
-    _exponential_backoff as tailoring_exponential_backoff,
-)
-from resume_generator.optimization.tailoring import (
-    _is_retryable_error as tailoring_is_retryable_error,
-)
-
-
-class TestOptimizerRetryHelpers:
-    """Tests for optimizer retry helper functions."""
-
-    def test_is_retryable_error_timeout(self) -> None:
-        mock_request = MagicMock()
-        error = APITimeoutError(request=mock_request)
-        assert _is_retryable_error(error)
-
-    def test_is_retryable_error_connection(self) -> None:
-        mock_request = MagicMock()
-        error = APIConnectionError(message="connection", request=mock_request)
-        assert _is_retryable_error(error)
-
-    def test_is_retryable_error_rate_limit(self) -> None:
-        mock_response = MagicMock()
-        error = RateLimitError("rate limit", response=mock_response, body=None)
-        assert _is_retryable_error(error)
-
-    def test_is_retryable_error_generic_exception(self) -> None:
-        assert not _is_retryable_error(ValueError("not retryable"))
-
-    def test_exponential_backoff_initial(self) -> None:
-        assert _exponential_backoff(0) == 1.0
-
-    def test_exponential_backoff_second_attempt(self) -> None:
-        assert _exponential_backoff(1) == 2.0
-
-    def test_exponential_backoff_max_limit(self) -> None:
-        assert _exponential_backoff(10) == 32.0
-
-    def test_call_with_retry_success_first_try(self) -> None:
-        mock_func = MagicMock(return_value="success")
-        result = _call_with_retry(mock_func)
-        assert result == "success"
-        assert mock_func.call_count == 1
-
-    def test_call_with_retry_success_after_retry(self) -> None:
-        mock_request = MagicMock()
-        error = APITimeoutError(request=mock_request)
-        mock_func = MagicMock(side_effect=[error, "success"])
-        with patch("time.sleep"):
-            result = _call_with_retry(mock_func)
-        assert result == "success"
-        assert mock_func.call_count == 2
-
-    def test_call_with_retry_non_retryable_error(self) -> None:
-        mock_func = MagicMock(side_effect=ValueError("bad input"))
-        with pytest.raises(ValueError, match="bad input"):
-            _call_with_retry(mock_func)
-        assert mock_func.call_count == 1
-
-    def test_call_with_retry_max_attempts_exceeded(self) -> None:
-        mock_request = MagicMock()
-        error = APITimeoutError(request=mock_request)
-        mock_func = MagicMock(side_effect=error)
-        with patch("time.sleep"), pytest.raises(APITimeoutError):
-            _call_with_retry(mock_func)
-        assert mock_func.call_count == 3
 
 
 class TestResumeOptimizer:
@@ -111,18 +35,19 @@ class TestResumeOptimizer:
     def test_init_with_settings(self, test_settings: Settings) -> None:
         optimizer = ResumeOptimizer(settings=test_settings)
         assert optimizer._settings == test_settings
-        assert optimizer._client is not None
+        assert optimizer._cli is not None
 
     def test_init_without_settings(self) -> None:
-        with patch("resume_generator.optimization.optimizer.get_settings") as mock_get_settings:
+        with patch("resume_generator.config.get_settings") as mock_get_settings:
             mock_settings = MagicMock()
-            mock_settings.anthropic_api_key = SecretStr("sk-test-key")
+            mock_settings.claude_model.value = "sonnet"
+            mock_settings.claude_cli_timeout = 3600
             mock_get_settings.return_value = mock_settings
             optimizer = ResumeOptimizer()
             assert optimizer._settings == mock_settings
 
     def test_build_contact(self, sample_person_profile: PersonProfile) -> None:
-        optimizer = ResumeOptimizer(settings=Settings(anthropic_api_key="sk-test"))
+        optimizer = ResumeOptimizer(settings=Settings())
         contact = optimizer._build_contact(sample_person_profile)
         assert contact.name == "Jane Doe"
         assert contact.email == "jane.doe@example.com"
@@ -130,7 +55,7 @@ class TestResumeOptimizer:
         assert contact.location == "San Francisco, CA"
 
     def test_build_education(self, sample_person_profile: PersonProfile) -> None:
-        optimizer = ResumeOptimizer(settings=Settings(anthropic_api_key="sk-test"))
+        optimizer = ResumeOptimizer(settings=Settings())
         education = optimizer._build_education(sample_person_profile)
         assert len(education) == 1
         assert education[0].institution == "Stanford University"
@@ -138,14 +63,14 @@ class TestResumeOptimizer:
         assert education[0].gpa == "3.80"
 
     def test_build_certifications(self, sample_person_profile: PersonProfile) -> None:
-        optimizer = ResumeOptimizer(settings=Settings(anthropic_api_key="sk-test"))
+        optimizer = ResumeOptimizer(settings=Settings())
         certs = optimizer._build_certifications(sample_person_profile)
         assert len(certs) == 1
         assert certs[0].name == "AWS Certified Solutions Architect (AWS-SAA)"
         assert certs[0].issuer == "Amazon Web Services"
 
     def test_build_projects(self, sample_person_profile: PersonProfile) -> None:
-        optimizer = ResumeOptimizer(settings=Settings(anthropic_api_key="sk-test"))
+        optimizer = ResumeOptimizer(settings=Settings())
         projects = optimizer._build_projects(sample_person_profile)
         assert len(projects) == 1
         assert projects[0].name == "Open Source ML Framework"
@@ -164,28 +89,29 @@ class TestResumeOptimizer:
         assert ResumeOptimizer._parse_bullet_type("unknown") == BulletType.GENERIC
 
     def test_fallback_skill_groups(self, sample_person_profile: PersonProfile) -> None:
-        optimizer = ResumeOptimizer(settings=Settings(anthropic_api_key="sk-test"))
+        optimizer = ResumeOptimizer(settings=Settings())
         groups = optimizer._fallback_skill_groups(sample_person_profile)
         assert len(groups) > 0
         categories = {g.category for g in groups}
         assert "Programming" in categories or "Technical" in categories
 
-    def test_optimize_bullets_fallback_on_error(
-        self, test_settings: Settings, sample_person_profile: PersonProfile
-    ) -> None:
+    def test_optimize_bullets_fallback_on_error(self, test_settings: Settings) -> None:
         optimizer = ResumeOptimizer(settings=test_settings)
-        with patch.object(optimizer, "_call_claude_structured", side_effect=Exception("API error")):
+        with patch.object(
+            optimizer, "_call_claude_structured", side_effect=OptimizationError("API error")
+        ):
             bullets = optimizer._optimize_bullets(
                 achievements=["Built something", "Improved performance"],
                 role_title="Engineer",
                 company="Tech Corp",
                 target_keywords=None,
+                max_bullets=5,
             )
             assert len(bullets) >= 2
             assert all(isinstance(b, ResumeBullet) for b in bullets)
 
     def test_optimize_experiences_no_achievements(
-        self, test_settings: Settings, sample_contact_info
+        self, test_settings: Settings, sample_contact_info: ContactInfo
     ) -> None:
         from resume_generator.models.profile import Experience
 
@@ -214,7 +140,9 @@ class TestResumeOptimizer:
         self, test_settings: Settings, sample_person_profile: PersonProfile
     ) -> None:
         optimizer = ResumeOptimizer(settings=test_settings)
-        with patch.object(optimizer, "_call_claude_structured", side_effect=Exception("API error")):
+        with patch.object(
+            optimizer, "_call_claude_structured", side_effect=OptimizationError("API error")
+        ):
             summary = optimizer._generate_summary(sample_person_profile, None, None)
             assert summary == sample_person_profile.professional_summary
 
@@ -222,138 +150,104 @@ class TestResumeOptimizer:
         self, test_settings: Settings, sample_person_profile: PersonProfile
     ) -> None:
         optimizer = ResumeOptimizer(settings=test_settings)
-        with patch.object(optimizer, "_call_claude_structured", side_effect=Exception("API error")):
+        with patch.object(
+            optimizer, "_call_claude_structured", side_effect=OptimizationError("API error")
+        ):
             skills = optimizer._optimize_skills(sample_person_profile, None)
             assert len(skills) > 0
 
-    @patch("resume_generator.optimization.optimizer.Anthropic")
-    def test_call_claude_structured_success(
-        self, mock_anthropic: MagicMock, test_settings: Settings
-    ) -> None:
-        mock_client = MagicMock()
-        mock_anthropic.return_value = mock_client
-
-        parsed_output = ProfessionalSummarySchema(
-            summary="Test summary",
-            word_count=10,
-            keywords_included=["Python"],
-            tailored_for_job=False,
+    def test_call_claude_structured_success(self, test_settings: Settings) -> None:
+        mock_cli = MagicMock(spec=ClaudeCLI)
+        mock_cli.invoke.return_value = InvokeResult(
+            success=True,
+            output='{"summary": "Test summary", "word_count": 10, "keywords_included": ["Python"], "tailored_for_job": false}',
+            exit_code=0,
         )
-        mock_response = MagicMock()
-        mock_response.stop_reason = "end_turn"
-        mock_response.parsed_output = parsed_output
-        mock_client.beta.messages.parse.return_value = mock_response
 
-        optimizer = ResumeOptimizer(settings=test_settings)
+        optimizer = ResumeOptimizer(settings=test_settings, claude_cli=mock_cli)
         result = optimizer._call_claude_structured("test prompt", ProfessionalSummarySchema)
         assert result.summary == "Test summary"
         assert result.word_count == 10
 
-    @patch("resume_generator.optimization.optimizer.Anthropic")
-    def test_call_claude_structured_refusal(
-        self, mock_anthropic: MagicMock, test_settings: Settings
-    ) -> None:
-        mock_client = MagicMock()
-        mock_anthropic.return_value = mock_client
+    def test_call_claude_structured_cli_error(self, test_settings: Settings) -> None:
+        mock_cli = MagicMock(spec=ClaudeCLI)
+        mock_cli.invoke.side_effect = ClaudeCLIError("CLI invocation failed")
 
-        mock_response = MagicMock()
-        mock_response.stop_reason = "refusal"
-        mock_client.beta.messages.parse.return_value = mock_response
-
-        optimizer = ResumeOptimizer(settings=test_settings)
-        with pytest.raises(OptimizationError, match="refused to process"):
+        optimizer = ResumeOptimizer(settings=test_settings, claude_cli=mock_cli)
+        with pytest.raises(OptimizationError, match="Claude CLI error"):
             optimizer._call_claude_structured("test prompt", ProfessionalSummarySchema)
 
-    @patch("resume_generator.optimization.optimizer.Anthropic")
-    def test_call_claude_structured_max_tokens(
-        self, mock_anthropic: MagicMock, test_settings: Settings
-    ) -> None:
-        mock_client = MagicMock()
-        mock_anthropic.return_value = mock_client
+    def test_call_claude_structured_failed_exit_code(self, test_settings: Settings) -> None:
+        mock_cli = MagicMock(spec=ClaudeCLI)
+        mock_cli.invoke.return_value = InvokeResult(
+            success=False, output="Error occurred", exit_code=1
+        )
 
-        mock_response = MagicMock()
-        mock_response.stop_reason = "max_tokens"
-        mock_client.beta.messages.parse.return_value = mock_response
-
-        optimizer = ResumeOptimizer(settings=test_settings)
-        with pytest.raises(OptimizationError, match="truncated due to max_tokens"):
+        optimizer = ResumeOptimizer(settings=test_settings, claude_cli=mock_cli)
+        with pytest.raises(OptimizationError, match="non-zero exit code"):
             optimizer._call_claude_structured("test prompt", ProfessionalSummarySchema)
 
-    @patch("resume_generator.optimization.optimizer.Anthropic")
-    def test_call_claude_structured_no_output(
-        self, mock_anthropic: MagicMock, test_settings: Settings
-    ) -> None:
-        mock_client = MagicMock()
-        mock_anthropic.return_value = mock_client
+    def test_call_claude_structured_invalid_json(self, test_settings: Settings) -> None:
+        mock_cli = MagicMock(spec=ClaudeCLI)
+        mock_cli.invoke.return_value = InvokeResult(
+            success=True, output="This is not valid JSON", exit_code=0
+        )
 
-        mock_response = MagicMock()
-        mock_response.stop_reason = "end_turn"
-        mock_response.parsed_output = None
-        mock_client.beta.messages.parse.return_value = mock_response
-
-        optimizer = ResumeOptimizer(settings=test_settings)
-        with pytest.raises(OptimizationError, match="No parsed output"):
+        optimizer = ResumeOptimizer(settings=test_settings, claude_cli=mock_cli)
+        with pytest.raises(OptimizationError, match="Failed to parse response"):
             optimizer._call_claude_structured("test prompt", ProfessionalSummarySchema)
 
-    @patch("resume_generator.optimization.optimizer.Anthropic")
     def test_optimize_full_pipeline(
         self,
-        mock_anthropic: MagicMock,
         test_settings: Settings,
         sample_person_profile: PersonProfile,
     ) -> None:
-        mock_client = MagicMock()
-        mock_anthropic.return_value = mock_client
+        import json
 
-        bullet_result = BulletBatchResultSchema(
-            bullets=[
-                OptimizedBulletSchema(
-                    text="Improved system performance by 50%",
-                    action_verb="Improved",
-                    bullet_type="action_result",
-                    has_metrics=True,
-                    metrics={"improvement": "50%"},
-                    keywords=["performance"],
-                    relevance_score=0.9,
-                    original_index=0,
-                )
+        bullet_result = {
+            "bullets": [
+                {
+                    "text": "Improved system performance by 50%",
+                    "action_verb": "Improved",
+                    "bullet_type": "action_result",
+                    "has_metrics": True,
+                    "metrics": {"improvement": "50%"},
+                    "keywords": ["performance"],
+                    "relevance_score": 0.9,
+                    "original_index": 0,
+                }
             ],
-            overall_quality_score=0.9,
-        )
+            "overall_quality_score": 0.9,
+        }
 
-        summary_result = ProfessionalSummarySchema(
-            summary="Senior engineer with proven track record",
-            word_count=6,
-            keywords_included=["Python", "AWS"],
-            tailored_for_job=True,
-        )
+        summary_result = {
+            "summary": "Senior engineer with proven track record",
+            "word_count": 6,
+            "keywords_included": ["Python", "AWS"],
+            "tailored_for_job": True,
+        }
 
-        skills_result = SkillsOptimizationSchema(
-            skill_groups=[
-                SkillGroupSchema(category="Languages", skills=["Python", "Go"], priority=1)
-            ],
-            total_skills_count=2,
-        )
-
-        mock_response = MagicMock()
-        mock_response.stop_reason = "end_turn"
-        mock_response.parsed_output = None
+        skills_result = {
+            "skill_groups": [{"category": "Languages", "skills": ["Python", "Go"], "priority": 1}],
+            "total_skills_count": 2,
+        }
 
         call_count = [0]
 
-        def side_effect(*args, **kwargs):
+        def mock_invoke(prompt: str, system: str | None = None) -> InvokeResult:
             call_count[0] += 1
             if call_count[0] == 1:
-                mock_response.parsed_output = bullet_result
+                output = json.dumps(bullet_result)
             elif call_count[0] == 2:
-                mock_response.parsed_output = summary_result
+                output = json.dumps(summary_result)
             else:
-                mock_response.parsed_output = skills_result
-            return mock_response
+                output = json.dumps(skills_result)
+            return InvokeResult(success=True, output=output, exit_code=0)
 
-        mock_client.beta.messages.parse.side_effect = side_effect
+        mock_cli = MagicMock(spec=ClaudeCLI)
+        mock_cli.invoke.side_effect = mock_invoke
 
-        optimizer = ResumeOptimizer(settings=test_settings)
+        optimizer = ResumeOptimizer(settings=test_settings, claude_cli=mock_cli)
         result = optimizer.optimize(sample_person_profile, target_job_title="Senior Engineer")
 
         assert isinstance(result, ResumeDocument)
@@ -363,40 +257,30 @@ class TestResumeOptimizer:
         assert result.optimization_score > 0
 
 
-class TestTailorerRetryHelpers:
-    """Tests for tailorer retry helper functions."""
-
-    def test_is_retryable_error_timeout(self) -> None:
-        mock_request = MagicMock()
-        error = APITimeoutError(request=mock_request)
-        assert tailoring_is_retryable_error(error)
-
-    def test_is_retryable_error_connection(self) -> None:
-        mock_request = MagicMock()
-        error = APIConnectionError(message="connection", request=mock_request)
-        assert tailoring_is_retryable_error(error)
-
-    def test_exponential_backoff(self) -> None:
-        assert tailoring_exponential_backoff(0) == 1.0
-        assert tailoring_exponential_backoff(1) == 2.0
-        assert tailoring_exponential_backoff(10) == 32.0
-
-    def test_call_with_retry_success(self) -> None:
-        mock_func = MagicMock(return_value="success")
-        result = tailoring_call_with_retry(mock_func)
-        assert result == "success"
-
-
 class TestJobTailorer:
     """Tests for JobTailorer class."""
 
     def test_init_with_settings(self, test_settings: Settings) -> None:
         tailorer = JobTailorer(settings=test_settings)
         assert tailorer._settings == test_settings
-        assert tailorer._client is not None
+        assert tailorer._cli is not None
+
+    def test_init_with_claude_cli(self, test_settings: Settings) -> None:
+        mock_cli = MagicMock(spec=ClaudeCLI)
+        tailorer = JobTailorer(settings=test_settings, claude_cli=mock_cli)
+        assert tailorer._cli is mock_cli
+
+    def test_init_without_settings(self) -> None:
+        with patch("resume_generator.config.get_settings") as mock_get_settings:
+            mock_settings = MagicMock()
+            mock_settings.claude_model.value = "sonnet"
+            mock_settings.claude_cli_timeout = 3600
+            mock_get_settings.return_value = mock_settings
+            tailorer = JobTailorer()
+            assert tailorer._settings == mock_settings
 
     def test_extract_job_keywords(self, sample_job_description: JobDescription) -> None:
-        tailorer = JobTailorer(settings=Settings(anthropic_api_key="sk-test"))
+        tailorer = JobTailorer(settings=Settings())
         keywords = tailorer._extract_job_keywords(sample_job_description)
         assert "Python" in keywords
         assert "AWS" in keywords
@@ -404,7 +288,7 @@ class TestJobTailorer:
         assert "Kubernetes" in keywords
 
     def test_extract_keywords_detailed(self, sample_job_description: JobDescription) -> None:
-        tailorer = JobTailorer(settings=Settings(anthropic_api_key="sk-test"))
+        tailorer = JobTailorer(settings=Settings())
         detailed_keywords = tailorer.extract_keywords_detailed(sample_job_description)
         assert "Python" in detailed_keywords
         sources, weight = detailed_keywords["Python"]
@@ -412,7 +296,7 @@ class TestJobTailorer:
         assert weight >= 2.0
 
     def test_compute_keyword_overlap(self) -> None:
-        tailorer = JobTailorer(settings=Settings(anthropic_api_key="sk-test"))
+        tailorer = JobTailorer(settings=Settings())
         job_kw = {"Python", "AWS", "Docker"}
         resume_kw = {"Python", "Docker", "React"}
         matched, missing = tailorer._compute_keyword_overlap(job_kw, resume_kw)
@@ -422,7 +306,7 @@ class TestJobTailorer:
     def test_analyze_keyword_match(
         self, sample_resume_document: ResumeDocument, sample_job_description: JobDescription
     ) -> None:
-        tailorer = JobTailorer(settings=Settings(anthropic_api_key="sk-test"))
+        tailorer = JobTailorer(settings=Settings())
         analysis = tailorer.analyze_keyword_match(sample_resume_document, sample_job_description)
         assert "job_keywords" in analysis
         assert "resume_keywords" in analysis
@@ -434,7 +318,7 @@ class TestJobTailorer:
     def test_analyze_keyword_match_detailed(
         self, sample_resume_document: ResumeDocument, sample_job_description: JobDescription
     ) -> None:
-        tailorer = JobTailorer(settings=Settings(anthropic_api_key="sk-test"))
+        tailorer = JobTailorer(settings=Settings())
         analysis = tailorer.analyze_keyword_match_detailed(
             sample_resume_document, sample_job_description
         )
@@ -446,14 +330,14 @@ class TestJobTailorer:
     def test_calculate_match_score(
         self, sample_resume_document: ResumeDocument, sample_job_description: JobDescription
     ) -> None:
-        tailorer = JobTailorer(settings=Settings(anthropic_api_key="sk-test"))
+        tailorer = JobTailorer(settings=Settings())
         score = tailorer.calculate_match_score(sample_resume_document, sample_job_description)
         assert 0.0 <= score <= 1.0
 
     def test_score_experience_relevance(
         self, sample_resume_experience: ResumeExperience, sample_job_description: JobDescription
     ) -> None:
-        tailorer = JobTailorer(settings=Settings(anthropic_api_key="sk-test"))
+        tailorer = JobTailorer(settings=Settings())
         score = tailorer.score_experience_relevance(
             sample_resume_experience, sample_job_description
         )
@@ -462,7 +346,7 @@ class TestJobTailorer:
     def test_reorder_bullets_for_job(
         self, sample_resume_experience: ResumeExperience, sample_job_description: JobDescription
     ) -> None:
-        tailorer = JobTailorer(settings=Settings(anthropic_api_key="sk-test"))
+        tailorer = JobTailorer(settings=Settings())
         reordered = tailorer.reorder_bullets_for_job(
             sample_resume_experience.bullets, sample_job_description
         )
@@ -473,7 +357,7 @@ class TestJobTailorer:
     def test_reorder_skills_for_job(
         self, sample_resume_document: ResumeDocument, sample_job_description: JobDescription
     ) -> None:
-        tailorer = JobTailorer(settings=Settings(anthropic_api_key="sk-test"))
+        tailorer = JobTailorer(settings=Settings())
         reordered = tailorer.reorder_skills_for_job(
             sample_resume_document.skills, sample_job_description
         )
@@ -483,7 +367,7 @@ class TestJobTailorer:
     def test_customize_summary_for_job(
         self, sample_resume_document: ResumeDocument, sample_job_description: JobDescription
     ) -> None:
-        tailorer = JobTailorer(settings=Settings(anthropic_api_key="sk-test"))
+        tailorer = JobTailorer(settings=Settings())
         summary = tailorer.customize_summary_for_job(
             sample_resume_document.professional_summary,
             sample_job_description,
@@ -495,14 +379,14 @@ class TestJobTailorer:
     def test_customize_summary_for_job_none_input(
         self, sample_job_description: JobDescription
     ) -> None:
-        tailorer = JobTailorer(settings=Settings(anthropic_api_key="sk-test"))
+        tailorer = JobTailorer(settings=Settings())
         resume = MagicMock()
         resume.skills = []
         summary = tailorer.customize_summary_for_job(None, sample_job_description, resume)
         assert summary is None
 
     def test_extract_significant_words(self) -> None:
-        tailorer = JobTailorer(settings=Settings(anthropic_api_key="sk-test"))
+        tailorer = JobTailorer(settings=Settings())
         words = tailorer._extract_significant_words("Python Developer with AWS experience")
         assert "Python" in words
         assert "Developer" in words
@@ -510,7 +394,7 @@ class TestJobTailorer:
         assert "with" not in words
 
     def test_extract_tech_keywords(self) -> None:
-        tailorer = JobTailorer(settings=Settings(anthropic_api_key="sk-test"))
+        tailorer = JobTailorer(settings=Settings())
         keywords = tailorer._extract_tech_keywords(
             "Experience with Python, React, AWS, and PostgreSQL required"
         )
@@ -520,7 +404,7 @@ class TestJobTailorer:
         assert "PostgreSQL" in keywords
 
     def test_extract_bigrams(self) -> None:
-        tailorer = JobTailorer(settings=Settings(anthropic_api_key="sk-test"))
+        tailorer = JobTailorer(settings=Settings())
         bigrams = tailorer._extract_bigrams(
             "We need machine learning and cloud computing expertise"
         )
@@ -528,14 +412,14 @@ class TestJobTailorer:
         assert "cloud computing" in bigrams
 
     def test_get_resume_text(self, sample_resume_document: ResumeDocument) -> None:
-        tailorer = JobTailorer(settings=Settings(anthropic_api_key="sk-test"))
+        tailorer = JobTailorer(settings=Settings())
         text = tailorer._get_resume_text(sample_resume_document)
         assert isinstance(text, str)
         assert len(text) > 0
         assert "Jane Doe" in text or "Senior Software Engineer" in text
 
     def test_find_best_match_exact(self) -> None:
-        tailorer = JobTailorer(settings=Settings(anthropic_api_key="sk-test"))
+        tailorer = JobTailorer(settings=Settings())
         resume_kw = {"Python", "AWS", "Docker"}
         resume_kw_lower = {kw.lower() for kw in resume_kw}
         resume_text_lower = "python aws docker kubernetes"
@@ -546,7 +430,7 @@ class TestJobTailorer:
         assert match[1] == "exact"
 
     def test_find_best_match_fuzzy(self) -> None:
-        tailorer = JobTailorer(settings=Settings(anthropic_api_key="sk-test"))
+        tailorer = JobTailorer(settings=Settings())
         resume_kw = {"Kubernetes"}
         resume_kw_lower = {kw.lower() for kw in resume_kw}
         resume_text_lower = "kubernetes experience"
@@ -555,7 +439,7 @@ class TestJobTailorer:
         assert match is not None
 
     def test_find_best_match_no_match(self) -> None:
-        tailorer = JobTailorer(settings=Settings(anthropic_api_key="sk-test"))
+        tailorer = JobTailorer(settings=Settings())
         resume_kw = {"Python"}
         resume_kw_lower = {kw.lower() for kw in resume_kw}
         resume_text_lower = "python only"
@@ -564,7 +448,7 @@ class TestJobTailorer:
         assert match is None
 
     def test_generate_recommendations_missing_required(self) -> None:
-        tailorer = JobTailorer(settings=Settings(anthropic_api_key="sk-test"))
+        tailorer = JobTailorer(settings=Settings())
         recommendations = tailorer._generate_recommendations(
             match_rate=0.5,
             weighted_score=0.6,
@@ -576,7 +460,7 @@ class TestJobTailorer:
         assert any("required" in r.lower() for r in recommendations)
 
     def test_generate_recommendations_good_match(self) -> None:
-        tailorer = JobTailorer(settings=Settings(anthropic_api_key="sk-test"))
+        tailorer = JobTailorer(settings=Settings())
         recommendations = tailorer._generate_recommendations(
             match_rate=0.8,
             weighted_score=0.85,
@@ -590,7 +474,7 @@ class TestJobTailorer:
     def test_rule_based_tailor(
         self, sample_resume_document: ResumeDocument, sample_job_description: JobDescription
     ) -> None:
-        tailorer = JobTailorer(settings=Settings(anthropic_api_key="sk-test"))
+        tailorer = JobTailorer(settings=Settings())
         job_keywords = tailorer._extract_job_keywords(sample_job_description)
         resume_keywords = sample_resume_document.get_all_keywords()
 
@@ -605,32 +489,94 @@ class TestJobTailorer:
     def test_tailor_with_ai_disabled(
         self, sample_resume_document: ResumeDocument, sample_job_description: JobDescription
     ) -> None:
-        settings = Settings(anthropic_api_key="sk-test", enable_job_tailoring=False)
+        settings = Settings(enable_job_tailoring=False)
         tailorer = JobTailorer(settings=settings)
         tailored = tailorer.tailor(sample_resume_document, sample_job_description, use_ai=False)
         assert isinstance(tailored, ResumeDocument)
         assert tailored.target_job_title == sample_job_description.title
 
-    @patch("resume_generator.optimization.tailoring.Anthropic")
     def test_tailor_with_ai_fallback_on_error(
         self,
-        mock_anthropic: MagicMock,
         sample_resume_document: ResumeDocument,
         sample_job_description: JobDescription,
     ) -> None:
-        mock_client = MagicMock()
-        mock_anthropic.return_value = mock_client
-        mock_client.beta.messages.parse.side_effect = Exception("API error")
+        mock_cli = MagicMock(spec=ClaudeCLI)
+        mock_cli.invoke.side_effect = ClaudeCLIError("CLI error")
 
-        settings = Settings(anthropic_api_key="sk-test", enable_job_tailoring=True)
-        tailorer = JobTailorer(settings=settings)
+        settings = Settings(enable_job_tailoring=True)
+        tailorer = JobTailorer(settings=settings, claude_cli=mock_cli)
         tailored = tailorer.tailor(sample_resume_document, sample_job_description, use_ai=True)
 
         assert isinstance(tailored, ResumeDocument)
         assert tailored.target_job_title == sample_job_description.title
 
+    def test_call_claude_structured_success(self, test_settings: Settings) -> None:
+        import json
+
+        from resume_generator.optimization.tailoring import TailoringResultSchema
+
+        mock_cli = MagicMock(spec=ClaudeCLI)
+        mock_cli.invoke.return_value = InvokeResult(
+            success=True,
+            output=json.dumps(
+                {
+                    "tailored_summary": "Test summary",
+                    "experiences": [],
+                    "skills": {"reordered_groups": [], "added_keywords": [], "keyword_mapping": {}},
+                    "keyword_analysis": {
+                        "job_keywords": [],
+                        "matched_keywords": [],
+                        "missing_keywords": [],
+                        "match_rate": 0.5,
+                        "recommendations": [],
+                    },
+                    "overall_fit_score": 0.7,
+                }
+            ),
+            exit_code=0,
+        )
+
+        tailorer = JobTailorer(settings=test_settings, claude_cli=mock_cli)
+        result = tailorer._call_claude_structured("test prompt", TailoringResultSchema)
+        assert result.tailored_summary == "Test summary"
+        assert result.overall_fit_score == 0.7
+
+    def test_call_claude_structured_cli_error(self, test_settings: Settings) -> None:
+        from resume_generator.optimization.tailoring import TailoringResultSchema
+
+        mock_cli = MagicMock(spec=ClaudeCLI)
+        mock_cli.invoke.side_effect = ClaudeCLIError("CLI invocation failed")
+
+        tailorer = JobTailorer(settings=test_settings, claude_cli=mock_cli)
+        with pytest.raises(TailoringError, match="Claude CLI error"):
+            tailorer._call_claude_structured("test prompt", TailoringResultSchema)
+
+    def test_call_claude_structured_failed_exit_code(self, test_settings: Settings) -> None:
+        from resume_generator.optimization.tailoring import TailoringResultSchema
+
+        mock_cli = MagicMock(spec=ClaudeCLI)
+        mock_cli.invoke.return_value = InvokeResult(
+            success=False, output="Error occurred", exit_code=1
+        )
+
+        tailorer = JobTailorer(settings=test_settings, claude_cli=mock_cli)
+        with pytest.raises(TailoringError, match="non-zero exit code"):
+            tailorer._call_claude_structured("test prompt", TailoringResultSchema)
+
+    def test_call_claude_structured_invalid_json(self, test_settings: Settings) -> None:
+        from resume_generator.optimization.tailoring import TailoringResultSchema
+
+        mock_cli = MagicMock(spec=ClaudeCLI)
+        mock_cli.invoke.return_value = InvokeResult(
+            success=True, output="This is not valid JSON", exit_code=0
+        )
+
+        tailorer = JobTailorer(settings=test_settings, claude_cli=mock_cli)
+        with pytest.raises(TailoringError, match="Failed to parse response"):
+            tailorer._call_claude_structured("test prompt", TailoringResultSchema)
+
     def test_resume_to_dict(self, sample_resume_document: ResumeDocument) -> None:
-        tailorer = JobTailorer(settings=Settings(anthropic_api_key="sk-test"))
+        tailorer = JobTailorer(settings=Settings())
         resume_dict = tailorer._resume_to_dict(sample_resume_document)
         assert "professional_summary" in resume_dict
         assert "experiences" in resume_dict
@@ -638,7 +584,7 @@ class TestJobTailorer:
         assert isinstance(resume_dict["experiences"], list)
 
     def test_job_to_dict(self, sample_job_description: JobDescription) -> None:
-        tailorer = JobTailorer(settings=Settings(anthropic_api_key="sk-test"))
+        tailorer = JobTailorer(settings=Settings())
         job_dict = tailorer._job_to_dict(sample_job_description)
         assert "title" in job_dict
         assert "company" in job_dict

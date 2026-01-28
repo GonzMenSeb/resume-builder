@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from ..config import ResumeTemplate, Settings
+from .localization import get_section_headers
 
 TEMPLATES_DIR = Path(__file__).parent / "templates"
 
@@ -106,20 +107,23 @@ class TemplateConfig:
     primary_color: str = "45, 85, 145"
     secondary_color: str = "60, 60, 60"
     accent_color: str = "100, 100, 100"
+    language: str = "en"
 
     @classmethod
     def from_settings(cls, settings: Settings) -> TemplateConfig:
         """Create template config from application settings."""
         margin = f"{settings.margin_inches}in"
+        primary_hex, secondary_hex = settings.get_effective_colors()
         return cls(
             font_family="sans",
             margin_top=margin,
             margin_bottom=margin,
             margin_left=margin,
             margin_right=margin,
-            primary_color=hex_to_rgb(settings.primary_color),
-            secondary_color=hex_to_rgb(settings.secondary_color),
+            primary_color=hex_to_rgb(primary_hex),
+            secondary_color=hex_to_rgb(secondary_hex),
             accent_color="100, 100, 100",
+            language=settings.output_language.value,
         )
 
 
@@ -210,8 +214,10 @@ class LaTeXGenerator:
         config: TemplateConfig,
     ) -> dict[str, object]:
         """Build the template context from resume document."""
+        labels = get_section_headers(config.language)
         return {
             "config": config,
+            "labels": labels,
             "contact": resume.contact,
             "professional_summary": resume.professional_summary,
             "headline": resume.headline,
