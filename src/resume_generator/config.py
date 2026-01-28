@@ -2,10 +2,19 @@
 
 from enum import Enum
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any
 
+import yaml
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+CONFIG_FILE_NAME = "resume-gen.yaml"
+CONFIG_SEARCH_PATHS = [
+    Path.cwd() / CONFIG_FILE_NAME,
+    Path.cwd() / f".{CONFIG_FILE_NAME}",
+    Path.home() / f".{CONFIG_FILE_NAME}",
+    Path.home() / ".config" / "resume-gen" / "config.yaml",
+]
 
 
 class ResumeTemplate(str, Enum):
@@ -13,6 +22,27 @@ class ResumeTemplate(str, Enum):
 
     MODERN = "modern"
     ATS = "ats"
+
+
+class ColorPalette(str, Enum):
+    """Predefined color palettes for resume styling."""
+
+    CLASSIC = "classic"
+    BURGUNDY = "burgundy"
+    NAVY = "navy"
+    FOREST = "forest"
+    SLATE = "slate"
+    CHARCOAL = "charcoal"
+
+
+COLOR_PALETTE_VALUES: dict[ColorPalette, tuple[str, str]] = {
+    ColorPalette.CLASSIC: ("#2C3E50", "#3498DB"),
+    ColorPalette.BURGUNDY: ("#800020", "#4A4A4A"),
+    ColorPalette.NAVY: ("#1B365D", "#5B7C99"),
+    ColorPalette.FOREST: ("#2D5A27", "#6B8E23"),
+    ColorPalette.SLATE: ("#4A5568", "#718096"),
+    ColorPalette.CHARCOAL: ("#2D3748", "#4A5568"),
+}
 
 
 class ResumeLanguage(str, Enum):
@@ -67,6 +97,10 @@ class Settings(BaseSettings):
     )
 
     # Path Configuration
+    input_dir: Path | None = Field(
+        default=None,
+        description="Default input directory for resume data (used when no inputs provided)",
+    )
     output_dir: Path = Field(
         default=Path("./output"),
         description="Default output directory for generated resumes",
@@ -85,15 +119,19 @@ class Settings(BaseSettings):
         default=ResumeTemplate.MODERN,
         description="Default resume template",
     )
+    color_palette: ColorPalette = Field(
+        default=ColorPalette.CLASSIC,
+        description="Color palette for resume styling",
+    )
     primary_color: str = Field(
         default="#2C3E50",
         pattern=r"^#[0-9A-Fa-f]{6}$",
-        description="Primary color (hex) for resume styling",
+        description="Primary color (hex) - overridden by color_palette if set",
     )
     secondary_color: str = Field(
         default="#3498DB",
         pattern=r"^#[0-9A-Fa-f]{6}$",
-        description="Secondary color (hex) for accents",
+        description="Secondary color (hex) - overridden by color_palette if set",
     )
     font_name_size: int = Field(
         default=20,
@@ -116,6 +154,18 @@ class Settings(BaseSettings):
     margin_inches: Annotated[float, Field(ge=0.5, le=1.0)] = 0.75
 
     # Content Optimization (research-backed defaults)
+    max_pages: int = Field(
+        default=1,
+        ge=1,
+        le=3,
+        description="Maximum pages for the final resume",
+    )
+    max_bullet_words: int = Field(
+        default=25,
+        ge=10,
+        le=50,
+        description="Maximum words per bullet point",
+    )
     min_bullets_per_job: int = Field(
         default=3,
         ge=2,
@@ -175,9 +225,11 @@ class Settings(BaseSettings):
         description="Language for the generated resume content",
     )
 
-    @field_validator("output_dir", "templates_dir", "cache_dir", mode="before")
+    @field_validator("input_dir", "output_dir", "templates_dir", "cache_dir", mode="before")
     @classmethod
-    def ensure_path(cls, v: str | Path) -> Path:
+    def ensure_path(cls, v: str | Path | None) -> Path | None:
+        if v is None:
+            return None
         return Path(v) if isinstance(v, str) else v
 
     def ensure_directories(self) -> None:
@@ -190,7 +242,84 @@ class Settings(BaseSettings):
         t = template or self.default_template
         return self.templates_dir / f"{t.value}.tex"
 
+    def get_effective_colors(self) -> tuple[str, str]:
+        """Get effective primary and secondary colors.
 
-def get_settings() -> Settings:
-    """Factory function to get settings instance."""
-    return Settings()
+        If custom colors differ from defaults (indicating user override),
+        those are used. Otherwise, the color palette is applied.
+        """
+        default_primary = "#2C3E50"
+        default_secondary = "#3498DB"
+        if self.primary_color != default_primary or self.secondary_color != default_secondary:
+            return (self.primary_color, self.secondary_color)
+        return COLOR_PALETTE_VALUES[self.color_palette]
+
+
+def find_config_file() -> Path | None:
+    """Find the first existing config file from search paths."""
+    for path in CONFIG_SEARCH_PATHS:
+        if path.exists():
+            return path
+    return None
+
+
+def load_yaml_config(config_path: Path | None = None) -> dict[str, Any]:
+    """Load configuration from YAML file."""
+    path = config_path or find_config_file()
+    if path is None or not path.exists():
+        return {}
+
+    with open(path, encoding="utf-8") as f:
+        data = yaml.safe_load(f) or {}
+
+    return data
+
+
+def get_settings(config_path: Path | None = None) -> Settings:
+    """Factory function to get settings instance with YAML config support."""
+    yaml_config = load_yaml_config(config_path)
+    return Settings(**yaml_config)
+
+
+def get_default_config_template() -> str:
+    """Generate a default YAML configuration template with comments."""
+    return """\
+# Resume Generator Configuration
+# Place this file as resume-gen.yaml in your project directory
+# or as ~/.resume-gen.yaml for global settings
+
+# === Output Settings ===
+max_pages: 1              # Maximum pages (1-3)
+max_bullet_words: 25      # Max words per bullet point (10-50)
+compile_pdf: true         # Generate PDF (false = LaTeX only)
+keep_latex_source: true   # Keep .tex file after compilation
+
+# === AI Settings ===
+claude_model: sonnet      # Model: sonnet, opus, haiku
+
+# === Design Settings ===
+color_palette: classic    # Palette: classic, burgundy, navy, forest, slate, charcoal
+# Or specify custom colors (overrides palette):
+# primary_color: "#2C3E50"
+# secondary_color: "#3498DB"
+
+# === Content Settings ===
+min_bullets_per_job: 3    # Minimum bullets per job (2-5)
+max_bullets_per_job: 5    # Maximum bullets per job (3-7)
+summary_min_words: 50     # Min words in summary (30-80)
+summary_max_words: 100    # Max words in summary (80-150)
+
+# === Language ===
+output_language: en       # Language: en, es, fr, de, pt, it, zh, ja, ko, ar, nl, ru, pl
+
+# === Paths (optional) ===
+# input_dir: ./resume_data    # Default input directory (allows running just 'resume-gen generate')
+# output_dir: ./output
+# cache_dir: ./.resume_cache
+
+# === Advanced ===
+# target_keyword_match_rate: 0.70
+# tailoring_customization_rate: 0.50
+# enable_job_tailoring: true
+# verbose: false
+"""

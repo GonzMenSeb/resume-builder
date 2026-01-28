@@ -2,22 +2,61 @@
 
 ## Overview
 
-Resume Generator uses Pydantic Settings for configuration management. Settings can be configured via:
+Resume Generator uses a flexible configuration system with multiple sources. Settings can be configured via:
 
-1. Environment variables (with `RESUME_GEN_` prefix)
-2. `.env` file
-3. Programmatic configuration
-4. Default values
+1. **YAML configuration file** (recommended for persistent settings)
+2. **CLI options** (for per-execution overrides)
+3. **Environment variables** (with `RESUME_GEN_` prefix)
+4. **`.env` file**
+5. **Programmatic configuration**
 
 ## Configuration Hierarchy
 
 Settings are loaded in this order (later overrides earlier):
 
 ```
-Default Values → .env File → Environment Variables → Programmatic Config
+Default Values → .env File → Environment Variables → YAML Config → CLI Options
 ```
 
 ## Quick Start
+
+### Using YAML Configuration File (Recommended)
+
+Create a configuration file:
+
+```bash
+resume-gen init
+```
+
+This creates `resume-gen.yaml` in your current directory. Edit it:
+
+```yaml
+# resume-gen.yaml
+max_pages: 1
+max_bullet_words: 25
+color_palette: burgundy
+claude_model: sonnet
+output_language: en
+min_bullets_per_job: 3
+max_bullets_per_job: 5
+compile_pdf: true
+```
+
+**Config file search locations** (in order):
+1. `./resume-gen.yaml`
+2. `./.resume-gen.yaml`
+3. `~/.resume-gen.yaml`
+4. `~/.config/resume-gen/config.yaml`
+
+**Use a specific config file:**
+```bash
+resume-gen generate ./data/ --config my-custom-config.yaml
+```
+
+**View current configuration:**
+```bash
+resume-gen config
+```
 
 ### Using .env File
 
@@ -41,11 +80,21 @@ export RESUME_GEN_CLAUDE_CLI_TIMEOUT=3600
 ### Programmatic Configuration
 
 ```python
-from resume_generator.config import Settings, get_settings, ClaudeModel
+from pathlib import Path
+from resume_generator.config import Settings, get_settings, ClaudeModel, ColorPalette
 
+# Load from default config file
 settings = get_settings()
-settings.claude_model = ClaudeModel.SONNET
-settings.output_dir = Path("./custom_output")
+
+# Load from specific config file
+settings = get_settings(config_path=Path("my-config.yaml"))
+
+# Override settings
+settings = settings.model_copy(update={
+    "claude_model": ClaudeModel.SONNET,
+    "color_palette": ColorPalette.BURGUNDY,
+    "max_pages": 1,
+})
 ```
 
 ## Configuration Sections
@@ -146,6 +195,11 @@ Visual appearance and template settings.
 **Options:** `modern`, `ats`
 **Description:** Default resume template
 
+**YAML:**
+```yaml
+default_template: modern
+```
+
 **Environment Variable:**
 ```bash
 RESUME_GEN_DEFAULT_TEMPLATE=modern
@@ -158,12 +212,52 @@ RESUME_GEN_DEFAULT_TEMPLATE=modern
 | `modern` | Two-column, color accents, professional | Direct submissions, email |
 | `ats` | Single-column, simple, machine-readable | Online application systems |
 
+#### `COLOR_PALETTE`
+
+**Type:** `ColorPalette`
+**Default:** `classic`
+**Options:** `classic`, `burgundy`, `navy`, `forest`, `slate`, `charcoal`
+**Description:** Predefined color scheme for resume styling
+
+**YAML:**
+```yaml
+color_palette: burgundy
+```
+
+**CLI:**
+```bash
+resume-gen generate ./data/ --colors burgundy
+```
+
+**Environment Variable:**
+```bash
+RESUME_GEN_COLOR_PALETTE=burgundy
+```
+
+**Available Palettes:**
+
+| Palette | Primary | Secondary | Best For |
+|---------|---------|-----------|----------|
+| `classic` | #2C3E50 (dark blue) | #3498DB (bright blue) | Traditional corporate |
+| `burgundy` | #800020 (burgundy) | #4A4A4A (gray) | Elegant/executive |
+| `navy` | #1B365D (navy) | #5B7C99 (slate blue) | Finance/legal |
+| `forest` | #2D5A27 (forest) | #6B8E23 (olive) | Environmental/creative |
+| `slate` | #4A5568 (slate) | #718096 (gray) | Modern minimalist |
+| `charcoal` | #2D3748 (charcoal) | #4A5568 (slate) | Tech/startup |
+
+**Note:** Color palette overrides `PRIMARY_COLOR` and `SECONDARY_COLOR` settings.
+
 #### `PRIMARY_COLOR`
 
 **Type:** `str`
 **Default:** `#2C3E50`
 **Format:** Hex color code
-**Description:** Primary color for headers and accents
+**Description:** Primary color for headers and accents (overridden by `color_palette`)
+
+**YAML:**
+```yaml
+primary_color: "#1E3A8A"
+```
 
 **Environment Variable:**
 ```bash
@@ -183,7 +277,12 @@ RESUME_GEN_PRIMARY_COLOR=#1E3A8A
 **Type:** `str`
 **Default:** `#3498DB`
 **Format:** Hex color code
-**Description:** Secondary color for links and highlights
+**Description:** Secondary color for links and highlights (overridden by `color_palette`)
+
+**YAML:**
+```yaml
+secondary_color: "#3B82F6"
+```
 
 **Environment Variable:**
 ```bash
@@ -257,12 +356,71 @@ RESUME_GEN_MARGIN_INCHES=0.75
 
 Settings for resume content optimization.
 
+#### `MAX_PAGES`
+
+**Type:** `int`
+**Default:** `1`
+**Range:** `1-3`
+**Description:** Maximum pages for the final resume. If the generated resume exceeds this limit, bullets will be automatically compacted.
+
+**YAML:**
+```yaml
+max_pages: 1
+```
+
+**CLI:**
+```bash
+resume-gen generate ./data/ --max-pages 2
+```
+
+**Environment Variable:**
+```bash
+RESUME_GEN_MAX_PAGES=1
+```
+
+**Behavior:**
+- When PDF exceeds `max_pages`, the pipeline automatically removes lower-priority bullets
+- Compaction respects `min_bullets_per_job` setting
+- Up to 5 compaction rounds are attempted
+
+#### `MAX_BULLET_WORDS`
+
+**Type:** `int`
+**Default:** `25`
+**Range:** `10-50`
+**Description:** Maximum words per bullet point. Claude AI is instructed to keep bullets concise.
+
+**YAML:**
+```yaml
+max_bullet_words: 25
+```
+
+**CLI:**
+```bash
+resume-gen generate ./data/ --max-bullet-words 20
+```
+
+**Environment Variable:**
+```bash
+RESUME_GEN_MAX_BULLET_WORDS=25
+```
+
+**Guidelines:**
+- `10-15` words: Very concise, headline-style bullets
+- `20-25` words: Standard, recommended (default)
+- `30-50` words: Detailed, for complex achievements
+
 #### `MIN_BULLETS_PER_JOB`
 
 **Type:** `int`
 **Default:** `3`
 **Range:** `2-5`
 **Description:** Minimum bullet points per job
+
+**YAML:**
+```yaml
+min_bullets_per_job: 3
+```
 
 **Environment Variable:**
 ```bash
@@ -419,6 +577,48 @@ RESUME_GEN_VERBOSE=true
 
 ## Complete Configuration Example
 
+### YAML Configuration (Recommended)
+
+Create `resume-gen.yaml`:
+
+```yaml
+# Resume Generator Configuration
+
+# === Output Constraints ===
+max_pages: 1
+max_bullet_words: 25
+compile_pdf: true
+keep_latex_source: true
+
+# === AI Settings ===
+claude_model: sonnet
+claude_cli_timeout: 3600
+
+# === Design ===
+color_palette: classic
+# Or use custom colors:
+# primary_color: "#2C3E50"
+# secondary_color: "#3498DB"
+
+# === Content Optimization ===
+min_bullets_per_job: 3
+max_bullets_per_job: 5
+summary_min_words: 50
+summary_max_words: 100
+target_keyword_match_rate: 0.70
+
+# === Language ===
+output_language: en
+
+# === Paths ===
+output_dir: ./output
+cache_dir: ./.resume_cache
+
+# === Pipeline ===
+enable_job_tailoring: true
+verbose: false
+```
+
 ### Production .env
 
 ```bash
@@ -427,31 +627,23 @@ RESUME_GEN_CLAUDE_MODEL=sonnet
 RESUME_GEN_CLAUDE_CLI_TIMEOUT=3600
 RESUME_GEN_CLAUDE_CLI_VERBOSE=false
 
+# Output Constraints
+RESUME_GEN_MAX_PAGES=1
+RESUME_GEN_MAX_BULLET_WORDS=25
+
+# Design
+RESUME_GEN_COLOR_PALETTE=classic
+
 # Paths
 RESUME_GEN_OUTPUT_DIR=./output
 RESUME_GEN_CACHE_DIR=./.resume_cache
 
-# Template & Design
-RESUME_GEN_DEFAULT_TEMPLATE=modern
-RESUME_GEN_PRIMARY_COLOR=#2C3E50
-RESUME_GEN_SECONDARY_COLOR=#3498DB
-RESUME_GEN_FONT_NAME_SIZE=20
-RESUME_GEN_FONT_HEADER_SIZE=14
-RESUME_GEN_FONT_BODY_SIZE=11
-RESUME_GEN_MARGIN_INCHES=0.75
-
 # Content Optimization
 RESUME_GEN_MIN_BULLETS_PER_JOB=3
 RESUME_GEN_MAX_BULLETS_PER_JOB=5
-RESUME_GEN_SUMMARY_MIN_WORDS=50
-RESUME_GEN_SUMMARY_MAX_WORDS=100
-RESUME_GEN_TARGET_KEYWORD_MATCH_RATE=0.70
-RESUME_GEN_TAILORING_CUSTOMIZATION_RATE=0.50
 
 # Pipeline Options
-RESUME_GEN_ENABLE_JOB_TAILORING=true
 RESUME_GEN_COMPILE_PDF=true
-RESUME_GEN_KEEP_LATEX_SOURCE=true
 RESUME_GEN_VERBOSE=false
 ```
 
@@ -459,39 +651,37 @@ RESUME_GEN_VERBOSE=false
 
 ```python
 from pathlib import Path
-from resume_generator.config import Settings, ResumeTemplate, ClaudeModel
+from resume_generator.config import (
+    Settings, ResumeTemplate, ClaudeModel, ColorPalette, get_settings
+)
 
+# Load from YAML file
+settings = get_settings(config_path=Path("my-config.yaml"))
+
+# Or create directly
 settings = Settings(
+    # Output Constraints
+    max_pages=1,
+    max_bullet_words=25,
+
     # Claude CLI
     claude_model=ClaudeModel.SONNET,
     claude_cli_timeout=3600,
-    claude_cli_verbose=False,
+
+    # Design
+    color_palette=ColorPalette.BURGUNDY,
 
     # Paths
     output_dir=Path("./output"),
     cache_dir=Path("./.resume_cache"),
 
-    # Template
-    default_template=ResumeTemplate.MODERN,
-    primary_color="#2C3E50",
-    secondary_color="#3498DB",
-    font_name_size=20,
-    font_header_size=14,
-    font_body_size=11,
-    margin_inches=0.75,
-
     # Content
     min_bullets_per_job=3,
     max_bullets_per_job=5,
-    summary_min_words=50,
-    summary_max_words=100,
-    target_keyword_match_rate=0.70,
-    tailoring_customization_rate=0.50,
 
     # Pipeline
     enable_job_tailoring=True,
     compile_pdf=True,
-    keep_latex_source=True,
     verbose=False,
 )
 ```

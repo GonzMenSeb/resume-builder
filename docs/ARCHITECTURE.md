@@ -103,7 +103,7 @@ Converts optimized resume data into professional LaTeX documents.
 
 **Components:**
 - `LaTeXGenerator`: Template-based document generation
-- `PDFCompiler`: LaTeX to PDF compilation
+- `PDFCompiler`: LaTeX to PDF compilation with page counting
 - `templates/`: LaTeX template files
 
 **Templates:**
@@ -113,6 +113,26 @@ Converts optimized resume data into professional LaTeX documents.
 **Process:**
 ```
 ResumeDocument → Template Engine → LaTeX → pdflatex → PDF
+```
+
+**Page Compaction:**
+
+When the generated PDF exceeds the configured `max_pages` limit, the pipeline automatically compacts content:
+
+1. Compile PDF and count pages
+2. If pages > `max_pages`, remove lowest-priority bullets (respecting `min_bullets_per_job`)
+3. Regenerate LaTeX and recompile
+4. Repeat up to 5 times until within page limit
+
+```mermaid
+flowchart TD
+    A[Generate LaTeX] --> B[Compile PDF]
+    B --> C{Pages > max_pages?}
+    C -->|No| D[Done]
+    C -->|Yes| E{Compaction rounds < 5?}
+    E -->|No| D
+    E -->|Yes| F[Compact Resume]
+    F --> A
 ```
 
 ### 5. Models Layer (`src/resume_generator/models/`)
@@ -151,17 +171,26 @@ Provides beautiful terminal interface with real-time progress tracking.
 
 ### 7. Configuration (`src/resume_generator/config.py`)
 
-Centralized configuration management using Pydantic Settings.
+Centralized configuration management using Pydantic Settings with YAML file support.
 
-**Configuration Sources:**
-1. Environment variables (with `RESUME_GEN_` prefix)
-2. `.env` file
-3. Default values
+**Configuration Sources (in priority order):**
+1. CLI options (highest priority)
+2. YAML configuration file (`resume-gen.yaml`)
+3. Environment variables (with `RESUME_GEN_` prefix)
+4. `.env` file
+5. Default values
+
+**Config File Locations:**
+- `./resume-gen.yaml`
+- `./.resume-gen.yaml`
+- `~/.resume-gen.yaml`
+- `~/.config/resume-gen/config.yaml`
 
 **Key Settings:**
-- API configuration (key, model, timeout)
+- Output constraints (`max_pages`, `max_bullet_words`)
+- Design options (`color_palette`)
+- Claude CLI configuration (model, timeout)
 - Path configuration (output, cache)
-- Template and design options
 - Content optimization parameters
 - Pipeline behavior flags
 

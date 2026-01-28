@@ -64,7 +64,25 @@ pip install -e .
 
 ### Configuration
 
-Configure the Claude model (optional):
+**Option 1: YAML Configuration File (Recommended)**
+
+```bash
+# Create a config file
+resume-gen init
+
+# Edit the generated resume-gen.yaml
+```
+
+Example `resume-gen.yaml`:
+```yaml
+max_pages: 1
+max_bullet_words: 25
+color_palette: burgundy
+claude_model: sonnet
+output_language: en
+```
+
+**Option 2: Environment Variables**
 
 ```bash
 export RESUME_GEN_CLAUDE_MODEL=sonnet
@@ -76,6 +94,8 @@ Or create a `.env` file:
 RESUME_GEN_CLAUDE_MODEL=sonnet
 RESUME_GEN_CLAUDE_CLI_TIMEOUT=3600
 ```
+
+See [Configuration Documentation](docs/CONFIGURATION.md) for all options.
 
 ## Usage
 
@@ -139,6 +159,23 @@ resume-gen generate ./data/ -V
 **Specify Claude model:**
 ```bash
 resume-gen generate ./data/ --claude-model opus
+```
+
+**Use a color palette:**
+```bash
+resume-gen generate ./data/ --colors burgundy
+```
+
+Available palettes: `classic`, `burgundy`, `navy`, `forest`, `slate`, `charcoal`
+
+**Limit pages and bullet length:**
+```bash
+resume-gen generate ./data/ --max-pages 1 --max-bullet-words 20
+```
+
+**Use a custom config file:**
+```bash
+resume-gen generate ./data/ --config my-config.yaml
 ```
 
 ### Complete Example
@@ -260,65 +297,56 @@ resume-generator/
 
 ## Configuration
 
-All settings can be configured via environment variables or `.env` file with the `RESUME_GEN_` prefix.
+Configuration can be set via YAML file, environment variables, or CLI options (in order of precedence: CLI > YAML > ENV > defaults).
 
-### Claude CLI Configuration
+### YAML Configuration File
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `CLAUDE_MODEL` | `sonnet` | Claude model to use (`sonnet`, `opus`, `haiku`) |
-| `CLAUDE_CLI_TIMEOUT` | `3600` | Claude CLI subprocess timeout (seconds) |
-| `CLAUDE_CLI_VERBOSE` | `false` | Enable verbose Claude CLI output |
-
-### Path Configuration
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `OUTPUT_DIR` | `./output` | Output directory for resumes |
-| `CACHE_DIR` | `./.resume_cache` | Cache directory |
-
-### Template & Design Configuration
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `DEFAULT_TEMPLATE` | `modern` | Default template (`modern`, `ats`) |
-| `PRIMARY_COLOR` | `#2C3E50` | Primary color (hex) |
-| `SECONDARY_COLOR` | `#3498DB` | Secondary color (hex) |
-| `FONT_NAME_SIZE` | `20` | Name font size (18-24) |
-| `FONT_HEADER_SIZE` | `14` | Header font size (12-16) |
-| `FONT_BODY_SIZE` | `11` | Body font size (10-12) |
-| `MARGIN_INCHES` | `0.75` | Page margins (0.5-1.0) |
-
-### Content Optimization
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `MIN_BULLETS_PER_JOB` | `3` | Minimum bullets per job (2-5) |
-| `MAX_BULLETS_PER_JOB` | `5` | Maximum bullets per job (3-7) |
-| `SUMMARY_MIN_WORDS` | `50` | Minimum summary words (30-80) |
-| `SUMMARY_MAX_WORDS` | `100` | Maximum summary words (80-150) |
-| `TARGET_KEYWORD_MATCH_RATE` | `0.70` | Target keyword match (0.5-0.9) |
-| `TAILORING_CUSTOMIZATION_RATE` | `0.50` | Customization level (0.3-0.7) |
-
-### Pipeline Options
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `ENABLE_JOB_TAILORING` | `true` | Enable job-specific optimization |
-| `COMPILE_PDF` | `true` | Compile LaTeX to PDF |
-| `KEEP_LATEX_SOURCE` | `true` | Keep generated LaTeX file |
-| `VERBOSE` | `false` | Enable verbose output |
-
-### Example `.env` File
+Create a `resume-gen.yaml` file in your project directory:
 
 ```bash
-RESUME_GEN_CLAUDE_MODEL=sonnet
-RESUME_GEN_CLAUDE_CLI_TIMEOUT=3600
-RESUME_GEN_DEFAULT_TEMPLATE=modern
-RESUME_GEN_PRIMARY_COLOR=#1E3A8A
-RESUME_GEN_COMPILE_PDF=true
-RESUME_GEN_VERBOSE=false
+resume-gen init  # Creates a template config file
 ```
+
+Example configuration:
+```yaml
+# Output constraints
+max_pages: 1              # Maximum pages (1-3)
+max_bullet_words: 25      # Max words per bullet (10-50)
+
+# Design
+color_palette: classic    # classic, burgundy, navy, forest, slate, charcoal
+
+# AI
+claude_model: sonnet      # sonnet, opus, haiku
+
+# Content
+min_bullets_per_job: 3
+max_bullets_per_job: 5
+output_language: en
+```
+
+### Color Palettes
+
+| Palette | Primary | Secondary | Best For |
+|---------|---------|-----------|----------|
+| `classic` | Dark blue | Bright blue | Traditional corporate |
+| `burgundy` | Burgundy | Gray | Elegant/executive |
+| `navy` | Navy | Slate blue | Finance/legal |
+| `forest` | Forest green | Olive | Environmental/creative |
+| `slate` | Slate gray | Gray | Modern minimalist |
+| `charcoal` | Charcoal | Slate | Tech/startup |
+
+### Environment Variables
+
+All settings can also be configured via environment variables with the `RESUME_GEN_` prefix:
+
+```bash
+export RESUME_GEN_CLAUDE_MODEL=sonnet
+export RESUME_GEN_MAX_PAGES=1
+export RESUME_GEN_COLOR_PALETTE=burgundy
+```
+
+See [docs/CONFIGURATION.md](docs/CONFIGURATION.md) for complete reference.
 
 ## Pipeline Stages
 

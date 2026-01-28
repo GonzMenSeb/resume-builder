@@ -113,14 +113,15 @@ class TemplateConfig:
     def from_settings(cls, settings: Settings) -> TemplateConfig:
         """Create template config from application settings."""
         margin = f"{settings.margin_inches}in"
+        primary_hex, secondary_hex = settings.get_effective_colors()
         return cls(
             font_family="sans",
             margin_top=margin,
             margin_bottom=margin,
             margin_left=margin,
             margin_right=margin,
-            primary_color=hex_to_rgb(settings.primary_color),
-            secondary_color=hex_to_rgb(settings.secondary_color),
+            primary_color=hex_to_rgb(primary_hex),
+            secondary_color=hex_to_rgb(secondary_hex),
             accent_color="100, 100, 100",
             language=settings.output_language.value,
         )

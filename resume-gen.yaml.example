@@ -1,0 +1,41 @@
+# Resume Generator Configuration
+# Copy this file to resume-gen.yaml and customize as needed.
+# CLI arguments will override these settings.
+
+# === Output Settings ===
+max_pages: 1              # Maximum pages (1-3)
+max_bullet_words: 25      # Max words per bullet point (10-50)
+compile_pdf: true         # Generate PDF (false = LaTeX only)
+keep_latex_source: true   # Keep .tex file after compilation
+
+# === AI Settings ===
+claude_model: sonnet      # Model: sonnet, opus, haiku
+
+# === Design Settings ===
+# Available palettes: classic, burgundy, navy, forest, slate, charcoal
+color_palette: classic
+
+# Or specify custom colors (hex format):
+# primary_color: "#2C3E50"
+# secondary_color: "#3498DB"
+
+# === Content Settings ===
+min_bullets_per_job: 3    # Minimum bullets per job (2-5)
+max_bullets_per_job: 5    # Maximum bullets per job (3-7)
+summary_min_words: 50     # Min words in summary (30-80)
+summary_max_words: 100    # Max words in summary (80-150)
+
+# === Language ===
+# Supported: en, es, fr, de, pt, it, zh, ja, ko, ar, nl, ru, pl
+output_language: en
+
+# === Paths (optional) ===
+# input_dir: ./resume_data   # Default input directory (allows 'resume-gen generate' with no args)
+# output_dir: ./output
+# cache_dir: ./.resume_cache
+
+# === Advanced ===
+# target_keyword_match_rate: 0.70
+# tailoring_customization_rate: 0.50
+# enable_job_tailoring: true
+# verbose: false

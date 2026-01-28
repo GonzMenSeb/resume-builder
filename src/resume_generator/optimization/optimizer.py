@@ -233,12 +233,14 @@ class ResumeOptimizer:
     ) -> list[ResumeBullet]:
         min_bullets = self._settings.min_bullets_per_job if self._settings else 2
         language = self._settings.output_language.value if self._settings else None
+        max_words = self._settings.max_bullet_words if self._settings else None
         prompt = build_bullet_batch_prompt(
             achievements=achievements,
             role_title=role_title,
             company=company,
             target_keywords=target_keywords,
             language=language,
+            max_words=max_words,
         )
 
         try:

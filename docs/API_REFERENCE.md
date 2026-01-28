@@ -212,27 +212,38 @@ else:
 
 ### Settings
 
-Configuration management using Pydantic Settings.
+Configuration management using Pydantic Settings with YAML file support.
 
 ```python
-from resume_generator.config import Settings, ClaudeModel, get_settings
 from pathlib import Path
+from resume_generator.config import (
+    Settings, ClaudeModel, ColorPalette, get_settings
+)
 
+# Load settings from default config file locations
 settings = get_settings()
 
-settings.claude_model = ClaudeModel.SONNET
-settings.claude_cli_timeout = 3600
-settings.output_dir = Path("./output")
-settings.compile_pdf = True
+# Load settings from specific YAML file
+settings = get_settings(config_path=Path("my-config.yaml"))
+
+# Override settings
+settings = settings.model_copy(update={
+    "claude_model": ClaudeModel.SONNET,
+    "color_palette": ColorPalette.BURGUNDY,
+    "max_pages": 1,
+    "max_bullet_words": 25,
+})
 ```
 
 **Key Settings:**
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
+| `max_pages` | int | `1` | Maximum pages (1-3) |
+| `max_bullet_words` | int | `25` | Max words per bullet (10-50) |
+| `color_palette` | ColorPalette | `CLASSIC` | Color scheme |
 | `claude_model` | ClaudeModel | `SONNET` | Claude model to use |
 | `claude_cli_timeout` | int | `3600` | Claude CLI timeout (seconds) |
-| `claude_cli_verbose` | bool | `False` | Verbose Claude CLI output |
 | `output_dir` | Path | `./output` | Output directory |
 | `default_template` | ResumeTemplate | `MODERN` | Default template |
 | `compile_pdf` | bool | `True` | Enable PDF compilation |
@@ -240,6 +251,34 @@ settings.compile_pdf = True
 | `verbose` | bool | `False` | Verbose logging |
 
 See [CONFIGURATION.md](./CONFIGURATION.md) for complete reference.
+
+### PipelineConfig
+
+Display configuration shown in the UI during pipeline execution.
+
+```python
+from resume_generator.ui.progress import PipelineConfig
+from resume_generator.config import get_settings
+
+settings = get_settings()
+config = PipelineConfig.from_settings(settings)
+
+print(config.max_pages)       # 1
+print(config.max_bullet_words) # 25
+print(config.color_palette)   # "classic"
+print(config.claude_model)    # "sonnet"
+```
+
+**Attributes:**
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `max_pages` | int | Maximum pages |
+| `max_bullet_words` | int | Max words per bullet |
+| `max_bullets_per_job` | int | Max bullets per job |
+| `claude_model` | str | Claude model name |
+| `output_language` | str | Output language code |
+| `color_palette` | str | Color palette name |
 
 ## Data Models
 
@@ -428,6 +467,30 @@ from resume_generator.config import ResumeTemplate
 template = ResumeTemplate.MODERN  # Professional modern design
 template = ResumeTemplate.ATS     # ATS-friendly format
 ```
+
+#### ColorPalette
+
+```python
+from resume_generator.config import ColorPalette
+
+palette = ColorPalette.CLASSIC    # Dark blue + bright blue
+palette = ColorPalette.BURGUNDY   # Burgundy + gray
+palette = ColorPalette.NAVY       # Navy + slate blue
+palette = ColorPalette.FOREST     # Forest green + olive
+palette = ColorPalette.SLATE      # Slate gray + gray
+palette = ColorPalette.CHARCOAL   # Charcoal + slate
+```
+
+**Available Palettes:**
+
+| Palette | Primary | Secondary |
+|---------|---------|-----------|
+| `CLASSIC` | #2C3E50 | #3498DB |
+| `BURGUNDY` | #800020 | #4A4A4A |
+| `NAVY` | #1B365D | #5B7C99 |
+| `FOREST` | #2D5A27 | #6B8E23 |
+| `SLATE` | #4A5568 | #718096 |
+| `CHARCOAL` | #2D3748 | #4A5568 |
 
 #### PipelineStage
 

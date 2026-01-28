@@ -192,9 +192,13 @@ class ResumePipeline:
             result.tex_path = tex_path
 
             if self._settings.compile_pdf:
-                pdf_path, compilation = self._run_compilation(tex_path, output_path)
+                pdf_path, compilation, resume = self._run_compilation_with_compaction(
+                    resume, tex_path, output_path, template
+                )
                 result.pdf_path = pdf_path
                 result.compilation_result = compilation
+                result.resume = resume
+                result.tex_path = tex_path
 
             result.keyword_match_rate = resume.keyword_match_rate or 0.0
             result.optimization_score = resume.optimization_score or 0.0
@@ -377,9 +381,6 @@ class ResumePipeline:
         tex_path: Path,
         output_path: Path | None,
     ) -> tuple[Path | None, CompilationResult]:
-        if self._ui:
-            self._ui.update_stage(PipelineStage.COMPILING, message="Running pdflatex")
-
         pdf_output = (
             output_path.with_suffix(".pdf") if output_path else tex_path.with_suffix(".pdf")
         )
@@ -392,11 +393,45 @@ class ResumePipeline:
                 PipelineStage.COMPILING,
             )
 
+        logger.info("Compiled PDF: %s", result.pdf_path)
+        return result.pdf_path, result
+
+    def _run_compilation_with_compaction(
+        self,
+        resume: ResumeDocument,
+        tex_path: Path,
+        output_path: Path | None,
+        template: ResumeTemplate | None,
+    ) -> tuple[Path | None, CompilationResult, ResumeDocument]:
+        if self._ui:
+            self._ui.update_stage(PipelineStage.COMPILING, message="Running pdflatex")
+
+        pdf_path, compilation = self._run_compilation(tex_path, output_path)
+        max_pages = self._settings.max_pages
+        min_bullets = self._settings.min_bullets_per_job
+        max_compaction_rounds = 5
+        current_resume = resume
+
+        for round_num in range(max_compaction_rounds):
+            if compilation.page_count <= max_pages:
+                break
+
+            logger.info(
+                "PDF has %d pages, compacting (round %d, max=%d)",
+                compilation.page_count,
+                round_num + 1,
+                max_pages,
+            )
+
+            current_resume = current_resume.compact(min_bullets_per_job=min_bullets)
+            tex_path = self._run_generation(current_resume, output_path, template)
+            pdf_path, compilation = self._run_compilation(tex_path, output_path)
+
         if self._ui:
             self._ui.update_stage(PipelineStage.COMPILING, completed=True)
 
-        logger.info("Compiled PDF: %s", result.pdf_path)
-        return result.pdf_path, result
+        logger.info("Compiled PDF: %s (%d pages)", compilation.pdf_path, compilation.page_count)
+        return pdf_path, compilation, current_resume
 
     def _generate_output_name(self, resume: ResumeDocument) -> str:
         name_parts = resume.contact.name.lower().split()

@@ -42,6 +42,7 @@ class CompilationResult:
     warnings: list[CompilationError] = field(default_factory=list)
     log_content: str = ""
     exit_code: int = 0
+    page_count: int = 0
 
     @property
     def has_errors(self) -> bool:
@@ -223,6 +224,10 @@ class PDFCompiler:
         pdf_path = work_dir / tex_file.with_suffix(".pdf").name
         success = exit_code == 0 and pdf_path.exists()
 
+        page_count = 0
+        if success and pdf_path.exists():
+            page_count = self.count_pdf_pages(pdf_path)
+
         if self._clean_aux:
             self._cleanup_aux_files(work_dir, tex_file.stem)
 
@@ -233,6 +238,7 @@ class PDFCompiler:
             warnings=warnings,
             log_content=log_content,
             exit_code=exit_code,
+            page_count=page_count,
         )
 
     def _parse_log(
@@ -278,3 +284,28 @@ class PDFCompiler:
             "hyperref": True,
         }
         return packages
+
+    @staticmethod
+    def count_pdf_pages(pdf_path: Path) -> int:
+        """Count pages in a PDF file using pdfinfo or regex fallback."""
+        pdfinfo = shutil.which("pdfinfo")
+        if pdfinfo:
+            try:
+                proc = subprocess.run(
+                    [pdfinfo, str(pdf_path)],
+                    capture_output=True,
+                    text=True,
+                    timeout=10.0,
+                )
+                for line in proc.stdout.splitlines():
+                    if line.startswith("Pages:"):
+                        return int(line.split(":")[1].strip())
+            except (subprocess.TimeoutExpired, ValueError, IndexError):
+                pass
+
+        try:
+            content = pdf_path.read_bytes()
+            matches = re.findall(rb"/Type\s*/Page[^s]", content)
+            return len(matches) if matches else 1
+        except Exception:
+            return 1

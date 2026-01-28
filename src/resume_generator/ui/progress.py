@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 from time import time
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from rich.console import Console, Group, RenderableType
 from rich.live import Live
@@ -26,6 +26,9 @@ from rich.progress import (
 from rich.rule import Rule
 from rich.table import Table
 from rich.text import Text
+
+if TYPE_CHECKING:
+    from resume_generator.config import Settings
 
 
 class PipelineStage(str, Enum):
@@ -99,6 +102,29 @@ class StageElapsedColumn(ProgressColumn):
             elapsed = task.elapsed if task.elapsed is not None else 0.0
             return Text(f"{elapsed:.1f}s", style=COLOR_PRIMARY)
         return Text("", style=COLOR_MUTED)
+
+
+@dataclass
+class PipelineConfig:
+    """Configuration values displayed during pipeline execution."""
+
+    max_pages: int = 1
+    max_bullet_words: int = 25
+    max_bullets_per_job: int = 5
+    claude_model: str = "sonnet"
+    output_language: str = "en"
+    color_palette: str = "classic"
+
+    @classmethod
+    def from_settings(cls, settings: Settings) -> PipelineConfig:
+        return cls(
+            max_pages=settings.max_pages,
+            max_bullet_words=settings.max_bullet_words,
+            max_bullets_per_job=settings.max_bullets_per_job,
+            claude_model=settings.claude_model.value,
+            output_language=settings.output_language.value,
+            color_palette=settings.color_palette.value,
+        )
 
 
 @dataclass
@@ -217,9 +243,14 @@ class SummaryPanel:
 class PipelineUI:
     """Rich-based UI for pipeline progress visualization."""
 
-    def __init__(self, verbose: bool = False) -> None:
+    def __init__(
+        self,
+        verbose: bool = False,
+        config: PipelineConfig | None = None,
+    ) -> None:
         self.console = Console()
         self.verbose = verbose
+        self._config = config
         self._live: Live | None = None
         self._overall_progress: Progress | None = None
         self._stages_progress: Progress | None = None
@@ -264,11 +295,32 @@ class PipelineUI:
             expand=False,
         )
 
-    def _build_header(self) -> Text:
-        """Build a simple header."""
+    def _build_header(self) -> RenderableType:
+        """Build header."""
         text = Text()
         text.append("Resume Generator", style="bold")
         return text
+
+    def _build_config_panel(self) -> Panel:
+        """Build the configuration panel."""
+        table = Table(show_header=False, box=None, padding=(0, 1), expand=True)
+        table.add_column("Label")
+        table.add_column("Value", justify="right")
+
+        if self._config:
+            table.add_row("Pages", Text(str(self._config.max_pages), style=COLOR_PRIMARY))
+            table.add_row("Bullet words", Text(str(self._config.max_bullet_words), style=COLOR_DIM))
+            table.add_row("Bullets/job", Text(str(self._config.max_bullets_per_job), style=COLOR_DIM))
+            table.add_row("Model", Text(self._config.claude_model, style=COLOR_DIM))
+            table.add_row("Palette", Text(self._config.color_palette, style=COLOR_DIM))
+            table.add_row("Language", Text(self._config.output_language, style=COLOR_DIM))
+
+        return Panel(
+            table,
+            title=f"[{COLOR_PRIMARY}]Config",
+            border_style=COLOR_MUTED,
+            padding=(0, 1),
+        )
 
     def _build_stats_panel(self) -> Panel | None:
         """Build the statistics panel."""
@@ -324,14 +376,19 @@ class PipelineUI:
             elements.append(Padding(self._overall_progress, (1, 1)))
 
         if self._stages_progress:
-            elements.append(
-                Panel(
-                    self._stages_progress,
-                    title=f"[{COLOR_PRIMARY}]Pipeline Stages",
-                    border_style=COLOR_MUTED,
-                    padding=(0, 1),
-                )
+            stages_panel = Panel(
+                self._stages_progress,
+                title=f"[{COLOR_PRIMARY}]Pipeline Stages",
+                border_style=COLOR_MUTED,
+                padding=(0, 1),
             )
+            config_panel = self._build_config_panel()
+
+            columns = Table.grid(expand=True)
+            columns.add_column(ratio=1)
+            columns.add_column(ratio=2)
+            columns.add_row(config_panel, stages_panel)
+            elements.append(columns)
 
         stats_panel = self._build_stats_panel()
         if stats_panel:
@@ -397,10 +454,9 @@ class PipelineUI:
 
                 curr_idx = PIPELINE_STAGE_TO_DISPLAY_INDEX.get(self._current_stage)
                 if curr_idx is not None and self._stages_progress:
-                    self._stages_progress.update(
-                        self._stage_task_ids[curr_idx],
-                        completed=1,
-                    )
+                    task_id = self._stage_task_ids[curr_idx]
+                    self._stages_progress.stop_task(task_id)
+                    self._stages_progress.update(task_id, completed=1)
 
             if self._overall_progress and self._overall_task_id is not None:
                 self._overall_progress.advance(self._overall_task_id)

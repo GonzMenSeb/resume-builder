@@ -357,6 +357,7 @@ def build_bullet_batch_prompt(
     company: str,
     target_keywords: list[str] | None = None,
     language: str | None = None,
+    max_words: int | None = None,
 ) -> str:
     """Build prompt for optimizing multiple achievement bullets in one call.
 
@@ -374,6 +375,9 @@ def build_bullet_batch_prompt(
 
     language_section = _get_language_instruction(language)
 
+    word_limit = max_words or 25
+    word_limit_instruction = f"8. CRITICAL: Keep each bullet under {word_limit} words maximum."
+
     return f"""\
 Optimize the following achievement bullets for a {role_title} position at {company}.
 {keywords_section}{language_section}
@@ -389,7 +393,8 @@ Optimize the following achievement bullets for a {role_title} position at {compa
 4. Order by impact (most impressive first).
 5. Limit to 5 bullets maximum (remove weakest if more).
 6. Ensure each bullet is unique and adds value.
-7. Include the original_index (0-based) for each bullet to track provenance."""
+7. Include the original_index (0-based) for each bullet to track provenance.
+{word_limit_instruction}"""
 
 
 def build_professional_summary_prompt(
