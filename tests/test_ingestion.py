@@ -6,6 +6,7 @@ import pytest
 
 from resume_generator.ingestion import (
     DataLoader,
+    DocxExtractor,
     ExtractionError,
     ExtractionResult,
     LoadResult,
@@ -196,6 +197,105 @@ class TestTextExtractor:
         assert "not a file" in str(exc_info.value)
 
 
+class TestDocxExtractor:
+    """Tests for DocxExtractor."""
+
+    @pytest.fixture
+    def extractor(self) -> DocxExtractor:
+        return DocxExtractor()
+
+    @pytest.fixture
+    def sample_docx(self, tmp_path: Path) -> Path:
+        from docx import Document
+
+        docx_file = tmp_path / "test.docx"
+        doc = Document()
+        doc.add_paragraph("Test Document Title")
+        doc.add_paragraph("This is the first paragraph with some content.")
+        doc.add_paragraph("This is the second paragraph.")
+        doc.save(docx_file)
+        return docx_file
+
+    @pytest.fixture
+    def docx_with_table(self, tmp_path: Path) -> Path:
+        from docx import Document
+
+        docx_file = tmp_path / "table.docx"
+        doc = Document()
+        doc.add_paragraph("Document with Table")
+        table = doc.add_table(rows=2, cols=2)
+        table.cell(0, 0).text = "Header 1"
+        table.cell(0, 1).text = "Header 2"
+        table.cell(1, 0).text = "Value 1"
+        table.cell(1, 1).text = "Value 2"
+        doc.save(docx_file)
+        return docx_file
+
+    def test_supported_extensions(self, extractor: DocxExtractor) -> None:
+        assert ".docx" in extractor.supported_extensions
+        assert len(extractor.supported_extensions) == 1
+
+    def test_can_handle_docx(self, extractor: DocxExtractor, tmp_path: Path) -> None:
+        docx_path = tmp_path / "test.docx"
+        docx_path.touch()
+        assert extractor.can_handle(docx_path)
+
+    def test_cannot_handle_non_docx(self, extractor: DocxExtractor, tmp_path: Path) -> None:
+        txt_path = tmp_path / "test.txt"
+        txt_path.touch()
+        assert not extractor.can_handle(txt_path)
+
+        pdf_path = tmp_path / "test.pdf"
+        pdf_path.touch()
+        assert not extractor.can_handle(pdf_path)
+
+    def test_extract_from_docx(self, extractor: DocxExtractor, sample_docx: Path) -> None:
+        text = extractor.extract(sample_docx)
+        assert isinstance(text, str)
+        assert "Test Document Title" in text
+        assert "first paragraph" in text
+        assert "second paragraph" in text
+
+    def test_extract_with_table(self, extractor: DocxExtractor, docx_with_table: Path) -> None:
+        text = extractor.extract(docx_with_table)
+        assert "Document with Table" in text
+        assert "Header 1" in text
+        assert "Value 1" in text
+
+    def test_extract_file_not_found(self, extractor: DocxExtractor, tmp_path: Path) -> None:
+        nonexistent = tmp_path / "nonexistent.docx"
+        with pytest.raises(FileNotFoundError):
+            extractor.extract(nonexistent)
+
+    def test_extract_unsupported_extension(self, extractor: DocxExtractor, tmp_path: Path) -> None:
+        txt_file = tmp_path / "test.txt"
+        txt_file.write_text("content")
+        with pytest.raises(ExtractionError) as exc_info:
+            extractor.extract(txt_file)
+        assert "Unsupported file type" in str(exc_info.value)
+
+    def test_extract_invalid_docx(self, extractor: DocxExtractor, tmp_path: Path) -> None:
+        invalid_docx = tmp_path / "invalid.docx"
+        invalid_docx.write_text("not a docx")
+        with pytest.raises(ExtractionError):
+            extractor.extract(invalid_docx)
+
+    def test_extract_with_metadata(self, extractor: DocxExtractor, sample_docx: Path) -> None:
+        result = extractor.extract_with_metadata(sample_docx)
+        assert isinstance(result, ExtractionResult)
+        assert result.source_path == sample_docx
+        assert "Test Document Title" in result.text
+        assert result.char_count > 0
+        assert result.word_count > 0
+        assert "paragraph_count" in result.metadata
+        assert "table_count" in result.metadata
+
+    def test_extract_directory_raises_error(self, extractor: DocxExtractor, tmp_path: Path) -> None:
+        with pytest.raises(ExtractionError) as exc_info:
+            extractor.extract(tmp_path)
+        assert "not a file" in str(exc_info.value)
+
+
 class TestExtractionResult:
     """Tests for ExtractionResult dataclass."""
 
@@ -267,9 +367,20 @@ class TestDataLoader:
         )
         return pdf_file
 
+    @pytest.fixture
+    def sample_docx_file(self, tmp_path: Path) -> Path:
+        from docx import Document
+
+        docx_file = tmp_path / "sample.docx"
+        doc = Document()
+        doc.add_paragraph("DOCX Data")
+        doc.add_paragraph("Sample content from docx")
+        doc.save(docx_file)
+        return docx_file
+
     def test_initialization(self, loader: DataLoader) -> None:
         assert loader is not None
-        assert len(loader._extractors) == 2
+        assert len(loader._extractors) == 3
 
     def test_supported_extensions(self, loader: DataLoader) -> None:
         extensions = loader.supported_extensions
@@ -277,6 +388,7 @@ class TestDataLoader:
         assert ".txt" in extensions
         assert ".md" in extensions
         assert ".markdown" in extensions
+        assert ".docx" in extensions
 
     def test_can_handle(self, loader: DataLoader, tmp_path: Path) -> None:
         txt_file = tmp_path / "test.txt"
@@ -287,7 +399,11 @@ class TestDataLoader:
         pdf_file.touch()
         assert loader.can_handle(pdf_file)
 
-        unsupported = tmp_path / "test.docx"
+        docx_file = tmp_path / "test.docx"
+        docx_file.touch()
+        assert loader.can_handle(docx_file)
+
+        unsupported = tmp_path / "test.xyz"
         unsupported.touch()
         assert not loader.can_handle(unsupported)
 
@@ -310,6 +426,11 @@ class TestDataLoader:
         result = loader.load(sample_pdf_file)
         assert result.source_count == 1
         assert "PDF Data" in result.unified_text
+
+    def test_load_single_docx_file(self, loader: DataLoader, sample_docx_file: Path) -> None:
+        result = loader.load(sample_docx_file)
+        assert result.source_count == 1
+        assert "DOCX Data" in result.unified_text
 
     def test_load_multiple_files(
         self,
@@ -382,7 +503,7 @@ class TestDataLoader:
             loader.load(nonexistent, skip_failures=False)
 
     def test_load_unsupported_file_skip_failures(self, loader: DataLoader, tmp_path: Path) -> None:
-        unsupported = tmp_path / "test.docx"
+        unsupported = tmp_path / "test.xyz"
         unsupported.write_text("content")
         result = loader.load(unsupported, skip_failures=True)
         assert result.source_count == 0
@@ -437,7 +558,7 @@ class TestDataLoader:
         assert files[0] == sample_text_file
 
     def test_collect_files_unsupported_file(self, loader: DataLoader, tmp_path: Path) -> None:
-        unsupported = tmp_path / "test.docx"
+        unsupported = tmp_path / "test.xyz"
         unsupported.touch()
         files = loader._collect_files(unsupported)
         assert len(files) == 0
@@ -457,10 +578,16 @@ class TestDataLoader:
         assert extractor is not None
         assert isinstance(extractor, PDFExtractor)
 
+        docx_file = tmp_path / "test.docx"
+        docx_file.touch()
+        extractor = loader._get_extractor(docx_file)
+        assert extractor is not None
+        assert isinstance(extractor, DocxExtractor)
+
     def test_get_extractor_returns_none_for_unsupported(
         self, loader: DataLoader, tmp_path: Path
     ) -> None:
-        unsupported = tmp_path / "test.docx"
+        unsupported = tmp_path / "test.xyz"
         unsupported.touch()
         extractor = loader._get_extractor(unsupported)
         assert extractor is None

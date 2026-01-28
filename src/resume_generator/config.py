@@ -113,6 +113,10 @@ class Settings(BaseSettings):
         default=Path("./.resume_cache"),
         description="Cache directory for intermediate files",
     )
+    target_job_dir: Path | None = Field(
+        default=None,
+        description="Default directory for target job description files",
+    )
 
     # Template & Design Configuration (research-backed defaults)
     default_template: ResumeTemplate = Field(
@@ -225,7 +229,7 @@ class Settings(BaseSettings):
         description="Language for the generated resume content",
     )
 
-    @field_validator("input_dir", "output_dir", "templates_dir", "cache_dir", mode="before")
+    @field_validator("input_dir", "output_dir", "templates_dir", "cache_dir", "target_job_dir", mode="before")
     @classmethod
     def ensure_path(cls, v: str | Path | None) -> Path | None:
         if v is None:

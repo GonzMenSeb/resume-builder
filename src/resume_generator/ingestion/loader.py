@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from resume_generator.ingestion.base import BaseExtractor, ExtractionError, ExtractionResult
+from resume_generator.ingestion.docx import DocxExtractor
 from resume_generator.ingestion.pdf import PDFExtractor
 from resume_generator.ingestion.text import TextExtractor
 
@@ -38,7 +39,7 @@ class DataLoader:
     """Loads and aggregates text content from multiple file types and sources."""
 
     def __init__(self) -> None:
-        self._extractors: list[BaseExtractor] = [PDFExtractor(), TextExtractor()]
+        self._extractors: list[BaseExtractor] = [PDFExtractor(), TextExtractor(), DocxExtractor()]
 
     def _get_extractor(self, path: Path) -> BaseExtractor | None:
         """Find an extractor that can handle the given file."""

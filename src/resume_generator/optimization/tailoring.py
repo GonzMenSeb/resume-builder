@@ -899,7 +899,10 @@ class JobTailorer:
         job_content = self._job_to_dict(job)
 
         language = self._settings.output_language.value if self._settings else None
-        prompt = build_job_tailoring_prompt(resume_content, job_content, language=language)
+        customization_rate = self._settings.tailoring_customization_rate if self._settings else None
+        prompt = build_job_tailoring_prompt(
+            resume_content, job_content, language=language, customization_rate=customization_rate
+        )
 
         try:
             result = self._call_claude_structured(prompt, TailoringResultSchema)

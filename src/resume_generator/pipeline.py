@@ -200,6 +200,11 @@ class ResumePipeline:
                 result.resume = resume
                 result.tex_path = tex_path
 
+                if not self._settings.keep_latex_source and tex_path.exists():
+                    tex_path.unlink()
+                    result.tex_path = None
+                    logger.debug("Removed LaTeX source: %s", tex_path)
+
             result.keyword_match_rate = resume.keyword_match_rate or 0.0
             result.optimization_score = resume.optimization_score or 0.0
             result.success = True
@@ -539,6 +544,11 @@ class ResumePipeline:
                 result.pdf_path = pdf_path
                 result.compilation_result = compilation
 
+                if not self._settings.keep_latex_source and tex_path.exists():
+                    tex_path.unlink()
+                    result.tex_path = None
+                    logger.debug("Removed LaTeX source: %s", tex_path)
+
             result.keyword_match_rate = resume.keyword_match_rate or 0.0
             result.optimization_score = resume.optimization_score or 0.0
             result.success = True
@@ -726,6 +736,11 @@ class ResumePipeline:
                 pdf_path, compilation = sr.data
                 result.pdf_path = pdf_path
                 result.compilation_result = compilation
+
+                if not self._settings.keep_latex_source and tex_path.exists():
+                    tex_path.unlink()
+                    result.tex_path = None
+                    logger.debug("Removed LaTeX source: %s", tex_path)
 
             result.keyword_match_rate = resume.keyword_match_rate or 0.0
             result.optimization_score = resume.optimization_score or 0.0

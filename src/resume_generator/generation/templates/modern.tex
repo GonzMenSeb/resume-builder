@@ -33,6 +33,7 @@
 \usepackage{xcolor}
 \usepackage{hyperref}
 \usepackage{etoolbox}
+\usepackage{fontawesome5}
 
 %% Color scheme (max 3 colors per research guidelines)
 \definecolor{primary}{RGB}{((( config.primary_color | default('45, 85, 145') )))}
@@ -78,16 +79,16 @@
 \begin{center}
     {\fontsize{22}{26}\bfseries\color{secondary} ((( contact.name | latex_escape )))}\\[6pt]
     {\color{accent}
-        ((* if contact.email *))((( contact.email | latex_escape )))((* endif *))%
-        ((* if contact.phone *)) \enspace $\cdot$ \enspace ((( contact.phone | latex_escape )))((* endif *))%
-        ((* if contact.location *)) \enspace $\cdot$ \enspace ((( contact.location | latex_escape )))((* endif *))
+        ((* if contact.email *)){\color{gray}\faEnvelope}\ \href{mailto:((( contact.email | latex_escape )))}{((( contact.email | latex_escape )))}((* endif *))%
+        ((* if contact.phone *)) \enspace $\cdot$ \enspace {\color{gray}\faPhone}\ ((( contact.phone | latex_escape )))((* endif *))%
+        ((* if contact.location *)) \enspace $\cdot$ \enspace {\color{gray}\faMapMarker*}\ ((( contact.location | latex_escape )))((* endif *))
     }
     ((* if contact.linkedin_url or contact.github_url or contact.portfolio_url *))
     \\[3pt]
     {\color{accent}
-        ((* if contact.linkedin_url *))\href{((( contact.linkedin_url | string )))}{((( labels.linkedin | default('LinkedIn') )))}((* endif *))%
-        ((* if contact.github_url *)) \enspace $\cdot$ \enspace \href{((( contact.github_url | string )))}{((( labels.github | default('GitHub') )))}((* endif *))%
-        ((* if contact.portfolio_url *)) \enspace $\cdot$ \enspace \href{((( contact.portfolio_url | string )))}{((( labels.portfolio | default('Portfolio') )))}((* endif *))
+        ((* if contact.github_url *)){\color{gray}\faGithub}\ \href{((( contact.github_url | string )))}{((( labels.github | default('GitHub') )))}((* endif *))%
+        ((* if contact.linkedin_url *))((* if contact.github_url *)) \enspace $\cdot$ \enspace ((* endif *)){\color{gray}\faLinkedin}\ \href{((( contact.linkedin_url | string )))}{((( labels.linkedin | default('LinkedIn') )))}((* endif *))%
+        ((* if contact.portfolio_url *))((* if contact.linkedin_url or contact.github_url *)) \enspace $\cdot$ \enspace ((* endif *)){\color{gray}\faGlobe}\ \href{((( contact.portfolio_url | string )))}{((( labels.portfolio | default('Portfolio') )))}((* endif *))
     }
     ((* endif *))
 \end{center}
@@ -165,7 +166,7 @@
 
 ((* for project in projects *))
 \noindent
-\textbf{\color{secondary}((( project.name | latex_escape )))}((* if project.url *)) -- \href{((( project.url | string )))}{Link}((* endif *))
+\textbf{\color{secondary}((( project.name | latex_escape )))}((* if project.url *)) {\color{gray}\faExternalLink*}\ \href{((( project.url | string )))}{Link}((* endif *))
 ((* if project.description *))
 \\((( project.description | latex_escape )))
 ((* endif *))

@@ -300,6 +300,8 @@ class ResumeOptimizer:
         years_exp = profile.years_of_experience or profile.compute_years_of_experience()
 
         language = self._settings.output_language.value if self._settings else None
+        min_words = self._settings.summary_min_words if self._settings else None
+        max_words = self._settings.summary_max_words if self._settings else None
         prompt = build_professional_summary_prompt(
             name=profile.contact.full_name,
             current_title=current_title,
@@ -309,6 +311,8 @@ class ResumeOptimizer:
             target_job_title=target_job_title,
             target_keywords=target_keywords,
             language=language,
+            min_words=min_words,
+            max_words=max_words,
         )
 
         try:
@@ -370,7 +374,7 @@ class ResumeOptimizer:
             ResumeEducation(
                 institution=edu.institution,
                 degree=f"{edu.degree} in {edu.field_of_study}"
-                if edu.field_of_study
+                if edu.field_of_study and edu.field_of_study.lower() not in edu.degree.lower()
                 else edu.degree,
                 location=edu.location,
                 graduation_date=edu.graduation_date,

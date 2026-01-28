@@ -264,7 +264,7 @@ matching the requested schema.
 [Unique value proposition or career focus].
 
 ## Requirements
-- Length: 50-100 words (optimal for recruiter scanning)
+- Length: Follow the word count specified in the instructions
 - Tone: Confident, professional, third-person or implied first-person
 - Include: Years of experience, core expertise areas, standout achievements, target role fit
 - Avoid: Personal pronouns, generic claims, soft skills without context
@@ -407,6 +407,8 @@ def build_professional_summary_prompt(
     target_company: str | None = None,
     target_keywords: list[str] | None = None,
     language: str | None = None,
+    min_words: int | None = None,
+    max_words: int | None = None,
 ) -> str:
     """Build prompt for generating an optimized professional summary.
 
@@ -443,7 +445,7 @@ Generate a professional summary for the following candidate.
 
 ## Instructions
 
-1. Write 50-100 words (optimal length for recruiter scanning).
+1. Write {min_words or 50}-{max_words or 100} words (optimal length for recruiter scanning).
 2. Structure: [Title] with [years] experience + [domain]. [Key achievements]. [Value prop].
 3. If targeting a specific job, mirror relevant terminology.
 4. Use confident, professional tone without personal pronouns.
@@ -455,6 +457,7 @@ def build_job_tailoring_prompt(
     resume_content: dict[str, Any],
     job_description: dict[str, Any],
     language: str | None = None,
+    customization_rate: float | None = None,
 ) -> str:
     """Build prompt for tailoring resume content to a specific job description.
 
@@ -462,10 +465,16 @@ def build_job_tailoring_prompt(
     to append JSON schema instructions.
     """
     language_section = _get_language_instruction(language)
+    rate = customization_rate if customization_rate is not None else 0.50
+    rate_pct = int(rate * 100)
+    customization_section = f"""
+## Customization Level: {rate_pct}%
+- At {rate_pct}% customization, {"make moderate changes" if rate <= 0.5 else "make aggressive changes"} to align with the job.
+- {"Preserve most original phrasing while reordering and incorporating keywords." if rate <= 0.4 else "Rewrite content more substantially to match job requirements." if rate >= 0.6 else "Balance between preserving authenticity and optimizing for the job."}
+"""
     return f"""\
 Tailor the following resume content to match the target job description.
-{language_section}
-
+{language_section}{customization_section}
 ## Expected JSON Output Structure
 
 The response must be a JSON object with these fields:

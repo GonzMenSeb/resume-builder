@@ -64,7 +64,7 @@ def generate(
     inputs: Annotated[
         list[Path] | None,
         typer.Argument(
-            help="Input files or directories (PDF, TXT, MD). If omitted, uses input_dir from config.",
+            help="Input files or directories (PDF, DOCX, TXT, MD). If omitted, uses input_dir from config.",
         ),
     ] = None,
     output: Annotated[
@@ -184,7 +184,7 @@ def generate(
 ) -> None:
     """Generate an S+ tier resume from input data.
 
-    Provide one or more input files (PDF, TXT, MD) or directories containing
+    Provide one or more input files (PDF, DOCX, TXT, MD) or directories containing
     your resume data. If no inputs are provided, uses input_dir from config.
     Optionally specify a job description to tailor the resume for that
     specific position.
@@ -242,7 +242,9 @@ def generate(
         raise typer.Exit(1) from e
 
     resolved_inputs = _resolve_inputs(inputs, settings, verbose)
-    job = _parse_job_description(job_description, job_file, job_url, verbose)
+    job = _parse_job_description(
+        job_description, job_file, job_url, verbose, settings.target_job_dir
+    )
 
     pipeline_config = PipelineConfig.from_settings(settings)
     ui = PipelineUI(verbose=verbose, config=pipeline_config)
@@ -339,8 +341,9 @@ def _parse_job_description(
     job_file: Path | None,
     job_url: str | None,
     verbose: bool,
+    target_job_dir: Path | None = None,
 ) -> JobDescription | None:
-    """Parse job description from text, file, or URL."""
+    """Parse job description from text, file, URL, or target_job_dir config."""
     if job_file:
         text = job_file.read_text(encoding="utf-8")
         return JobDescription(title="Target Position", raw_text=text)
@@ -353,6 +356,14 @@ def _parse_job_description(
         )
     if job_text:
         return JobDescription(title="Target Position", raw_text=job_text)
+    if target_job_dir and target_job_dir.exists():
+        job_files = list(target_job_dir.glob("*.txt")) + list(target_job_dir.glob("*.md"))
+        if job_files:
+            latest_job_file = max(job_files, key=lambda f: f.stat().st_mtime)
+            if verbose:
+                console.print(f"[dim]Using job description from target_job_dir: {latest_job_file}[/]")
+            text = latest_job_file.read_text(encoding="utf-8")
+            return JobDescription(title="Target Position", raw_text=text)
     return None
 
 

@@ -129,7 +129,7 @@ class ProfileExtractionSchema(BaseModel):
     projects: list[ProjectSchema] = Field(default_factory=list, description="Projects")
     publications: list[str] = Field(default_factory=list, description="Publications")
     awards: list[str] = Field(default_factory=list, description="Awards")
-    languages: list[list[str]] = Field(
+    languages: list[list[str | None]] = Field(
         default_factory=list, description="Languages as [name, proficiency]"
     )
     volunteer_experience: list[str] = Field(default_factory=list, description="Volunteer work")
@@ -305,11 +305,12 @@ class ProfileExtractor:
                 proj_data["end_date"] = self._parse_date(proj.end_date) if proj.end_date else None
                 projects.append(Project.model_validate(proj_data))
 
-            languages = [
-                (lang[0], lang[1]) if len(lang) >= 2 else (lang[0], "")
-                for lang in extracted.languages
-                if lang
-            ]
+            languages: list[tuple[str, str]] = []
+            for lang in extracted.languages:
+                if lang and lang[0]:
+                    name = lang[0]
+                    prof = lang[1] if len(lang) >= 2 and lang[1] else ""
+                    languages.append((name, prof))
 
             return PersonProfile(
                 contact=contact,

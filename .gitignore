@@ -67,7 +67,7 @@ output/
 # Data directories (keep folders, ignore contents)
 tmp/resume_data/*
 tmp/resumes/*
-tmp/jobs/*
+tmp/target_job/*
 
 
 # Claude Code

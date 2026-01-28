@@ -30,8 +30,9 @@ summary_max_words: 100    # Max words in summary (80-150)
 output_language: en
 
 # === Paths (optional) ===
-# input_dir: ./resume_data   # Default input directory (allows 'resume-gen generate' with no args)
+# input_dir: ./resume_data     # Default input directory (allows 'resume-gen generate' with no args)
 # output_dir: ./output
+# target_job_dir: ./target_job # Default directory for job description files (uses most recent .txt/.md)
 # cache_dir: ./.resume_cache
 
 # === Advanced ===
