@@ -9,21 +9,21 @@ compile_pdf: true
 keep_latex_source: true
 
 # === AI Settings ===
-claude_model: sonnet
+claude_model: opus
 
 # === Design Settings ===
 # Available palettes: classic, burgundy, navy, forest, slate, charcoal
-color_palette: navy
+color_palette: charcoal
 
 # === Content Settings ===
 min_bullets_per_job: 3
-max_bullets_per_job: 6
+max_bullets_per_job: 7
 summary_min_words: 50
-summary_max_words: 150
+summary_max_words: 130
 
 # === Language ===
 # Supported: en, es, fr, de, pt, it, zh, ja, ko, ar, nl, ru, pl
-output_language: es
+output_language: en
 
 # === Paths (optional) ===
 output_dir: ./output
@@ -31,6 +31,7 @@ input_dir: ./tmp/resume_data
 target_job_dir: ./tmp/target_job
 
 # === Advanced ===
+target_tier: S
 # target_keyword_match_rate: 0.70
 # tailoring_customization_rate: 0.50
 # enable_job_tailoring: true

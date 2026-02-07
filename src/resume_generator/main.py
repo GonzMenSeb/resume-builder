@@ -172,6 +172,14 @@ def generate(
             case_sensitive=False,
         ),
     ] = None,
+    log_level: Annotated[
+        str | None,
+        typer.Option(
+            "--log-level",
+            "-L",
+            help="Log level for pipeline file logging (DEBUG, INFO, WARNING, ERROR, CRITICAL)",
+        ),
+    ] = None,
     config_file: Annotated[
         Path | None,
         typer.Option(
@@ -236,6 +244,7 @@ def generate(
             max_pages=max_pages,
             max_bullet_words=max_bullet_words,
             color_palette=color_palette,
+            log_level=log_level,
         )
     except Exception as e:
         console.print(f"[bold red]Configuration error:[/] {e}")
@@ -262,6 +271,10 @@ def generate(
             for error in result.errors:
                 console.print(f"  [red]• {error}[/]")
             raise typer.Exit(1)
+
+        log_dir = settings.output_dir / "logs"
+        if log_dir.exists():
+            console.print(f"[dim]Logs written to: {log_dir}[/]")
 
     except PipelineError as e:
         console.print(f"\n[bold red]Pipeline error:[/] {e}")
@@ -313,10 +326,11 @@ def _build_settings(
     max_pages: int | None,
     max_bullet_words: int | None,
     color_palette: ColorPalette | None,
+    log_level: str | None = None,
 ) -> Settings:
     """Build settings from config file with CLI overrides."""
     settings = get_settings(config_path=config_file)
-    updates: dict[str, bool | int | ClaudeModel | ResumeLanguage | ColorPalette] = {}
+    updates: dict[str, bool | int | str | ClaudeModel | ResumeLanguage | ColorPalette] = {}
     if no_compile:
         updates["compile_pdf"] = False
     if verbose:
@@ -331,6 +345,8 @@ def _build_settings(
         updates["max_bullet_words"] = max_bullet_words
     if color_palette is not None and color_palette != settings.color_palette:
         updates["color_palette"] = color_palette
+    if log_level is not None:
+        updates["log_level"] = log_level
     if updates:
         settings = settings.model_copy(update=updates)
     return settings
@@ -467,6 +483,7 @@ def config(
         console.print(f"  compile_pdf: {settings.compile_pdf}")
         console.print(f"  min_bullets_per_job: {settings.min_bullets_per_job}")
         console.print(f"  max_bullets_per_job: {settings.max_bullets_per_job}")
+        console.print(f"  log_level: {settings.log_level}")
 
 
 if __name__ == "__main__":

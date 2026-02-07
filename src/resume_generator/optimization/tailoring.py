@@ -206,6 +206,7 @@ class JobTailorer:
         Raises:
             TailoringError: If tailoring fails.
         """
+        logger.info("Tailoring resume for '%s' (ai=%s)", job.title, use_ai)
         job_keywords = self._extract_job_keywords(job)
         resume_keywords = resume.get_all_keywords()
 
@@ -325,6 +326,13 @@ class JobTailorer:
             missing_required,
             missing_preferred,
             target_rate,
+        )
+
+        logger.info(
+            "Keyword match: rate=%.0f%%, weighted=%.0f%%, missing=%d",
+            match_rate * 100,
+            weighted_score * 100,
+            len(missing_required) + len(missing_preferred),
         )
 
         return MatchAnalysis(
@@ -845,6 +853,7 @@ class JobTailorer:
         resume_keywords: set[str],
     ) -> ResumeDocument:
         """Apply rule-based tailoring without AI assistance."""
+        logger.info("Using rule-based tailoring fallback")
         tailored_experiences = []
         for exp in resume.experiences:
             reordered_bullets = self.reorder_bullets_for_job(exp.bullets, job)
@@ -910,6 +919,11 @@ class JobTailorer:
             logger.warning("AI tailoring failed, falling back to rule-based: %s", e)
             return self._rule_based_tailor(resume, job, job_keywords, resume.get_all_keywords())
 
+        logger.info(
+            "AI tailoring result: fit_score=%.0f%%, match_rate=%.0f%%",
+            result.overall_fit_score * 100,
+            result.keyword_analysis.match_rate * 100,
+        )
         return self._apply_tailoring_result(resume, job, result)
 
     def _resume_to_dict(self, resume: ResumeDocument) -> dict[str, object]:

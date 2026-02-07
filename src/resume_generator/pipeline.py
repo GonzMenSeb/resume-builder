@@ -11,7 +11,8 @@ from time import time
 from typing import TYPE_CHECKING, Any
 
 from resume_generator.claude_client import ClaudeCLI, ClaudeCLINotFoundError
-from resume_generator.config import ResumeTemplate, Settings, get_settings
+from resume_generator.logging_config import PipelineLogging
+from resume_generator.config import ResumeTemplate, Settings, TierGrade, get_settings
 from resume_generator.extraction.profile import ExtractionError, ProfileExtractor
 from resume_generator.generation.compiler import CompilationResult, PDFCompiler
 from resume_generator.generation.generator import LaTeXGenerator, TemplateConfig
@@ -21,6 +22,7 @@ from resume_generator.models.profile import PersonProfile
 from resume_generator.models.resume import ResumeDocument
 from resume_generator.optimization.optimizer import OptimizationError, ResumeOptimizer
 from resume_generator.optimization.tailoring import JobTailorer, TailoringError
+from resume_generator.refinement.refiner import AdversarialRefiner, RefinementError, RefinementResult
 from resume_generator.ui.progress import PipelineStage, PipelineUI
 
 if TYPE_CHECKING:
@@ -76,8 +78,10 @@ class PipelineResult:
     profile: PersonProfile | None = None
     load_result: LoadResult | None = None
     compilation_result: CompilationResult | None = None
+    refinement_result: RefinementResult | None = None
     keyword_match_rate: float = 0.0
     optimization_score: float = 0.0
+    final_grade: TierGrade | None = None
     errors: list[str] = field(default_factory=list)
     stage_results: list[StageResult] = field(default_factory=list)
     total_duration_seconds: float = 0.0
@@ -119,12 +123,18 @@ class ResumePipeline:
         )
         self._verify_claude_cli()
 
+        self._logging = PipelineLogging(
+            log_dir=self._settings.output_dir / "logs",
+            level=self._settings.log_level,
+        )
+
         self._loader = DataLoader()
         self._extractor = ProfileExtractor(self._settings)
         self._optimizer = ResumeOptimizer(self._settings)
         self._tailorer = JobTailorer(self._settings)
         self._generator = LaTeXGenerator(self._settings)
         self._compiler = PDFCompiler()
+        self._refiner = AdversarialRefiner(self._settings)
 
     def _verify_claude_cli(self) -> None:
         """Verify Claude CLI is available before running pipeline."""
@@ -173,25 +183,32 @@ class ResumePipeline:
             self._ui.start_pipeline(stages)
 
         result = PipelineResult(success=False)
+        self._logging.setup()
 
         try:
+            self._logging.enter_stage("loading")
             load_result = self._run_ingestion(sources)
             result.load_result = load_result
 
+            self._logging.enter_stage("extraction")
             profile = self._run_extraction(load_result.unified_text)
             result.profile = profile
 
+            self._logging.enter_stage("optimization")
             resume = self._run_optimization(profile, job)
 
             if job and self._settings.enable_job_tailoring:
+                self._logging.enter_stage("tailoring")
                 resume = self._run_tailoring(resume, job)
 
             result.resume = resume
 
+            self._logging.enter_stage("generation")
             tex_path = self._run_generation(resume, output_path, template)
             result.tex_path = tex_path
 
             if self._settings.compile_pdf:
+                self._logging.enter_stage("compilation")
                 pdf_path, compilation, resume = self._run_compilation_with_compaction(
                     resume, tex_path, output_path, template
                 )
@@ -199,6 +216,19 @@ class ResumePipeline:
                 result.compilation_result = compilation
                 result.resume = resume
                 result.tex_path = tex_path
+
+                target_tier = self._settings.get_target_tier_grade()
+                if target_tier is not None and pdf_path is not None:
+                    self._logging.enter_stage("refinement")
+                    raw_text = profile.raw_text if profile else None
+                    refinement_result, resume, pdf_path, tex_path = self._run_refinement(
+                        resume, pdf_path, tex_path, target_tier, output_path, template, raw_text
+                    )
+                    result.refinement_result = refinement_result
+                    result.final_grade = refinement_result.final_grade
+                    result.resume = resume
+                    result.pdf_path = pdf_path
+                    result.tex_path = tex_path
 
                 if not self._settings.keep_latex_source and tex_path.exists():
                     tex_path.unlink()
@@ -224,6 +254,7 @@ class ResumePipeline:
                 self._ui.show_error(e)
             raise PipelineError(str(e)) from e
         finally:
+            self._logging.teardown()
             if self._ui:
                 self._ui.stop()
 
@@ -240,6 +271,8 @@ class ResumePipeline:
         stages.append(PipelineStage.GENERATING)
         if self._settings.compile_pdf:
             stages.append(PipelineStage.COMPILING)
+        if self._settings.compile_pdf and self._settings.get_target_tier_grade() is not None:
+            stages.append(PipelineStage.REFINING)
         return stages
 
     def _run_ingestion(self, sources: Path | str | Sequence[Path | str]) -> LoadResult:
@@ -438,6 +471,93 @@ class ResumePipeline:
         logger.info("Compiled PDF: %s (%d pages)", compilation.pdf_path, compilation.page_count)
         return pdf_path, compilation, current_resume
 
+    def _run_refinement(
+        self,
+        resume: ResumeDocument,
+        pdf_path: Path,
+        tex_path: Path,
+        target_tier: TierGrade,
+        output_path: Path | None,
+        template: ResumeTemplate | None,
+        raw_text: str | None = None,
+    ) -> tuple[RefinementResult, ResumeDocument, Path, Path]:
+        """Run adversarial refinement loop until target tier is achieved.
+
+        Args:
+            resume: Current resume document.
+            pdf_path: Path to current PDF.
+            tex_path: Path to current LaTeX source.
+            target_tier: Target tier grade to achieve.
+            output_path: Base output path.
+            template: Resume template to use.
+            raw_text: Original raw data for truth verification and content recovery.
+
+        Returns:
+            Tuple of (refinement_result, final_resume, final_pdf_path, final_tex_path).
+        """
+        if self._ui:
+            self._ui.update_stage(
+                PipelineStage.REFINING,
+                message=f"Target: {target_tier.value}",
+            )
+
+        current_resume = resume
+        current_pdf = pdf_path
+        current_tex = tex_path
+
+        def regenerate_callback(polished_resume: ResumeDocument) -> tuple[Path, Path]:
+            nonlocal current_tex
+            current_tex = self._run_generation(polished_resume, output_path, template)
+            new_pdf, _ = self._run_compilation(current_tex, output_path)
+            if new_pdf is None:
+                raise PipelineError("PDF regeneration failed", PipelineStage.REFINING)
+            return current_tex, new_pdf
+
+        def on_iteration(iteration: Any) -> None:
+            if self._ui:
+                msg = f"Iter {iteration.iteration}: {iteration.grade.value}"
+                self._ui.update_stage(PipelineStage.REFINING, message=msg)
+            logger.info(
+                "Refinement iteration %d: grade=%s",
+                iteration.iteration,
+                iteration.grade.value,
+            )
+
+        try:
+            refinement_result = self._refiner.refine(
+                resume=current_resume,
+                pdf_path=current_pdf,
+                target_grade=target_tier,
+                raw_text=raw_text,
+                regenerate_callback=regenerate_callback,
+                on_iteration=on_iteration,
+            )
+        except RefinementError as e:
+            raise PipelineError(str(e), PipelineStage.REFINING) from e
+
+        if refinement_result.final_resume is not None:
+            current_resume = refinement_result.final_resume
+
+        if refinement_result.iterations:
+            last_iteration = refinement_result.iterations[-1]
+            if last_iteration.polish_result is not None:
+                current_tex = self._run_generation(current_resume, output_path, template)
+                current_pdf, _ = self._run_compilation(current_tex, output_path)
+                if current_pdf is None:
+                    current_pdf = pdf_path
+
+        if self._ui:
+            self._ui.update_stage(PipelineStage.REFINING, completed=True)
+
+        logger.info(
+            "Refinement complete: %s (target: %s, iterations: %d)",
+            refinement_result.final_grade.value,
+            target_tier.value,
+            refinement_result.iteration_count,
+        )
+
+        return refinement_result, current_resume, current_pdf, current_tex
+
     def _generate_output_name(self, resume: ResumeDocument) -> str:
         name_parts = resume.contact.name.lower().split()
         sanitized = "_".join(name_parts[:2]) if name_parts else "resume"
@@ -452,6 +572,13 @@ class ResumePipeline:
         if self._ui and result.resume:
             self._ui.stats.keyword_match_rate = result.keyword_match_rate
             self._ui.stats.optimization_score = result.optimization_score
+            if result.refinement_result:
+                self._ui.stats.refinement_iterations = result.refinement_result.iteration_count
+                self._ui.stats.final_grade = result.refinement_result.final_grade.value
+                self._ui.stats.target_grade = result.refinement_result.target_grade.value
+                self._ui.stats.target_unattainable = result.refinement_result.target_unattainable
+                if result.refinement_result.max_achievable_grade:
+                    self._ui.stats.max_achievable_grade = result.refinement_result.max_achievable_grade.value
 
     async def run_async(
         self,
@@ -485,8 +612,10 @@ class ResumePipeline:
 
         result = PipelineResult(success=False)
         loop = asyncio.get_event_loop()
+        self._logging.setup()
 
         try:
+            self._logging.enter_stage("loading")
             stage_result = await self._run_stage_async(
                 PipelineStage.LOADING,
                 lambda: self._run_ingestion(sources),
@@ -496,6 +625,7 @@ class ResumePipeline:
             load_result = stage_result.data
             result.load_result = load_result
 
+            self._logging.enter_stage("extraction")
             stage_result = await self._run_stage_async(
                 PipelineStage.EXTRACTING,
                 lambda: self._run_extraction(load_result.unified_text),
@@ -505,6 +635,7 @@ class ResumePipeline:
             profile = stage_result.data
             result.profile = profile
 
+            self._logging.enter_stage("optimization")
             stage_result = await self._run_stage_async(
                 PipelineStage.OPTIMIZING,
                 lambda: self._run_optimization(profile, job),
@@ -514,6 +645,7 @@ class ResumePipeline:
             resume = stage_result.data
 
             if job and self._settings.enable_job_tailoring:
+                self._logging.enter_stage("tailoring")
                 stage_result = await self._run_stage_async(
                     PipelineStage.TAILORING,
                     lambda: self._run_tailoring(resume, job),
@@ -524,6 +656,7 @@ class ResumePipeline:
 
             result.resume = resume
 
+            self._logging.enter_stage("generation")
             stage_result = await self._run_stage_async(
                 PipelineStage.GENERATING,
                 lambda: self._run_generation(resume, output_path, template),
@@ -534,6 +667,7 @@ class ResumePipeline:
             result.tex_path = tex_path
 
             if self._settings.compile_pdf:
+                self._logging.enter_stage("compilation")
                 stage_result = await self._run_stage_async(
                     PipelineStage.COMPILING,
                     lambda: self._run_compilation(tex_path, output_path),
@@ -577,6 +711,7 @@ class ResumePipeline:
                 self._ui.show_error(e)
             raise PipelineError(str(e), cause=e) from e
         finally:
+            self._logging.teardown()
             if self._ui:
                 self._ui.stop()
 
@@ -688,12 +823,16 @@ class ResumePipeline:
                     on_error(stage, error)
                 raise error from e
 
+        self._logging.setup()
+
         try:
+            self._logging.enter_stage("loading")
             sr = execute_stage(PipelineStage.LOADING, lambda: self._run_ingestion(sources))
             result.stage_results.append(sr)
             load_result = sr.data
             result.load_result = load_result
 
+            self._logging.enter_stage("extraction")
             sr = execute_stage(
                 PipelineStage.EXTRACTING,
                 lambda: self._run_extraction(load_result.unified_text),
@@ -702,6 +841,7 @@ class ResumePipeline:
             profile = sr.data
             result.profile = profile
 
+            self._logging.enter_stage("optimization")
             sr = execute_stage(
                 PipelineStage.OPTIMIZING,
                 lambda: self._run_optimization(profile, job),
@@ -710,6 +850,7 @@ class ResumePipeline:
             resume = sr.data
 
             if job and self._settings.enable_job_tailoring:
+                self._logging.enter_stage("tailoring")
                 sr = execute_stage(
                     PipelineStage.TAILORING,
                     lambda: self._run_tailoring(resume, job),
@@ -719,6 +860,7 @@ class ResumePipeline:
 
             result.resume = resume
 
+            self._logging.enter_stage("generation")
             sr = execute_stage(
                 PipelineStage.GENERATING,
                 lambda: self._run_generation(resume, output_path, template),
@@ -728,6 +870,7 @@ class ResumePipeline:
             result.tex_path = tex_path
 
             if self._settings.compile_pdf:
+                self._logging.enter_stage("compilation")
                 sr = execute_stage(
                     PipelineStage.COMPILING,
                     lambda: self._run_compilation(tex_path, output_path),
@@ -764,6 +907,7 @@ class ResumePipeline:
                 self._ui.show_error(e)
             raise PipelineError(str(e), cause=e) from e
         finally:
+            self._logging.teardown()
             if self._ui:
                 self._ui.stop()
 

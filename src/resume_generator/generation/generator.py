@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -12,6 +13,7 @@ from ..config import ResumeTemplate, Settings
 from .localization import get_section_headers
 
 TEMPLATES_DIR = Path(__file__).parent / "templates"
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from ..models.resume import ResumeDocument
@@ -175,6 +177,7 @@ class LaTeXGenerator:
         """
         if template is None:
             template = self._settings.default_template if self._settings else ResumeTemplate.MODERN
+        logger.info("Generating LaTeX with template=%s for %s", template.value, resume.contact.name)
         tpl = self._env.get_template(f"{template.value}.tex")
         if config is None:
             config = (
@@ -206,6 +209,7 @@ class LaTeXGenerator:
         output_path = output_path.with_suffix(".tex")
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(latex_source, encoding="utf-8")
+        logger.info("Wrote LaTeX file: %s (%d bytes)", output_path, output_path.stat().st_size)
         return output_path
 
     def _build_context(

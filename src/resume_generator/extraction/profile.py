@@ -40,7 +40,7 @@ class ContactInfoSchema(BaseModel):
     """Schema for contact information extraction."""
 
     full_name: str = Field(description="Full legal name")
-    email: str = Field(description="Email address")
+    email: str | None = Field(default=None, description="Email address (if available)")
     phone: str | None = Field(default=None, description="Phone number")
     location: str | None = Field(default=None, description="City and region/state")
     linkedin_url: str | None = Field(default=None, description="LinkedIn URL")
@@ -194,14 +194,24 @@ class ProfileExtractor:
         if not raw_text.strip():
             raise ExtractionError("Cannot extract profile from empty text")
 
+        logger.info("Extracting profile from %d chars of raw text", len(raw_text))
         extracted = self._call_claude(raw_text)
-        return self._convert_to_profile(extracted, raw_text)
+        profile = self._convert_to_profile(extracted, raw_text)
+        logger.info(
+            "Extracted profile: name=%s, %d experiences, %d skills",
+            profile.contact.full_name,
+            len(profile.experiences),
+            len(profile.skills),
+        )
+        return profile
 
     def _call_claude(self, raw_text: str) -> ProfileExtractionSchema:
         """Call Claude CLI and parse response into extraction schema."""
+        logger.debug("Building extraction prompt for %d chars", len(raw_text))
         prompt = _build_extraction_prompt(raw_text)
 
         try:
+            logger.debug("Invoking Claude for profile extraction")
             result = self._cli.invoke(prompt=prompt, system=PROFILE_EXTRACTION_SYSTEM)
         except ClaudeCLIError as e:
             logger.exception("Claude CLI invocation failed")
@@ -228,6 +238,12 @@ class ProfileExtractor:
         raw_text: str,
     ) -> PersonProfile:
         """Convert extraction schema to full PersonProfile with validated types."""
+        logger.debug(
+            "Converting extraction: %d experiences, %d skills, %d education",
+            len(extracted.experiences),
+            len(extracted.skills),
+            len(extracted.education),
+        )
         try:
             contact_data = extracted.contact.model_dump()
             contact_data = self._sanitize_contact_urls(contact_data)

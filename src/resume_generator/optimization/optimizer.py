@@ -131,6 +131,11 @@ class ResumeOptimizer:
         Raises:
             OptimizationError: If optimization fails.
         """
+        logger.info(
+            "Optimizing resume: %d experiences, target=%s",
+            len(profile.experiences),
+            target_job_title or "general",
+        )
         contact = self._build_contact(profile)
         optimized_experiences = self._optimize_experiences(profile, target_keywords)
         professional_summary = self._generate_summary(profile, target_job_title, target_keywords)
@@ -176,7 +181,8 @@ class ResumeOptimizer:
         max_bullets = self._settings.max_bullets_per_job if self._settings else 5
 
         optimized: list[ResumeExperience] = []
-        for exp in profile.experiences:
+        for i, exp in enumerate(profile.experiences):
+            logger.debug("Optimizing experience %d/%d: %s at %s", i + 1, len(profile.experiences), exp.title, exp.company)
             if not exp.achievements:
                 main_text = exp.description or f"Worked as {exp.title} at {exp.company}"
                 bullets = [
@@ -231,6 +237,7 @@ class ResumeOptimizer:
         target_keywords: list[str] | None,
         max_bullets: int,
     ) -> list[ResumeBullet]:
+        logger.debug("Optimizing %d bullets for %s at %s (max=%d)", len(achievements), role_title, company, max_bullets)
         min_bullets = self._settings.min_bullets_per_job if self._settings else 2
         language = self._settings.output_language.value if self._settings else None
         max_words = self._settings.max_bullet_words if self._settings else None
@@ -317,6 +324,7 @@ class ResumeOptimizer:
 
         try:
             result = self._call_claude_structured(prompt, ProfessionalSummarySchema)
+            logger.info("Generated professional summary: %d words", result.word_count)
             return result.summary
         except OptimizationError as e:
             logger.warning("Summary generation failed, using original: %s", e)
@@ -354,6 +362,7 @@ class ResumeOptimizer:
             groups = []
             for g in sorted(result.skill_groups, key=lambda x: x.priority):
                 groups.append(ResumeSkillGroup(category=g.category, skills=g.skills))
+            logger.info("Optimized skills: %d groups, %d total skills", len(groups), result.total_skills_count)
             return groups
         except OptimizationError as e:
             logger.warning("Skills optimization failed, using basic grouping: %s", e)

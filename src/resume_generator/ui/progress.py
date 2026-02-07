@@ -40,6 +40,7 @@ class PipelineStage(str, Enum):
     TAILORING = "tailoring"
     GENERATING = "generating"
     COMPILING = "compiling"
+    REFINING = "refining"
 
 
 @dataclass
@@ -75,6 +76,10 @@ STAGE_CONFIG: dict[PipelineStage, StageInfo] = {
         name="Compiling PDF",
         description="Running pdflatex",
     ),
+    PipelineStage.REFINING: StageInfo(
+        name="Refining Resume",
+        description="Adversarial critique and polish",
+    ),
 }
 
 COLOR_PRIMARY = "cyan"
@@ -88,6 +93,7 @@ STAGE_LABELS = [
     "Optimizing Content",
     "Generating LaTeX",
     "Compiling PDF",
+    "Refining Resume",
 ]
 
 
@@ -141,6 +147,11 @@ class PipelineStats:
     optimization_score: float = 0.0
     output_path: Path | None = None
     errors: list[str] = field(default_factory=list)
+    refinement_iterations: int = 0
+    final_grade: str | None = None
+    target_grade: str | None = None
+    target_unattainable: bool = False
+    max_achievable_grade: str | None = None
 
 
 PIPELINE_STAGE_TO_DISPLAY_INDEX: dict[PipelineStage, int] = {
@@ -149,6 +160,7 @@ PIPELINE_STAGE_TO_DISPLAY_INDEX: dict[PipelineStage, int] = {
     PipelineStage.OPTIMIZING: 2,
     PipelineStage.GENERATING: 3,
     PipelineStage.COMPILING: 4,
+    PipelineStage.REFINING: 5,
 }
 
 
@@ -194,6 +206,17 @@ class SummaryPanel:
             table.add_row("Skills Identified", str(self.stats.skills_extracted))
         if self.stats.bullets_optimized > 0:
             table.add_row("Bullets Optimized", str(self.stats.bullets_optimized))
+        if self.stats.refinement_iterations > 0:
+            table.add_row("Refinement Iterations", str(self.stats.refinement_iterations))
+        if self.stats.final_grade:
+            grade_text = self.stats.final_grade
+            if self.stats.target_grade:
+                grade_text = f"{self.stats.final_grade} (target: {self.stats.target_grade})"
+            if self.stats.target_unattainable and self.stats.max_achievable_grade:
+                grade_text = f"{self.stats.final_grade} (max: {self.stats.max_achievable_grade})"
+            table.add_row("Final Grade", grade_text)
+        if self.stats.target_unattainable:
+            table.add_row("Status", "Target unattainable")
 
         return table
 
@@ -220,9 +243,9 @@ class SummaryPanel:
             sections.append(stats_table)
             sections.append(Text())
 
-        if self.stats.optimization_score > 0:
+        if self.stats.final_grade is None and self.stats.optimization_score > 0:
             sections.append(self._build_score_row("Quality Score", self.stats.optimization_score))
-        if self.stats.keyword_match_rate > 0:
+        if self.stats.final_grade is None and self.stats.keyword_match_rate > 0:
             sections.append(self._build_score_row("Keyword Match", self.stats.keyword_match_rate))
 
         if self.stats.output_path:

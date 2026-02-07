@@ -210,7 +210,7 @@ class ResumeContact(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 
     name: Annotated[str, Field(min_length=1, description="Full name")]
-    email: str = Field(description="Email address")
+    email: str | None = Field(default=None, description="Email address")
     phone: str | None = Field(default=None, description="Phone number")
     location: str | None = Field(default=None, description="Location (City, State)")
     linkedin_url: HttpUrl | None = Field(default=None, description="LinkedIn URL")

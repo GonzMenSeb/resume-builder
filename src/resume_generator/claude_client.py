@@ -106,6 +106,7 @@ class ClaudeCLI:
         Returns:
             InvokeResult containing success status, output, and exit code.
         """
+        logger.info("Invoking Claude CLI (model=%s)", self._model)
         args = self._build_args(system)
         cwd = str(working_dir) if working_dir else None
 
@@ -113,12 +114,16 @@ class ClaudeCLI:
         exit_code = -1
         success = False
 
+        use_pty = self._should_use_pty()
+        logger.debug("Using %s for invocation", "PTY" if use_pty else "subprocess")
+
         try:
-            if self._should_use_pty():
+            if use_pty:
                 success, exit_code = self._invoke_with_pty(args, prompt, output_lines, cwd)
             else:
                 success, exit_code = self._invoke_with_subprocess(args, prompt, output_lines, cwd)
         except subprocess.TimeoutExpired:
+            logger.warning("Claude CLI timed out after %ds", self._timeout)
             output_lines.append(f"\n[TIMEOUT after {self._timeout}s]")
             return InvokeResult(success=False, output="".join(output_lines), exit_code=-1)
         except FileNotFoundError as e:
@@ -128,7 +133,9 @@ class ClaudeCLI:
         except OSError as e:
             raise ClaudeCLIInvocationError(f"Failed to invoke Claude CLI: {e}") from e
 
-        return InvokeResult(success=success, output="".join(output_lines), exit_code=exit_code)
+        output = "".join(output_lines)
+        logger.info("Claude CLI completed: exit_code=%d, output_length=%d", exit_code, len(output))
+        return InvokeResult(success=success, output=output, exit_code=exit_code)
 
     def _build_args(self, system: str | None = None) -> list[str]:
         """Build command line arguments for Claude CLI."""

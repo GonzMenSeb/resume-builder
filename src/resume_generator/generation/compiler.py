@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import os
 import re
 import shutil
@@ -10,6 +11,8 @@ import subprocess
 import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -116,6 +119,7 @@ class PDFCompiler:
         Returns:
             CompilationResult with success status, PDF path, and any errors
         """
+        logger.info("Compiling: %s", tex_source if not isinstance(tex_source, str) or Path(tex_source).exists() else "<string>")
         is_source_string = isinstance(tex_source, str) and not Path(tex_source).exists()
         use_temp_dir = work_dir is None
 
@@ -184,6 +188,7 @@ class PDFCompiler:
         ]
 
         for run in range(self._compile_runs):
+            logger.debug("pdflatex run %d/%d for %s", run + 1, self._compile_runs, tex_file.name)
             try:
                 proc = subprocess.run(
                     cmd,
@@ -195,6 +200,7 @@ class PDFCompiler:
                 )
                 log_content = proc.stdout + proc.stderr
                 exit_code = proc.returncode
+                logger.debug("pdflatex run %d exit_code=%d", run + 1, exit_code)
             except subprocess.TimeoutExpired:
                 return CompilationResult(
                     success=False,
@@ -227,6 +233,13 @@ class PDFCompiler:
         page_count = 0
         if success and pdf_path.exists():
             page_count = self.count_pdf_pages(pdf_path)
+
+        if errors:
+            logger.warning("Compilation errors: %s", "; ".join(str(e) for e in errors[:5]))
+        if warnings:
+            logger.debug("Compilation warnings: %d total", len(warnings))
+        if success:
+            logger.info("Compilation succeeded: %d pages", page_count)
 
         if self._clean_aux:
             self._cleanup_aux_files(work_dir, tex_file.stem)
@@ -269,6 +282,7 @@ class PDFCompiler:
 
     def _cleanup_aux_files(self, work_dir: Path, stem: str) -> None:
         """Remove auxiliary files generated during compilation."""
+        logger.debug("Cleaning up auxiliary files in %s", work_dir)
         for ext in self.AUX_EXTENSIONS:
             aux_file = work_dir / f"{stem}{ext}"
             if aux_file.exists():

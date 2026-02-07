@@ -71,6 +71,59 @@ class ClaudeModel(str, Enum):
     HAIKU = "haiku"
 
 
+class TierGrade(str, Enum):
+    """Valid tier grades for adversarial refinement."""
+
+    S_PLUS = "S+"
+    S = "S"
+    A_PLUS = "A+"
+    A = "A"
+    A_MINUS = "A-"
+    B_PLUS = "B+"
+    B = "B"
+    B_MINUS = "B-"
+    C_PLUS = "C+"
+    C = "C"
+    C_MINUS = "C-"
+    D = "D"
+    F = "F"
+
+
+TIER_GRADE_ORDER: dict[TierGrade, int] = {
+    TierGrade.S_PLUS: 13,
+    TierGrade.S: 12,
+    TierGrade.A_PLUS: 11,
+    TierGrade.A: 10,
+    TierGrade.A_MINUS: 9,
+    TierGrade.B_PLUS: 8,
+    TierGrade.B: 7,
+    TierGrade.B_MINUS: 6,
+    TierGrade.C_PLUS: 5,
+    TierGrade.C: 4,
+    TierGrade.C_MINUS: 3,
+    TierGrade.D: 2,
+    TierGrade.F: 1,
+}
+
+
+def tier_meets_target(current: TierGrade, target: TierGrade) -> bool:
+    """Check if current grade meets or exceeds target grade."""
+    return TIER_GRADE_ORDER[current] >= TIER_GRADE_ORDER[target]
+
+
+def parse_tier_grade(value: str) -> TierGrade | None:
+    """Parse a string into a TierGrade, returning None if invalid."""
+    if not value:
+        return None
+    normalized = value.strip().upper().replace(" ", "")
+    for grade in TierGrade:
+        if grade.value.upper().replace("+", "PLUS").replace("-", "MINUS") == normalized.replace("+", "PLUS").replace("-", "MINUS"):
+            return grade
+        if grade.value.upper() == normalized:
+            return grade
+    return None
+
+
 class Settings(BaseSettings):
     """Application settings with environment variable support."""
 
@@ -229,7 +282,53 @@ class Settings(BaseSettings):
         description="Language for the generated resume content",
     )
 
-    @field_validator("input_dir", "output_dir", "templates_dir", "cache_dir", "target_job_dir", mode="before")
+    log_level: str = Field(
+        default="INFO",
+        description="Log level for pipeline file logging (DEBUG, INFO, WARNING, ERROR, CRITICAL)",
+    )
+
+    @field_validator("log_level", mode="before")
+    @classmethod
+    def validate_log_level(cls, v: str) -> str:
+        valid = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
+        normalized = v.strip().upper()
+        if normalized not in valid:
+            raise ValueError(f"Invalid log_level '{v}'. Valid values: {', '.join(sorted(valid))}")
+        return normalized
+
+    target_tier: str | None = Field(
+        default=None,
+        description="Target tier grade for adversarial refinement (S+, S, A+, A, A-, B+, B, etc). If set, enables the refinement loop.",
+    )
+    max_refinement_iterations: int = Field(
+        default=5,
+        ge=1,
+        le=10,
+        description="Maximum iterations for adversarial refinement loop",
+    )
+    refinement_research_dir: Path = Field(
+        default=Path(__file__).parent.parent.parent / "docs" / "research-results" / "tex",
+        description="Directory containing research documents for critique criteria",
+    )
+
+    @field_validator("target_tier", mode="before")
+    @classmethod
+    def validate_target_tier(cls, v: str | None) -> str | None:
+        if v is None or v == "":
+            return None
+        parsed = parse_tier_grade(v)
+        if parsed is None:
+            valid_grades = ", ".join(g.value for g in TierGrade)
+            raise ValueError(f"Invalid target_tier '{v}'. Valid values: {valid_grades}")
+        return parsed.value
+
+    def get_target_tier_grade(self) -> TierGrade | None:
+        """Get the target tier as a TierGrade enum, or None if not set."""
+        if self.target_tier is None:
+            return None
+        return parse_tier_grade(self.target_tier)
+
+    @field_validator("input_dir", "output_dir", "templates_dir", "cache_dir", "target_job_dir", "refinement_research_dir", mode="before")
     @classmethod
     def ensure_path(cls, v: str | Path | None) -> Path | None:
         if v is None:
@@ -326,4 +425,11 @@ output_language: en       # Language: en, es, fr, de, pt, it, zh, ja, ko, ar, nl
 # tailoring_customization_rate: 0.50
 # enable_job_tailoring: true
 # verbose: false
+
+# === Logging ===
+# log_level: INFO            # Log level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+
+# === Adversarial Refinement ===
+# target_tier: S              # Target grade (S+, S, A+, A, A-, B+, B, etc). If set, enables refinement loop.
+# max_refinement_iterations: 5  # Max iterations for refinement (1-10)
 """

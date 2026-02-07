@@ -26,7 +26,7 @@ class ContactInfo(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 
     full_name: Annotated[str, Field(min_length=1, description="Full legal name")]
-    email: EmailStr = Field(description="Professional email address")
+    email: EmailStr | None = Field(default=None, description="Professional email address")
     phone: str | None = Field(default=None, description="Phone number with country code")
     location: str | None = Field(
         default=None, description="City and region/state (full address not required)"
