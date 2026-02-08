@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from time import monotonic
 
 LOG_FORMAT = "%(asctime)s [%(levelname)-8s] %(name)s: %(message)s"
 LOG_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -30,6 +31,7 @@ class PipelineLogging:
         self._master_handler: logging.FileHandler | None = None
         self._stage_handler: logging.FileHandler | None = None
         self._current_stage: str | None = None
+        self._stage_start: float | None = None
 
     def setup(self) -> None:
         self._log_dir.mkdir(parents=True, exist_ok=True)
@@ -40,7 +42,16 @@ class PipelineLogging:
         self._master_handler.setFormatter(self._formatter)
         self._root_logger.addHandler(self._master_handler)
 
+    def _log_stage_duration(self) -> None:
+        if self._current_stage is not None and self._stage_start is not None:
+            elapsed = monotonic() - self._stage_start
+            logging.getLogger("resume_generator.pipeline").info(
+                "Stage %s completed in %.1fs", self._current_stage.upper(), elapsed
+            )
+
     def enter_stage(self, stage_name: str) -> None:
+        self._log_stage_duration()
+
         if self._stage_handler is not None:
             self._root_logger.removeHandler(self._stage_handler)
             self._stage_handler.close()
@@ -51,6 +62,7 @@ class PipelineLogging:
             return
 
         self._current_stage = stage_name
+        self._stage_start = monotonic()
         self._stage_handler = logging.FileHandler(self._log_dir / filename, encoding="utf-8")
         self._stage_handler.setLevel(self._level)
         self._stage_handler.setFormatter(self._formatter)
@@ -62,6 +74,8 @@ class PipelineLogging:
         )
 
     def teardown(self) -> None:
+        self._log_stage_duration()
+
         if self._stage_handler is not None:
             self._root_logger.removeHandler(self._stage_handler)
             self._stage_handler.close()
@@ -73,6 +87,7 @@ class PipelineLogging:
             self._master_handler = None
 
         self._current_stage = None
+        self._stage_start = None
 
     @property
     def log_dir(self) -> Path:

@@ -159,10 +159,9 @@ class AdversarialRefiner:
                 critique_result.max_achievable_grade, target_grade
             ):
                 logger.warning(
-                    "Target %s declared unattainable. Max achievable: %s. Reason: %s",
+                    "Target %s declared unattainable. Max achievable: %s",
                     target_grade.value,
                     critique_result.max_achievable_grade.value,
-                    critique_result.grade_ceiling_reason,
                 )
                 iterations.append(iteration)
                 if on_iteration:
@@ -232,9 +231,9 @@ class AdversarialRefiner:
                 )
 
             logger.debug(
-                "Sending to polisher: issues=%s, priorities=%s",
-                critique_result.issues,
-                critique_result.improvement_priorities,
+                "Sending to polisher:\n  Issues:\n%s\n  Priorities:\n%s",
+                "\n".join(f"    - {item}" for item in critique_result.issues),
+                "\n".join(f"    - {item}" for item in critique_result.improvement_priorities),
             )
             try:
                 polish_result = self._polisher.polish(current_resume, critique_result, raw_text)

@@ -1,6 +1,6 @@
 .PHONY: help install install-dev test test-unit test-e2e test-cov test-fast \
         lint lint-fix format format-check typecheck typecheck-mypy typecheck-pyright \
-        check clean clean-cache clean-all shell
+        check clean clean-cache clean-all clean-output clean-data shell
 
 VENV := .venv
 PYTHON := $(VENV)/bin/python
@@ -47,6 +47,8 @@ help:
 	@echo "Cleanup:"
 	@echo "  clean            Remove build artifacts"
 	@echo "  clean-cache      Remove cache directories"
+	@echo "  clean-output     Remove contents of data/output"
+	@echo "  clean-data       Remove contents of data/input, data/target_job, and data/output"
 	@echo "  clean-all        Remove all generated files"
 
 # Installation
@@ -123,5 +125,12 @@ clean-cache:
 	rm -rf .coverage
 	rm -rf coverage.xml
 	rm -rf .resume_cache/
+
+clean-output:
+	find data/output -mindepth 1 -delete 2>/dev/null || true
+
+clean-data: clean-output
+	find data/input -mindepth 1 -delete 2>/dev/null || true
+	find data/target_job -mindepth 1 -delete 2>/dev/null || true
 
 clean-all: clean clean-cache

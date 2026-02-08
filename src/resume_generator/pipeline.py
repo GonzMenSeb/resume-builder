@@ -204,6 +204,11 @@ class ResumePipeline:
             if job and self._settings.enable_job_tailoring:
                 self._logging.enter_stage("tailoring")
                 resume = self._run_tailoring(resume, job)
+            else:
+                if not job:
+                    logger.info("Skipping tailoring: no job description provided")
+                else:
+                    logger.info("Skipping tailoring: disabled in settings")
 
             result.resume = resume
 
@@ -233,6 +238,9 @@ class ResumePipeline:
                     result.resume = resume
                     result.pdf_path = pdf_path
                     result.tex_path = tex_path
+                else:
+                    if target_tier is None:
+                        logger.info("Skipping refinement: no target tier grade configured")
 
                 if not self._settings.keep_latex_source and tex_path.exists():
                     tex_path.unlink()
@@ -435,7 +443,6 @@ class ResumePipeline:
                 PipelineStage.COMPILING,
             )
 
-        logger.info("Compiled PDF: %s", result.pdf_path)
         return result.pdf_path, result
 
     def _run_compilation_with_compaction(
@@ -658,6 +665,11 @@ class ResumePipeline:
                 )
                 result.stage_results.append(stage_result)
                 resume = stage_result.data
+            else:
+                if not job:
+                    logger.info("Skipping tailoring: no job description provided")
+                else:
+                    logger.info("Skipping tailoring: disabled in settings")
 
             result.resume = resume
 
@@ -862,6 +874,11 @@ class ResumePipeline:
                 )
                 result.stage_results.append(sr)
                 resume = sr.data
+            else:
+                if not job:
+                    logger.info("Skipping tailoring: no job description provided")
+                else:
+                    logger.info("Skipping tailoring: disabled in settings")
 
             result.resume = resume
 

@@ -1,5 +1,6 @@
 """Unified data loader that auto-detects file types and aggregates content from multiple sources."""
 
+import logging
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -8,6 +9,8 @@ from resume_generator.ingestion.base import BaseExtractor, ExtractionError, Extr
 from resume_generator.ingestion.docx import DocxExtractor
 from resume_generator.ingestion.pdf import PDFExtractor
 from resume_generator.ingestion.text import TextExtractor
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -138,9 +141,11 @@ class DataLoader:
                     result = self._extract_file(file_path)
                     if not result.is_empty:
                         results.append(result)
+                        logger.debug("Loaded %s (%d chars)", file_path, len(result.text))
                 except ExtractionError as e:
                     if skip_failures:
                         failures.append((file_path, str(e)))
+                        logger.debug("Failed to load %s: %s", file_path, e)
                     else:
                         raise
 

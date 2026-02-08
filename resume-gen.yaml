@@ -26,9 +26,9 @@ summary_max_words: 130
 output_language: en
 
 # === Paths (optional) ===
-input_dir: ./tmp/resume_data
-output_dir: ./output
-target_job_dir: ./tmp/target_job
+input_dir: ./data/input
+output_dir: ./data/output
+target_job_dir: ./data/target_job
 
 # === Logging ===
 log_level: DEBUG            # Log level: DEBUG, INFO, WARNING, ERROR, CRITICAL

@@ -339,9 +339,12 @@ class ResumeCritique:
             response.ats_score * 100,
             response.truthfulness_score * 100,
         )
-        logger.debug("Issues: %s", response.issues)
-        logger.debug("Improvement priorities: %s", response.improvement_priorities)
-        logger.debug("Strengths: %s", response.strengths)
+        logger.debug("Issues:\n%s", "\n".join(f"  - {item}" for item in response.issues))
+        logger.debug(
+            "Improvement priorities:\n%s",
+            "\n".join(f"  - {item}" for item in response.improvement_priorities),
+        )
+        logger.debug("Strengths:\n%s", "\n".join(f"  - {item}" for item in response.strengths))
         if response.exaggeration_issues:
             logger.info("Exaggeration issues: %s", response.exaggeration_issues)
         if response.missing_valuable_info:

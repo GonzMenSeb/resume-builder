@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -25,6 +26,8 @@ logger = logging.getLogger(__name__)
 
 CLAUDE_BINARY = "claude"
 DEFAULT_TIMEOUT = 3600
+
+_ANSI_ESCAPE_RE = re.compile(r"\x1b(?:\[[0-9;?]*[a-zA-Z<>]|\][^\x07]*\x07)")
 
 
 @dataclass(frozen=True)
@@ -133,9 +136,9 @@ class ClaudeCLI:
         except OSError as e:
             raise ClaudeCLIInvocationError(f"Failed to invoke Claude CLI: {e}") from e
 
-        output = "".join(output_lines)
+        output = _ANSI_ESCAPE_RE.sub("", "".join(output_lines))
         logger.info("Claude CLI completed: exit_code=%d, output_length=%d", exit_code, len(output))
-        logger.debug("Claude response preview: %.200s", output[:200])
+        logger.debug("Claude response:\n%s", output)
         return InvokeResult(success=success, output=output, exit_code=exit_code)
 
     def _build_args(self, system: str | None = None) -> list[str]:

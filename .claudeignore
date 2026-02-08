@@ -1,0 +1,22 @@
+# Virtual environment
+.venv/
+
+# Git internals
+.git/
+
+# Dependency lock file (large, not useful for context)
+uv.lock
+
+# Build/dist artifacts
+build/
+dist/
+*.egg-info/
+
+# User data
+tmp/resumes/
+
+# Caches
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/

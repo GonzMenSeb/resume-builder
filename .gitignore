@@ -61,13 +61,13 @@ env/
 *.pdf
 *.log
 .resume_cache/
-output/
 *_TEST_RESULTS.md
 
 # Data directories (keep folders, ignore contents)
-tmp/resume_data/*
 tmp/resumes/*
-tmp/target_job/*
+data/input/*
+data/output/*
+data/target_job/*
 
 
 # Claude Code
