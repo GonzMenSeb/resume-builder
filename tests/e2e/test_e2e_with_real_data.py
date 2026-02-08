@@ -140,7 +140,6 @@ def test_e2e_with_real_pdf(pdf_file: Path, tmp_path: Path) -> None:
         claude_model=ClaudeModel.SONNET,
         output_dir=output_dir,
         compile_pdf=False,
-        verbose=False,
     )
 
     output_name = pdf_file.stem + "_generated"
@@ -171,7 +170,7 @@ def test_e2e_with_real_pdf(pdf_file: Path, tmp_path: Path) -> None:
         patch.object(ClaudeCLI, "version", return_value="mocked-version"),
         patch.object(ClaudeCLI, "invoke", mock_invoke),
     ):
-        ui = PipelineUI(verbose=False)
+        ui = PipelineUI()
         pipeline = ResumePipeline(settings=settings, ui=ui)
 
         result = pipeline.run(

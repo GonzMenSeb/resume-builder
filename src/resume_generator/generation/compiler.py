@@ -119,7 +119,12 @@ class PDFCompiler:
         Returns:
             CompilationResult with success status, PDF path, and any errors
         """
-        logger.info("Compiling: %s", tex_source if not isinstance(tex_source, str) or Path(tex_source).exists() else "<string>")
+        logger.info(
+            "Compiling: %s",
+            tex_source
+            if not isinstance(tex_source, str) or Path(tex_source).exists()
+            else "<string>",
+        )
         is_source_string = isinstance(tex_source, str) and not Path(tex_source).exists()
         use_temp_dir = work_dir is None
 

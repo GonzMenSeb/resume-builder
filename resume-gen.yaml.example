@@ -35,8 +35,14 @@ output_language: en
 # target_job_dir: ./target_job # Default directory for job description files (uses most recent .txt/.md)
 # cache_dir: ./.resume_cache
 
+# === Logging ===
+# log_level: INFO            # Log level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+
+# === Adversarial Refinement ===
+# target_tier: S              # Target grade (S+, S, A+, A, A-, B+, B, etc). If set, enables refinement loop.
+# max_refinement_iterations: 5  # Max iterations for refinement (1-10)
+
 # === Advanced ===
 # target_keyword_match_rate: 0.70
 # tailoring_customization_rate: 0.50
 # enable_job_tailoring: true
-# verbose: false

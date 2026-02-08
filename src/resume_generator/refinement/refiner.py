@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 
 from resume_generator.config import TierGrade, tier_meets_target
 from resume_generator.models.resume import ResumeDocument
@@ -128,16 +129,7 @@ class AdversarialRefiner:
                 logger.error("Critique failed at iteration %d: %s", iteration_num, e)
                 raise RefinementError(f"Critique failed: {e}") from e
 
-            logger.info(
-                "Critique grade: %s (content=%.0f%%, design=%.0f%%, ats=%.0f%%, truth=%.0f%%)",
-                critique_result.grade.value,
-                critique_result.content_score * 100,
-                critique_result.design_score * 100,
-                critique_result.ats_score * 100,
-                critique_result.truthfulness_score * 100,
-            )
-            logger.debug("Critique justification: %s", critique_result.justification)
-            logger.debug("Critique strengths: %s", critique_result.strengths)
+            logger.info("Critique returned grade: %s", critique_result.grade.value)
 
             iteration = RefinementIteration(
                 iteration=iteration_num,
@@ -163,28 +155,29 @@ class AdversarialRefiner:
                     message=f"Target grade {target_grade.value} achieved in {iteration_num} iteration(s)",
                 )
 
-            if critique_result.max_achievable_grade is not None:
-                if not tier_meets_target(critique_result.max_achievable_grade, target_grade):
-                    logger.warning(
-                        "Target %s declared unattainable. Max achievable: %s. Reason: %s",
-                        target_grade.value,
-                        critique_result.max_achievable_grade.value,
-                        critique_result.grade_ceiling_reason,
-                    )
-                    iterations.append(iteration)
-                    if on_iteration:
-                        on_iteration(iteration)
-                    return RefinementResult(
-                        success=False,
-                        final_grade=critique_result.grade,
-                        target_grade=target_grade,
-                        iterations=iterations,
-                        final_resume=current_resume,
-                        message=f"Target grade {target_grade.value} unattainable. Max achievable: {critique_result.max_achievable_grade.value}",
-                        target_unattainable=True,
-                        max_achievable_grade=critique_result.max_achievable_grade,
-                        unattainable_reason=critique_result.grade_ceiling_reason,
-                    )
+            if critique_result.max_achievable_grade is not None and not tier_meets_target(
+                critique_result.max_achievable_grade, target_grade
+            ):
+                logger.warning(
+                    "Target %s declared unattainable. Max achievable: %s. Reason: %s",
+                    target_grade.value,
+                    critique_result.max_achievable_grade.value,
+                    critique_result.grade_ceiling_reason,
+                )
+                iterations.append(iteration)
+                if on_iteration:
+                    on_iteration(iteration)
+                return RefinementResult(
+                    success=False,
+                    final_grade=critique_result.grade,
+                    target_grade=target_grade,
+                    iterations=iterations,
+                    final_resume=current_resume,
+                    message=f"Target grade {target_grade.value} unattainable. Max achievable: {critique_result.max_achievable_grade.value}",
+                    target_unattainable=True,
+                    max_achievable_grade=critique_result.max_achievable_grade,
+                    unattainable_reason=critique_result.grade_ceiling_reason,
+                )
 
             from resume_generator.config import TIER_GRADE_ORDER
 
@@ -192,7 +185,9 @@ class AdversarialRefiner:
             if iteration_num > 1:
                 if current_grade_order <= last_grade_order:
                     stagnation_count += 1
-                    logger.info("Grade stagnation detected (%d/%d)", stagnation_count, max_stagnation)
+                    logger.info(
+                        "Grade stagnation detected (%d/%d)", stagnation_count, max_stagnation
+                    )
                 else:
                     stagnation_count = 0
 
@@ -236,6 +231,11 @@ class AdversarialRefiner:
                     message=f"Max iterations reached. Final grade: {critique_result.grade.value}",
                 )
 
+            logger.debug(
+                "Sending to polisher: issues=%s, priorities=%s",
+                critique_result.issues,
+                critique_result.improvement_priorities,
+            )
             try:
                 polish_result = self._polisher.polish(current_resume, critique_result, raw_text)
             except PolishError as e:

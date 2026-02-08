@@ -829,8 +829,12 @@ class TestResumeDocumentCompact:
                     title="Engineer",
                     start_date=date(2020, 1, 1),
                     bullets=[
-                        ResumeBullet(text="Achievement one that is substantial", relevance_score=0.9),
-                        ResumeBullet(text="Achievement two that is substantial", relevance_score=0.8),
+                        ResumeBullet(
+                            text="Achievement one that is substantial", relevance_score=0.9
+                        ),
+                        ResumeBullet(
+                            text="Achievement two that is substantial", relevance_score=0.8
+                        ),
                     ],
                 )
             ],

@@ -94,8 +94,8 @@ class TestFetchUrlContent:
         mock_response.status_code = 404
 
         with patch("resume_generator.utils.web.httpx.Client") as mock_client:
-            mock_client.return_value.__enter__.return_value.get.side_effect = (
-                httpx.HTTPStatusError("Not Found", request=MagicMock(), response=mock_response)
+            mock_client.return_value.__enter__.return_value.get.side_effect = httpx.HTTPStatusError(
+                "Not Found", request=MagicMock(), response=mock_response
             )
 
             with pytest.raises(FetchError) as exc_info:

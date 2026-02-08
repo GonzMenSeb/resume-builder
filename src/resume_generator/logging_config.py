@@ -35,9 +35,7 @@ class PipelineLogging:
         self._log_dir.mkdir(parents=True, exist_ok=True)
         self._root_logger.setLevel(self._level)
 
-        self._master_handler = logging.FileHandler(
-            self._log_dir / "master.log", encoding="utf-8"
-        )
+        self._master_handler = logging.FileHandler(self._log_dir / "master.log", encoding="utf-8")
         self._master_handler.setLevel(self._level)
         self._master_handler.setFormatter(self._formatter)
         self._root_logger.addHandler(self._master_handler)
@@ -53,9 +51,7 @@ class PipelineLogging:
             return
 
         self._current_stage = stage_name
-        self._stage_handler = logging.FileHandler(
-            self._log_dir / filename, encoding="utf-8"
-        )
+        self._stage_handler = logging.FileHandler(self._log_dir / filename, encoding="utf-8")
         self._stage_handler.setLevel(self._level)
         self._stage_handler.setFormatter(self._formatter)
         self._root_logger.addHandler(self._stage_handler)

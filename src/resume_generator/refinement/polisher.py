@@ -15,10 +15,10 @@ from resume_generator.claude_client import (
     parse_json_response,
 )
 from resume_generator.models.resume import (
+    BulletType,
+    ResumeBullet,
     ResumeDocument,
     ResumeExperience,
-    ResumeBullet,
-    BulletType,
     ResumeSkillGroup,
 )
 from resume_generator.refinement.critique import CritiqueResult
@@ -108,11 +108,13 @@ def _build_polish_prompt(
     """Build the polish prompt with resume content, critique feedback, and original raw data."""
     experiences_json = []
     for exp in resume.experiences:
-        experiences_json.append({
-            "company": exp.company,
-            "title": exp.title,
-            "bullets": [b.text for b in exp.bullets],
-        })
+        experiences_json.append(
+            {
+                "company": exp.company,
+                "title": exp.title,
+                "bullets": [b.text for b in exp.bullets],
+            }
+        )
 
     skills_json = [{"category": g.category, "skills": g.skills} for g in resume.skills]
 
@@ -246,6 +248,13 @@ class ResumePolisher:
         language = self._settings.output_language.value if self._settings else None
         prompt = _build_polish_prompt(resume, critique, language, raw_text)
 
+        logger.debug(
+            "Prompting RESUME_POLISH: critique_grade=%s, issue_count=%d, priority_count=%d, has_raw_text=%s",
+            critique.grade.value,
+            len(critique.issues),
+            len(critique.improvement_priorities),
+            raw_text is not None,
+        )
         try:
             result = self._cli.invoke(prompt=prompt, system=POLISHER_SYSTEM_PROMPT)
         except ClaudeCLIError as e:
@@ -289,20 +298,22 @@ class ResumePolisher:
         polished: PolishResponseSchema,
     ) -> ResumeDocument:
         """Apply polished content to create a new ResumeDocument."""
-        polished_exp_map = {
-            (e.company.lower(), e.title.lower()): e for e in polished.experiences
-        }
+        polished_exp_map = {(e.company.lower(), e.title.lower()): e for e in polished.experiences}
 
         new_experiences: list[ResumeExperience] = []
         for orig_exp in original.experiences:
             key = (orig_exp.company.lower(), orig_exp.title.lower())
             if key in polished_exp_map:
-                logger.debug("Applying polish to experience: %s at %s", orig_exp.title, orig_exp.company)
+                logger.debug(
+                    "Applying polish to experience: %s at %s", orig_exp.title, orig_exp.company
+                )
                 pol_exp = polished_exp_map[key]
                 new_bullets = [
                     ResumeBullet(
                         text=b.text,
-                        bullet_type=BulletType.XYZ if "%" in b.text or any(c.isdigit() for c in b.text) else BulletType.ACTION_RESULT,
+                        bullet_type=BulletType.XYZ
+                        if "%" in b.text or any(c.isdigit() for c in b.text)
+                        else BulletType.ACTION_RESULT,
                         action_verb=b.action_verb,
                         keywords=b.keywords,
                         relevance_score=0.8,
@@ -324,10 +335,11 @@ class ResumePolisher:
             else:
                 new_experiences.append(orig_exp)
 
-        new_skills = [
-            ResumeSkillGroup(category=g.category, skills=g.skills)
-            for g in polished.skills
-        ] if polished.skills else original.skills
+        new_skills = (
+            [ResumeSkillGroup(category=g.category, skills=g.skills) for g in polished.skills]
+            if polished.skills
+            else original.skills
+        )
 
         return ResumeDocument(
             contact=original.contact,

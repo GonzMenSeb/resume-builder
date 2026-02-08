@@ -11,18 +11,22 @@ from time import time
 from typing import TYPE_CHECKING, Any
 
 from resume_generator.claude_client import ClaudeCLI, ClaudeCLINotFoundError
-from resume_generator.logging_config import PipelineLogging
 from resume_generator.config import ResumeTemplate, Settings, TierGrade, get_settings
 from resume_generator.extraction.profile import ExtractionError, ProfileExtractor
 from resume_generator.generation.compiler import CompilationResult, PDFCompiler
 from resume_generator.generation.generator import LaTeXGenerator, TemplateConfig
 from resume_generator.ingestion.loader import DataLoader, LoadResult
+from resume_generator.logging_config import PipelineLogging
 from resume_generator.models.job import JobDescription
 from resume_generator.models.profile import PersonProfile
 from resume_generator.models.resume import ResumeDocument
 from resume_generator.optimization.optimizer import OptimizationError, ResumeOptimizer
 from resume_generator.optimization.tailoring import JobTailorer, TailoringError
-from resume_generator.refinement.refiner import AdversarialRefiner, RefinementError, RefinementResult
+from resume_generator.refinement.refiner import (
+    AdversarialRefiner,
+    RefinementError,
+    RefinementResult,
+)
 from resume_generator.ui.progress import PipelineStage, PipelineUI
 
 if TYPE_CHECKING:
@@ -542,9 +546,8 @@ class ResumePipeline:
             last_iteration = refinement_result.iterations[-1]
             if last_iteration.polish_result is not None:
                 current_tex = self._run_generation(current_resume, output_path, template)
-                current_pdf, _ = self._run_compilation(current_tex, output_path)
-                if current_pdf is None:
-                    current_pdf = pdf_path
+                compiled_pdf, _ = self._run_compilation(current_tex, output_path)
+                current_pdf = compiled_pdf if compiled_pdf is not None else pdf_path
 
         if self._ui:
             self._ui.update_stage(PipelineStage.REFINING, completed=True)
@@ -578,7 +581,9 @@ class ResumePipeline:
                 self._ui.stats.target_grade = result.refinement_result.target_grade.value
                 self._ui.stats.target_unattainable = result.refinement_result.target_unattainable
                 if result.refinement_result.max_achievable_grade:
-                    self._ui.stats.max_achievable_grade = result.refinement_result.max_achievable_grade.value
+                    self._ui.stats.max_achievable_grade = (
+                        result.refinement_result.max_achievable_grade.value
+                    )
 
     async def run_async(
         self,

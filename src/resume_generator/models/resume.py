@@ -363,7 +363,7 @@ class ResumeDocument(BaseModel):
         compacted_experiences = []
         for exp in self.experiences:
             if len(exp.bullets) > min_bullets_per_job:
-                reduced_bullets = exp.bullets[:max(min_bullets_per_job, len(exp.bullets) - 1)]
+                reduced_bullets = exp.bullets[: max(min_bullets_per_job, len(exp.bullets) - 1)]
                 compacted_exp = exp.model_copy(update={"bullets": reduced_bullets})
                 compacted_experiences.append(compacted_exp)
             else:

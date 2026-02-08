@@ -117,7 +117,9 @@ def parse_tier_grade(value: str) -> TierGrade | None:
         return None
     normalized = value.strip().upper().replace(" ", "")
     for grade in TierGrade:
-        if grade.value.upper().replace("+", "PLUS").replace("-", "MINUS") == normalized.replace("+", "PLUS").replace("-", "MINUS"):
+        if grade.value.upper().replace("+", "PLUS").replace("-", "MINUS") == normalized.replace(
+            "+", "PLUS"
+        ).replace("-", "MINUS"):
             return grade
         if grade.value.upper() == normalized:
             return grade
@@ -144,11 +146,6 @@ class Settings(BaseSettings):
         le=7200,
         description="Timeout in seconds for Claude CLI invocations",
     )
-    claude_cli_verbose: bool = Field(
-        default=False,
-        description="Enable verbose output during Claude CLI invocations",
-    )
-
     # Path Configuration
     input_dir: Path | None = Field(
         default=None,
@@ -273,10 +270,6 @@ class Settings(BaseSettings):
         default=True,
         description="Keep the generated LaTeX source file",
     )
-    verbose: bool = Field(
-        default=False,
-        description="Enable verbose output for debugging",
-    )
     output_language: ResumeLanguage = Field(
         default=ResumeLanguage.EN,
         description="Language for the generated resume content",
@@ -328,7 +321,15 @@ class Settings(BaseSettings):
             return None
         return parse_tier_grade(self.target_tier)
 
-    @field_validator("input_dir", "output_dir", "templates_dir", "cache_dir", "target_job_dir", "refinement_research_dir", mode="before")
+    @field_validator(
+        "input_dir",
+        "output_dir",
+        "templates_dir",
+        "cache_dir",
+        "target_job_dir",
+        "refinement_research_dir",
+        mode="before",
+    )
     @classmethod
     def ensure_path(cls, v: str | Path | None) -> Path | None:
         if v is None:
@@ -424,8 +425,6 @@ output_language: en       # Language: en, es, fr, de, pt, it, zh, ja, ko, ar, nl
 # target_keyword_match_rate: 0.70
 # tailoring_customization_rate: 0.50
 # enable_job_tailoring: true
-# verbose: false
-
 # === Logging ===
 # log_level: INFO            # Log level: DEBUG, INFO, WARNING, ERROR, CRITICAL
 

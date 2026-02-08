@@ -207,11 +207,13 @@ class ProfileExtractor:
 
     def _call_claude(self, raw_text: str) -> ProfileExtractionSchema:
         """Call Claude CLI and parse response into extraction schema."""
-        logger.debug("Building extraction prompt for %d chars", len(raw_text))
+        logger.debug(
+            "Prompting PROFILE_EXTRACTION: raw_text_chars=%d, schema=ProfileExtractionSchema",
+            len(raw_text),
+        )
         prompt = _build_extraction_prompt(raw_text)
 
         try:
-            logger.debug("Invoking Claude for profile extraction")
             result = self._cli.invoke(prompt=prompt, system=PROFILE_EXTRACTION_SYSTEM)
         except ClaudeCLIError as e:
             logger.exception("Claude CLI invocation failed")
@@ -227,10 +229,16 @@ class ProfileExtractor:
             raise ExtractionError(f"Failed to parse response: {e}") from e
 
         try:
-            return ProfileExtractionSchema.model_validate(data)
+            extracted = ProfileExtractionSchema.model_validate(data)
         except ValidationError as e:
             logger.error("Response validation failed: %s", e)
             raise ExtractionError(f"Response validation failed: {e}") from e
+        logger.debug(
+            "PROFILE_EXTRACTION response: %d experiences, %d skills extracted",
+            len(extracted.experiences),
+            len(extracted.skills),
+        )
+        return extracted
 
     def _convert_to_profile(
         self,

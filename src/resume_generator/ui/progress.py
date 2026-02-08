@@ -268,11 +268,9 @@ class PipelineUI:
 
     def __init__(
         self,
-        verbose: bool = False,
         config: PipelineConfig | None = None,
     ) -> None:
         self.console = Console()
-        self.verbose = verbose
         self._config = config
         self._live: Live | None = None
         self._overall_progress: Progress | None = None
@@ -333,7 +331,9 @@ class PipelineUI:
         if self._config:
             table.add_row("Pages", Text(str(self._config.max_pages), style=COLOR_PRIMARY))
             table.add_row("Bullet words", Text(str(self._config.max_bullet_words), style=COLOR_DIM))
-            table.add_row("Bullets/job", Text(str(self._config.max_bullets_per_job), style=COLOR_DIM))
+            table.add_row(
+                "Bullets/job", Text(str(self._config.max_bullets_per_job), style=COLOR_DIM)
+            )
             table.add_row("Model", Text(self._config.claude_model, style=COLOR_DIM))
             table.add_row("Palette", Text(self._config.color_palette, style=COLOR_DIM))
             table.add_row("Language", Text(self._config.output_language, style=COLOR_DIM))
@@ -505,11 +505,6 @@ class PipelineUI:
         del current, total, message
         if self._live:
             self._live.update(self._build_display())
-
-    def log(self, message: str, style: str = "") -> None:
-        """Log a message (only shown in verbose mode)."""
-        if self.verbose:
-            self.console.print(f"  {message}", style=style or COLOR_DIM)
 
     def show_success(self, output_path: Path | None = None) -> None:
         """Display success message with summary."""

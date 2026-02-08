@@ -153,7 +153,6 @@ def test_full_pipeline_with_mocked_cli(tmp_path: Path) -> None:
         claude_model=ClaudeModel.SONNET,
         output_dir=output_dir,
         compile_pdf=False,
-        verbose=False,
     )
 
     output_path = output_dir / "test_resume.tex"
@@ -198,7 +197,7 @@ def test_full_pipeline_with_mocked_cli(tmp_path: Path) -> None:
         patch.object(ClaudeCLI, "version", return_value="mocked-version"),
         patch.object(ClaudeCLI, "invoke", mock_invoke),
     ):
-        ui = PipelineUI(verbose=False)
+        ui = PipelineUI()
         pipeline = ResumePipeline(settings=settings, ui=ui)
 
         result = pipeline.run(

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -38,27 +38,30 @@ class CritiqueResponseSchema(BaseModel):
         default_factory=list, description="Prioritized list of improvements"
     )
     content_score: float = Field(default=0.5, ge=0.0, le=1.0, description="Content quality 0-1")
-    design_score: float = Field(default=0.5, ge=0.0, le=1.0, description="Visual design quality 0-1")
+    design_score: float = Field(
+        default=0.5, ge=0.0, le=1.0, description="Visual design quality 0-1"
+    )
     ats_score: float = Field(default=0.5, ge=0.0, le=1.0, description="ATS compatibility 0-1")
     truthfulness_score: float = Field(
-        default=1.0, ge=0.0, le=1.0,
-        description="How truthful the resume is compared to raw data (1.0 = fully truthful)"
+        default=1.0,
+        ge=0.0,
+        le=1.0,
+        description="How truthful the resume is compared to raw data (1.0 = fully truthful)",
     )
     exaggeration_issues: list[str] = Field(
         default_factory=list,
-        description="Specific claims that appear exaggerated or unsupported by raw data"
+        description="Specific claims that appear exaggerated or unsupported by raw data",
     )
     missing_valuable_info: list[str] = Field(
         default_factory=list,
-        description="Valuable information from raw data that was omitted from the resume"
+        description="Valuable information from raw data that was omitted from the resume",
     )
     max_achievable_grade: str = Field(
-        default="S+",
-        description="Maximum grade achievable given the quality/quantity of raw data"
+        default="S+", description="Maximum grade achievable given the quality/quantity of raw data"
     )
     grade_ceiling_reason: str = Field(
         default="",
-        description="Explanation of why a higher grade cannot be achieved (if applicable)"
+        description="Explanation of why a higher grade cannot be achieved (if applicable)",
     )
 
 
@@ -75,20 +78,16 @@ class CritiqueResult:
     design_score: float
     ats_score: float
     truthfulness_score: float = 1.0
-    exaggeration_issues: list[str] = None  # type: ignore[assignment]
-    missing_valuable_info: list[str] = None  # type: ignore[assignment]
+    exaggeration_issues: list[str] = field(default_factory=list)
+    missing_valuable_info: list[str] = field(default_factory=list)
     max_achievable_grade: TierGrade | None = None
     grade_ceiling_reason: str = ""
 
-    def __post_init__(self) -> None:
-        if self.exaggeration_issues is None:
-            self.exaggeration_issues = []
-        if self.missing_valuable_info is None:
-            self.missing_valuable_info = []
-
     @property
     def overall_score(self) -> float:
-        return (self.content_score + self.design_score + self.ats_score + self.truthfulness_score) / 4
+        return (
+            self.content_score + self.design_score + self.ats_score + self.truthfulness_score
+        ) / 4
 
     @property
     def target_unattainable(self) -> bool:
@@ -159,7 +158,9 @@ def _load_research_criteria(research_dir: Path) -> str:
     return criteria_text
 
 
-def _build_critique_prompt(pdf_path: Path, research_criteria: str, raw_text: str | None = None) -> str:
+def _build_critique_prompt(
+    pdf_path: Path, research_criteria: str, raw_text: str | None = None
+) -> str:
     """Build the critique prompt with research criteria and optional raw data for truth verification."""
     raw_data_section = ""
     if raw_text:
@@ -290,6 +291,12 @@ class ResumeCritique:
         logger.debug("Loaded research criteria: %d chars", len(criteria))
         prompt = _build_critique_prompt(pdf_path, criteria, raw_text)
 
+        logger.debug(
+            "Prompting RESUME_CRITIQUE: pdf=%s, research_criteria_chars=%d, has_raw_text=%s",
+            pdf_path.name,
+            len(criteria),
+            raw_text is not None,
+        )
         try:
             result = self._cli.invoke(
                 prompt=prompt,
@@ -340,7 +347,9 @@ class ResumeCritique:
         if response.missing_valuable_info:
             logger.info("Missing valuable info: %s", response.missing_valuable_info)
         if max_grade and response.grade_ceiling_reason:
-            logger.info("Max achievable grade: %s (%s)", max_grade.value, response.grade_ceiling_reason)
+            logger.info(
+                "Max achievable grade: %s (%s)", max_grade.value, response.grade_ceiling_reason
+            )
 
         return CritiqueResult(
             grade=grade,

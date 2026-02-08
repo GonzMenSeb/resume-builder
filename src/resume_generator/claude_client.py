@@ -106,7 +106,7 @@ class ClaudeCLI:
         Returns:
             InvokeResult containing success status, output, and exit code.
         """
-        logger.info("Invoking Claude CLI (model=%s)", self._model)
+        logger.info("Invoking Claude CLI (model=%s, prompt_chars=%d)", self._model, len(prompt))
         args = self._build_args(system)
         cwd = str(working_dir) if working_dir else None
 
@@ -135,6 +135,7 @@ class ClaudeCLI:
 
         output = "".join(output_lines)
         logger.info("Claude CLI completed: exit_code=%d, output_length=%d", exit_code, len(output))
+        logger.debug("Claude response preview: %.200s", output[:200])
         return InvokeResult(success=success, output=output, exit_code=exit_code)
 
     def _build_args(self, system: str | None = None) -> list[str]:

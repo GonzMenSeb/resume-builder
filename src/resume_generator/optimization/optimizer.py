@@ -182,7 +182,13 @@ class ResumeOptimizer:
 
         optimized: list[ResumeExperience] = []
         for i, exp in enumerate(profile.experiences):
-            logger.debug("Optimizing experience %d/%d: %s at %s", i + 1, len(profile.experiences), exp.title, exp.company)
+            logger.debug(
+                "Optimizing experience %d/%d: %s at %s",
+                i + 1,
+                len(profile.experiences),
+                exp.title,
+                exp.company,
+            )
             if not exp.achievements:
                 main_text = exp.description or f"Worked as {exp.title} at {exp.company}"
                 bullets = [
@@ -237,7 +243,13 @@ class ResumeOptimizer:
         target_keywords: list[str] | None,
         max_bullets: int,
     ) -> list[ResumeBullet]:
-        logger.debug("Optimizing %d bullets for %s at %s (max=%d)", len(achievements), role_title, company, max_bullets)
+        logger.debug(
+            "Optimizing %d bullets for %s at %s (max=%d)",
+            len(achievements),
+            role_title,
+            company,
+            max_bullets,
+        )
         min_bullets = self._settings.min_bullets_per_job if self._settings else 2
         language = self._settings.output_language.value if self._settings else None
         max_words = self._settings.max_bullet_words if self._settings else None
@@ -250,6 +262,14 @@ class ResumeOptimizer:
             max_words=max_words,
         )
 
+        logger.debug(
+            "Prompting BULLET_BATCH_OPTIMIZATION: role=%s, company=%s, bullet_count=%d, target_keywords=%d, max_words=%s",
+            role_title,
+            company,
+            len(achievements),
+            len(target_keywords) if target_keywords else 0,
+            max_words,
+        )
         try:
             result = self._call_claude_structured(prompt, BulletBatchResultSchema)
         except OptimizationError as e:
@@ -322,6 +342,14 @@ class ResumeOptimizer:
             max_words=max_words,
         )
 
+        logger.debug(
+            "Prompting PROFESSIONAL_SUMMARY: name=%s, title=%s, skills=%d, achievements=%d, target=%s",
+            profile.contact.full_name,
+            current_title,
+            len(top_skills),
+            len(top_achievements),
+            target_job_title,
+        )
         try:
             result = self._call_claude_structured(prompt, ProfessionalSummarySchema)
             logger.info("Generated professional summary: %d words", result.word_count)
@@ -357,12 +385,22 @@ class ResumeOptimizer:
             language=language,
         )
 
+        logger.debug(
+            "Prompting SKILLS_OPTIMIZATION: skill_groups=%d, experiences=%d, target_keywords=%d",
+            len(skills_data),
+            len(experiences_data),
+            len(target_keywords) if target_keywords else 0,
+        )
         try:
             result = self._call_claude_structured(prompt, SkillsOptimizationSchema)
             groups = []
             for g in sorted(result.skill_groups, key=lambda x: x.priority):
                 groups.append(ResumeSkillGroup(category=g.category, skills=g.skills))
-            logger.info("Optimized skills: %d groups, %d total skills", len(groups), result.total_skills_count)
+            logger.info(
+                "Optimized skills: %d groups, %d total skills",
+                len(groups),
+                result.total_skills_count,
+            )
             return groups
         except OptimizationError as e:
             logger.warning("Skills optimization failed, using basic grouping: %s", e)

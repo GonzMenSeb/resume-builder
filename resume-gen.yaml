@@ -26,13 +26,18 @@ summary_max_words: 130
 output_language: en
 
 # === Paths (optional) ===
-output_dir: ./output
 input_dir: ./tmp/resume_data
+output_dir: ./output
 target_job_dir: ./tmp/target_job
 
+# === Logging ===
+log_level: DEBUG            # Log level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+
+# === Adversarial Refinement ===
+target_tier: S              # Target grade (S+, S, A+, A, A-, B+, B, etc). If set, enables refinement loop.
+# max_refinement_iterations: 5  # Max iterations for refinement (1-10)
+
 # === Advanced ===
-target_tier: S
 # target_keyword_match_rate: 0.70
 # tailoring_customization_rate: 0.50
 # enable_job_tailoring: true
-# verbose: false

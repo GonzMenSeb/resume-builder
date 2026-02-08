@@ -104,7 +104,9 @@ class TestSettings:
 class TestFindConfigFile:
     """Tests for find_config_file function."""
 
-    def test_find_config_file_not_found(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_find_config_file_not_found(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         monkeypatch.chdir(tmp_path)
         monkeypatch.setattr(
             "resume_generator.config.CONFIG_SEARCH_PATHS",
@@ -113,7 +115,9 @@ class TestFindConfigFile:
         result = find_config_file()
         assert result is None
 
-    def test_find_config_file_in_current_dir(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_find_config_file_in_current_dir(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         config_file = tmp_path / "resume-gen.yaml"
         config_file.write_text("max_pages: 2")
         monkeypatch.chdir(tmp_path)
@@ -123,13 +127,17 @@ class TestFindConfigFile:
         result = find_config_file()
         assert result == config_file
 
-    def test_find_config_file_returns_first_match(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_find_config_file_returns_first_match(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         first_config = tmp_path / "first.yaml"
         second_config = tmp_path / "second.yaml"
         first_config.write_text("max_pages: 1")
         second_config.write_text("max_pages: 2")
 
-        monkeypatch.setattr("resume_generator.config.CONFIG_SEARCH_PATHS", [first_config, second_config])
+        monkeypatch.setattr(
+            "resume_generator.config.CONFIG_SEARCH_PATHS", [first_config, second_config]
+        )
 
         result = find_config_file()
         assert result == first_config

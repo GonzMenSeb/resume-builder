@@ -76,8 +76,6 @@ def test_settings(tmp_path: Path) -> Settings:
         / "generation"
         / "templates",
         claude_cli_timeout=3600,
-        claude_cli_verbose=False,
-        verbose=False,
         compile_pdf=False,
     )
 

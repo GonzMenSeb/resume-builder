@@ -126,14 +126,6 @@ def generate(
             help="Skip PDF compilation (output LaTeX only)",
         ),
     ] = False,
-    verbose: Annotated[
-        bool,
-        typer.Option(
-            "--verbose",
-            "-V",
-            help="Enable verbose output",
-        ),
-    ] = False,
     language: Annotated[
         ResumeLanguage | None,
         typer.Option(
@@ -214,9 +206,6 @@ def generate(
         [dim]# Use a specific Claude model[/]
         resume-gen generate ./data/ --claude-model opus
 
-        [dim]# Verbose output for debugging[/]
-        resume-gen generate ./data/ -V --job "Senior Python Developer..."
-
         [dim]# Generate resume in Spanish[/]
         resume-gen generate ./data/ --language es
 
@@ -231,14 +220,13 @@ def generate(
         raise typer.Exit(1)
 
     used_config_file = config_file or find_config_file()
-    if verbose and used_config_file:
+    if used_config_file:
         console.print(f"[dim]Using config: {used_config_file}[/]")
 
     try:
         settings = _build_settings(
             config_file=config_file,
             no_compile=no_compile,
-            verbose=verbose,
             claude_model=claude_model,
             language=language,
             max_pages=max_pages,
@@ -250,13 +238,11 @@ def generate(
         console.print(f"[bold red]Configuration error:[/] {e}")
         raise typer.Exit(1) from e
 
-    resolved_inputs = _resolve_inputs(inputs, settings, verbose)
-    job = _parse_job_description(
-        job_description, job_file, job_url, verbose, settings.target_job_dir
-    )
+    resolved_inputs = _resolve_inputs(inputs, settings)
+    job = _parse_job_description(job_description, job_file, job_url, settings.target_job_dir)
 
     pipeline_config = PipelineConfig.from_settings(settings)
-    ui = PipelineUI(verbose=verbose, config=pipeline_config)
+    ui = PipelineUI(config=pipeline_config)
     pipeline = ResumePipeline(settings=settings, ui=ui)
 
     try:
@@ -286,7 +272,7 @@ def generate(
         raise typer.Exit(130) from None
     except Exception as e:
         console.print(f"\n[bold red]Unexpected error:[/] {e}")
-        if verbose:
+        if settings.log_level == "DEBUG":
             console.print_exception()
         raise typer.Exit(1) from e
 
@@ -294,7 +280,6 @@ def generate(
 def _resolve_inputs(
     inputs: list[Path] | None,
     settings: Settings,
-    verbose: bool,
 ) -> list[Path]:
     """Resolve input sources from CLI arguments or config file."""
     if inputs:
@@ -305,8 +290,7 @@ def _resolve_inputs(
         if not input_path.exists():
             console.print(f"[bold red]Input directory not found:[/] {input_path}")
             raise typer.Exit(1)
-        if verbose:
-            console.print(f"[dim]Using input_dir from config: {input_path}[/]")
+        console.print(f"[dim]Using input_dir from config: {input_path}[/]")
         return [input_path]
 
     console.print(
@@ -320,7 +304,6 @@ def _build_settings(
     *,
     config_file: Path | None,
     no_compile: bool,
-    verbose: bool,
     claude_model: ClaudeModel | None,
     language: ResumeLanguage | None,
     max_pages: int | None,
@@ -333,8 +316,6 @@ def _build_settings(
     updates: dict[str, bool | int | str | ClaudeModel | ResumeLanguage | ColorPalette] = {}
     if no_compile:
         updates["compile_pdf"] = False
-    if verbose:
-        updates["verbose"] = True
     if claude_model is not None:
         updates["claude_model"] = claude_model
     if language is not None:
@@ -356,7 +337,6 @@ def _parse_job_description(
     job_text: str | None,
     job_file: Path | None,
     job_url: str | None,
-    verbose: bool,
     target_job_dir: Path | None = None,
 ) -> JobDescription | None:
     """Parse job description from text, file, URL, or target_job_dir config."""
@@ -364,7 +344,7 @@ def _parse_job_description(
         text = job_file.read_text(encoding="utf-8")
         return JobDescription(title="Target Position", raw_text=text)
     if job_url:
-        text = _fetch_job_url(job_url, verbose)
+        text = _fetch_job_url(job_url)
         return JobDescription(
             title="Target Position",
             raw_text=text,
@@ -376,25 +356,22 @@ def _parse_job_description(
         job_files = list(target_job_dir.glob("*.txt")) + list(target_job_dir.glob("*.md"))
         if job_files:
             latest_job_file = max(job_files, key=lambda f: f.stat().st_mtime)
-            if verbose:
-                console.print(f"[dim]Using job description from target_job_dir: {latest_job_file}[/]")
+            console.print(f"[dim]Using job description from target_job_dir: {latest_job_file}[/]")
             text = latest_job_file.read_text(encoding="utf-8")
             return JobDescription(title="Target Position", raw_text=text)
     return None
 
 
-def _fetch_job_url(url: str, verbose: bool) -> str:
+def _fetch_job_url(url: str) -> str:
     """Fetch job posting content from URL."""
-    if verbose:
-        console.print(f"[dim]Fetching job posting from: {url}[/]")
+    console.print(f"[dim]Fetching job posting from: {url}[/]")
 
     try:
         text = fetch_and_extract_text(url)
     except FetchError as e:
         raise typer.BadParameter(f"Failed to fetch URL: {e}") from e
 
-    if verbose:
-        console.print(f"[dim]Extracted {len(text)} characters from job posting[/]")
+    console.print(f"[dim]Extracted {len(text)} characters from job posting[/]")
     return text
 
 

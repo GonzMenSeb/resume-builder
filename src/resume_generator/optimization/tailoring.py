@@ -913,6 +913,12 @@ class JobTailorer:
             resume_content, job_content, language=language, customization_rate=customization_rate
         )
 
+        logger.debug(
+            "Prompting JOB_TAILORING: job_title=%s, customization_rate=%s, language=%s",
+            job.title,
+            customization_rate,
+            language,
+        )
         try:
             result = self._call_claude_structured(prompt, TailoringResultSchema)
         except TailoringError as e:
